@@ -20,3 +20,8 @@ test-results
 .idea
 .vscode/*
 !.vscode/extensions.json
+
+
+.vinext
+.wrangler
+tsconfig.tsbuildinfo
