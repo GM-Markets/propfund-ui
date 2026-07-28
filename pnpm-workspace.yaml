@@ -1,7 +1,0 @@
-# pnpm 11+ reads pnpm-specific settings from here (no longer from package.json#pnpm).
-# strictDepBuilds defaults to true, so dependencies with build scripts must be
-# explicitly allowed below or install fails with ERR_PNPM_IGNORED_BUILDS.
-allowBuilds:
-  esbuild: true
-  msw: true
-  sharp: true
