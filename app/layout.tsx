@@ -1,28 +1,39 @@
 import type { Metadata } from "next";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-
+import { headers } from "next/headers";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-import { Toaster } from "@/components/ui/sonner";
-import { BRAND_NAME } from "@/lib/brand";
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: {
-    default: `${BRAND_NAME} — Trade with Our Capital`,
-    template: `%s · ${BRAND_NAME}`,
-  },
-  description:
-    "PropFund funds skilled traders. Pass a challenge, get a funded account, and keep the majority of your profits.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") || headerList.get("host");
+  const protocol = headerList.get("x-forwarded-proto") || "https";
+  const metadataBase = host ? new URL(`${protocol}://${host}`) : new URL("https://propfund.example");
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return {
+    metadataBase,
+    title: "Propfund | One-Step Trading Evaluations",
+    description: "One-step simulated trading evaluations with a 100% reward split, weekly rewards, and scaling up to $2.5M.",
+    openGraph: {
+      title: "Propfund | One-Step Trading Evaluations",
+      description: "Pass one evaluation. Keep 100% of eligible rewards.",
+      type: "website",
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Propfund simulated trading evaluations." }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Propfund | One-Step Trading Evaluations",
+      description: "Pass one evaluation. Keep 100% of eligible rewards.",
+      images: ["/og.png"],
+    },
+  };
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        {children}
-        <Toaster />
-      </body>
+    <html lang="en">
+      <body className={inter.variable}>{children}</body>
     </html>
   );
 }

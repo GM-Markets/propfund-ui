@@ -1,293 +1,277 @@
-import Link from "next/link";
-import {
-  ArrowRight,
-  Banknote,
-  BookOpen,
-  CandlestickChart,
-  Gauge,
-  ShieldCheck,
-  Target,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+"use client";
 
-import { Brand } from "@/components/brand";
-import { Aurora, HoverLift, Reveal, Stagger, StaggerItem } from "@/components/motion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BRAND_MARK_LETTER, BRAND_NAME } from "@/lib/brand";
+import Image from "next/image";
+import { useState } from "react";
+import { HeroDotField } from "../components/propfund/HeroDotField";
+import { EvaluationDialog } from "../components/propfund/EvaluationDialog";
+import { MaterialIcon } from "../components/propfund/MaterialIcon";
+import { SiteFooter, SiteHeader } from "../components/propfund/SiteChrome";
+import { pricingPlans } from "../components/propfund/site-data";
 
-const HERO_HEADLINE = "Trade with our capital.";
-const HERO_SUPPORT =
-  "Pass a PropFund challenge, get a funded account, and keep the majority of what you earn.";
 
-const PRIMARY_CTA_LABEL = "Start a challenge";
-const SECONDARY_CTA_LABEL = "How it works";
 
-const HOW_IT_WORKS = [
-  {
-    n: "01",
-    title: "Pick your challenge",
-    desc: "Choose an account size that matches your strategy and risk tolerance.",
-  },
-  {
-    n: "02",
-    title: "Prove your edge",
-    desc: "Hit profit targets while staying inside PropFund drawdown and risk rules.",
-  },
-  {
-    n: "03",
-    title: "Trade funded",
-    desc: "Get a live funded account and trade markets with PropFund capital.",
-  },
-  {
-    n: "04",
-    title: "Withdraw profits",
-    desc: "Request payouts on your share — verified, tracked, and paid out fast.",
-  },
-] as const;
+const questions = [
+  { q: "Is the account live capital?", a: "No. Both the evaluation and scaled account are simulated. Reward requests are based on eligible simulated profits." },
+  { q: "What do I need to pass?", a: "Hit your market’s target without breaching the daily loss or trailing drawdown limit. There is one phase and no deadline." },
+  { q: "Can I hold through news or the weekend?", a: "Yes, as long as the market is open and the position stays inside the published limits." },
+  { q: "When can I request a reward?", a: "After seven trading days on a scaled account. From then on, eligible rewards can be requested every week." },
+];
 
-const PILLARS = [
-  {
-    icon: Wallet,
-    title: "Real funding",
-    desc: "Trade PropFund capital after you pass evaluation — not a simulated trophy account.",
-  },
-  {
-    icon: Target,
-    title: "Clear rules",
-    desc: "Transparent profit targets, drawdown limits, and daily loss rules. No hidden gotchas.",
-  },
-  {
-    icon: CandlestickChart,
-    title: "Live markets",
-    desc: "Submit, manage, and close positions with the full order lifecycle traders expect.",
-  },
-  {
-    icon: Banknote,
-    title: "Trader payouts",
-    desc: "Keep the majority of profits. Connect your bank and withdraw when you hit milestones.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Verified traders",
-    desc: "Identity and KYC built in so funding and payouts stay compliant and secure.",
-  },
-  {
-    icon: Gauge,
-    title: "Risk discipline",
-    desc: "PropFund monitors risk in real time so capital stays protected — and so do you.",
-  },
-] as const;
-
-const ACCOUNT_TIERS = [
-  { size: "$25K", split: "80%", label: "Starter" },
-  { size: "$50K", split: "80%", label: "Growth" },
-  { size: "$100K", split: "90%", label: "Pro" },
-] as const;
-
-export default function HomePage() {
+function EvaluationVisual() {
   return (
-    <div className="relative">
-      <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="text-foreground">
-            <Brand />
-          </Link>
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" asChild className="hidden sm:inline-flex">
-              <Link href="/docs">
-                <BookOpen className="size-4" /> Docs
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">
-                {PRIMARY_CTA_LABEL} <ArrowRight />
-              </Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
-
-      <main>
-        {/* Hero — brand-first PropFund composition */}
-        <section className="relative overflow-hidden border-b border-border">
-          <Aurora />
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.035]"
-            style={{
-              backgroundImage:
-                "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-              maskImage: "radial-gradient(60rem 40rem at 50% 0%, black, transparent 75%)",
-            }}
-          />
-          {/* Atmospheric mark watermark */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-8 top-1/2 hidden -translate-y-1/2 select-none text-[18rem] font-semibold leading-none text-primary/[0.06] sm:block lg:right-[8%] lg:text-[22rem]"
-          >
-            {BRAND_MARK_LETTER}
-          </div>
-
-          <div className="relative mx-auto flex max-w-6xl flex-col items-start px-6 py-24 sm:py-32 lg:py-36">
-            <Reveal>
-              <Badge variant="outline" className="mb-6 backdrop-blur">
-                <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-                Prop trading · Funded accounts
-              </Badge>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-                {BRAND_NAME}
-              </p>
-              <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-                {HERO_HEADLINE}{" "}
-                <span className="bg-gradient-to-r from-primary via-sky-400 to-cyan-300 bg-clip-text text-transparent">
-                  Keep what you earn.
-                </span>
-              </h1>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <p className="mt-6 max-w-xl text-lg text-muted-foreground">{HERO_SUPPORT}</p>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <Button size="lg" asChild>
-                  <Link href="/signup">
-                    {PRIMARY_CTA_LABEL} <ArrowRight />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="#how-it-works">{SECONDARY_CTA_LABEL}</Link>
-                </Button>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* Account sizes */}
-        <section className="border-b border-border bg-card/20">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <Reveal className="mb-10 max-w-2xl">
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Capital sized for how you trade
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Start with the account that fits your plan. Scale up as you prove consistency.
-              </p>
-            </Reveal>
-            <Stagger className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {ACCOUNT_TIERS.map((tier) => (
-                <StaggerItem key={tier.size}>
-                  <div className="border-t border-primary/40 pt-5">
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {tier.label}
-                    </div>
-                    <div className="mt-2 text-4xl font-semibold tracking-tight">{tier.size}</div>
-                    <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                      <TrendingUp className="size-4 text-primary" />
-                      Up to {tier.split} profit split
-                    </div>
-                  </div>
-                </StaggerItem>
-              ))}
-            </Stagger>
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-6 py-20">
-          <Reveal className="mb-10 max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              How {BRAND_NAME} works
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              A straightforward path from challenge to funded trading to payout.
-            </p>
-          </Reveal>
-          <Stagger className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {HOW_IT_WORKS.map((step) => (
-              <StaggerItem key={step.n}>
-                <div className="font-mono text-sm text-primary">{step.n}</div>
-                <h3 className="mt-3 font-semibold">{step.title}</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{step.desc}</p>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </section>
-
-        {/* Pillars */}
-        <section className="border-y border-border bg-card/20">
-          <div className="mx-auto max-w-6xl px-6 py-20">
-            <Reveal className="mb-10 max-w-2xl">
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Built for serious traders
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                {BRAND_NAME} combines funded capital with institutional-grade onboarding,
-                risk controls, and payouts.
-              </p>
-            </Reveal>
-            <Stagger className="grid grid-cols-1 gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-              {PILLARS.map(({ icon: Icon, title, desc }) => (
-                <StaggerItem key={title}>
-                  <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </div>
-                  <h3 className="font-semibold">{title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
-                </StaggerItem>
-              ))}
-            </Stagger>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="relative overflow-hidden">
-          <Aurora />
-          <div className="relative mx-auto max-w-6xl px-6 py-24 text-center">
-            <Reveal>
-              <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-                {BRAND_NAME}
-              </p>
-              <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-5xl">
-                Ready to trade with our capital?
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                Create your account, pass verification, and start a challenge when you&apos;re
-                ready.
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Button size="lg" asChild>
-                  <Link href="/signup">
-                    {PRIMARY_CTA_LABEL} <ArrowRight />
-                  </Link>
-                </Button>
-                <HoverLift>
-                  <Button size="lg" variant="outline" asChild>
-                    <Link href="/login">Already a trader? Sign in</Link>
-                  </Button>
-                </HoverLift>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row">
-          <Link href="/" className="text-foreground">
-            <Brand />
-          </Link>
-          <p>
-            © {new Date().getFullYear()} {BRAND_NAME}. Trade responsibly.
-          </p>
-        </div>
-      </footer>
+    <div className="evaluation-ui" aria-hidden="true">
+      <div className="micro-score"><span>Progress</span><strong><span className="score-start">6.4%</span><span className="score-finish">9.2%</span></strong></div>
+      <div className="progress"><i /></div>
+      <div className="visual-caption"><span>Start</span><span>Target 8%</span></div>
     </div>
+  );
+}
+
+function RulesVisual() {
+  return (
+    <div className="rules-ui bounds-ui" aria-hidden="true">
+      <div className="bound-label bound-label-upper"><span>Target</span><strong>8-10%</strong></div>
+      <div className="bound-label bound-label-lower"><span>Drawdown</span><strong>5%</strong></div>
+      <svg viewBox="0 0 360 120" role="presentation">
+        <line className="bound bound-upper" x1="0" y1="29" x2="360" y2="29" />
+        <line className="bound bound-lower" x1="0" y1="94" x2="360" y2="94" />
+        <path className="trade-path" d="M0 84 C32 81 48 91 73 76 S118 73 143 62 S183 67 207 51 S249 57 274 40 S318 45 360 14" />
+      </svg>
+    </div>
+  );
+}
+
+function RewardsVisual() {
+  return (
+    <div className="rewards-ui" aria-hidden="true">
+      <div className="reward-head"><span>Weekly rhythm</span><strong>Day 07</strong></div>
+      <div className="day-track">{[1, 2, 3, 4, 5, 6, 7].map(day => <i className={day < 6 ? "complete" : "pending"} key={day} />)}</div>
+    </div>
+  );
+}
+
+function ScaleVisual() {
+  return (
+    <div className="scale-ui" aria-hidden="true">
+      <div><span>$25K</span><i /></div>
+      <div><span>$500K</span><i /></div>
+      <div className="scale-max"><span>$2.5M</span></div>
+    </div>
+  );
+}
+
+const heroFeatures = [
+  { title: "One evaluation", body: "Hit the target without crossing drawdown. That’s it.", visual: <EvaluationVisual /> },
+  { title: "No deadline", body: "Trade when the setup is there, not because the clock is running.", visual: <RulesVisual /> },
+  { title: "Weekly rewards", body: "After seven trading days, eligible rewards can be requested every week.", visual: <RewardsVisual /> },
+  { title: "Grow to $2.5M", body: "Keep performing and your simulated account can grow with you.", visual: <ScaleVisual /> },
+];
+
+const journeyTabs = [
+  {
+    label: "Evaluation",
+    title: "Hit one target. Then move on.",
+    body: "Pick an account, hit the target, and stay inside the loss limits. There is no second phase and no clock pushing you into a trade.",
+    stats: [["Performance target", "8-10%"], ["Maximum drawdown", "5%"], ["Trading period", "Unlimited"]],
+    statement: "Evaluation statement",
+    balanceLabel: "Simulated evaluation balance",
+    balance: "$25,000",
+    footer: [["Target", "8%"], ["Drawdown", "5%"], ["Time", "Unlimited"]],
+  },
+  {
+    label: "Scaled account",
+    title: "The test is over. Now trade.",
+    body: "Pass the evaluation and you move straight to a simulated scaled account. There is no second test and no ongoing profit target.",
+    stats: [["Starting allocation", "Account based"], ["Maximum scaling", "$2.5M"], ["Environment", "Simulated"]],
+    statement: "Scaled account",
+    balanceLabel: "Current simulated allocation",
+    balance: "$100,000",
+    footer: [["Status", "Active"], ["Drawdown", "5%"], ["Scale", "Up to $2.5M"]],
+  },
+  {
+    label: "Rewards",
+    title: "A weekly rhythm, not a long wait.",
+    body: "Trade for seven days, then request any eligible rewards. Keep the account in good standing and you can request again the following week.",
+    stats: [["First eligibility", "7 trading days"], ["Eligible split", "100%"], ["Request cycle", "Weekly"]],
+    statement: "Reward summary",
+    balanceLabel: "Eligible simulated performance",
+    balance: "$8,420",
+    footer: [["Split", "100%"], ["Cycle", "Weekly"], ["Status", "Eligible"]],
+  },
+];
+
+function JourneyVisual({ index }: { index: number }) {
+  if (index === 1) {
+    return (
+      <div className="journey-visual journey-scale" aria-hidden="true">
+        <div className="journey-scale-bars">
+          <div><span>$25K</span></div>
+          <div><span>$500K</span></div>
+          <div><span>$2.5M</span></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 2) {
+    return (
+      <div className="journey-visual journey-rewards" aria-hidden="true">
+        <div className="journey-reward-head"><span>Eligible request</span><strong>Day 07</strong></div>
+        <div className="journey-reward-track">{[1, 2, 3, 4, 5, 6, 7].map((day) => <i key={day} />)}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="journey-visual journey-evaluation" aria-hidden="true">
+      <svg viewBox="0 0 560 150" role="presentation">
+        <line x1="0" y1="122" x2="560" y2="122" />
+        <line x1="0" y1="30" x2="560" y2="30" />
+        <path d="M0 128 C55 122 76 138 118 108 S182 104 224 79 S300 96 337 58 S405 65 450 36 S512 50 560 17" />
+      </svg>
+    </div>
+  );
+}
+
+const markets = [
+  { name: "Forex", body: "Twenty-nine pairs across the global sessions you already trade.", detail: "See Forex", href: "/forex", illustration: "/illustrations/forex.png" },
+  { name: "Crypto", body: "Thirty crypto markets, open around the clock.", detail: "See Crypto", href: "/crypto", illustration: "/illustrations/crypto.png" },
+  { name: "Equities", body: "More than 1,000 US stocks and sector ETFs.", detail: "See Equities", href: "/equities", illustration: "/illustrations/equities.png" },
+  { name: "Commodities", body: "Six metals and energy markets for macro-driven setups.", detail: "See Commodities", href: "/commodities", illustration: "/illustrations/commodities.png" },
+];
+
+const comparisons = [
+  { feature: "Evaluation", typical: "Often two phases", propfund: "One evaluation" },
+  { feature: "Reward split", typical: "Firm takes a share", propfund: "100% eligible rewards" },
+  { feature: "Trading period", typical: "Fixed deadline", propfund: "No deadline" },
+  { feature: "Scaling", typical: "Depends on the program", propfund: "Up to $2.5M simulated" },
+];
+
+export default function Home() {
+  const [activeJourney, setActiveJourney] = useState(0);
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState("$25K");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const journey = journeyTabs[activeJourney];
+
+  function openForm(account = "$25K") {
+    setSelectedAccount(account);
+    setFormOpen(true);
+  }
+
+  return (
+    <main>
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <SiteHeader onStart={() => openForm()} />
+
+      <div className="dark-shell">
+        <section className="hero" id="main-content">
+          <HeroDotField />
+          <div className="hero-laser-content">
+            <div className="hero-copy">
+              <h1>Pass once.<br />Trade your strategy.<br />Keep the upside.</h1>
+              <p>One evaluation. No deadline. Eligible reward requests every week.</p>
+              <button className="pill pill-light pill-large" onClick={() => openForm()} type="button">Start evaluation</button>
+            </div>
+            <div className="hero-feature-grid" aria-label="Program highlights">
+              {heroFeatures.map(feature => (
+                <article key={feature.title}>
+                  <div className="hero-feature-visual">{feature.visual}</div>
+                  <div className="hero-feature-copy"><h2>{feature.title}</h2><p>{feature.body}</p></div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="product-section" id="model">
+        <div className="section-intro section-intro-light"><h2>One evaluation. Then you trade.</h2></div>
+        <div className="product-layout">
+          <div className="product-tabs" role="tablist" aria-label="Program journey">
+            {journeyTabs.map((tab, index) => (
+              <button className={activeJourney === index ? "active" : ""} id={`journey-tab-${index}`} key={tab.label} onClick={() => setActiveJourney(index)} role="tab" aria-selected={activeJourney === index} aria-controls="journey-panel" type="button"><span>0{index + 1}</span>{tab.label}</button>
+            ))}
+          </div>
+          <div className="product-panel" key={activeJourney} id="journey-panel" role="tabpanel" aria-labelledby={`journey-tab-${activeJourney}`}>
+            <div className="product-copy">
+              <h3>{journey.title}</h3>
+              <p>{journey.body}</p>
+              <dl>{journey.stats.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+            </div>
+            <div className="statement-stage">
+              <div className="statement-card">
+                <header><span>Propfund</span><span>{journey.statement}</span></header>
+                <div className="statement-account"><span>Account</span><strong>{journey.balance}</strong><p>{journey.balanceLabel}</p></div>
+                <JourneyVisual index={activeJourney} />
+                <div className="statement-data">{journey.footer.map(([label, value]) => <span key={label}>{label}<strong>{value}</strong></span>)}</div>
+              </div>
+              <div className="stage-note"><span>Rules visible before checkout</span><a href="#comparison">Compare the model <span aria-hidden="true">→</span></a></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="markets-section" id="markets">
+        <div className="section-intro section-intro-light"><h2>Trade the markets you know.</h2></div>
+        <div className="market-bento">
+          {markets.map((market) => (
+            <a className="market-card" href={market.href} key={market.name}>
+              <Image className="market-card-illustration" src={market.illustration} alt="" width={2500} height={2500} sizes="(max-width: 760px) 55vw, 340px" unoptimized aria-hidden="true" />
+              <div className="market-card-copy"><h3>{market.name}</h3><p>{market.body}</p><span>{market.detail} <i aria-hidden="true">→</i></span></div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="accounts-section" id="accounts">
+        <div className="section-intro section-intro-light"><h2>Pick your starting balance.</h2></div>
+        <div className="route-pricing-grid home-pricing-grid">
+          {pricingPlans.map((plan) => (
+            <article className={plan.size === "$25K" ? "featured" : ""} key={plan.size}>
+              <div className="route-plan-head"><h3>{plan.size}</h3></div>
+              <p>Starting simulated balance</p>
+              <div className="route-price"><strong>{plan.fee}</strong><small>evaluation fee</small></div>
+              <dl>
+                <div><dt><MaterialIcon name="flag" />Target</dt><dd>{plan.target}</dd></div>
+                <div><dt><MaterialIcon name="shield" />Drawdown</dt><dd>{plan.drawdown}</dd></div>
+                <div><dt><MaterialIcon name="schedule" />Time</dt><dd>Unlimited</dd></div>
+                <div><dt><MaterialIcon name="trending_up" />Scaling</dt><dd>{plan.scale}</dd></div>
+              </dl>
+              <button onClick={() => openForm(plan.size)} type="button">Start {plan.size} evaluation <MaterialIcon name="arrow_forward" /></button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="comparison-table-section" id="comparison">
+        <div className="comparison-table-inner">
+          <div className="comparison-table-head"><h2>A prop evaluation without the usual maze.</h2><p>One phase, no deadline, and the same straightforward limits at every account size.</p></div>
+          <div className="comparison-table-wrap">
+            <table>
+              <thead><tr><th scope="col">What matters</th><th scope="col">Typical challenge</th><th scope="col">Propfund</th></tr></thead>
+              <tbody>{comparisons.map(item => <tr key={item.feature}><th scope="row">{item.feature}</th><td data-label="Typical challenge">{item.typical}</td><td data-label="Propfund">{item.propfund}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="faq-section" id="faq">
+        <div className="faq-intro"><h2>A few things traders usually ask.</h2></div>
+        <div className="faq-list">{questions.map((item, index) => {
+          const isOpen = openFaq === index;
+          return (
+            <div className={`faq-item ${isOpen ? "open" : ""}`} key={item.q}>
+              <button className="faq-question" type="button" aria-expanded={isOpen} aria-controls={`faq-answer-${index}`} onClick={() => setOpenFaq(isOpen ? null : index)}><span>{item.q}</span><i aria-hidden="true">+</i></button>
+              <div className="faq-answer" id={`faq-answer-${index}`} aria-hidden={!isOpen}><div><p>{item.a}</p></div></div>
+            </div>
+          );
+        })}</div>
+      </section>
+
+      <section className="closing-section"><h2>Ready when you are.<br /><span>Pick an account and start.</span></h2><button className="data-cta" onClick={() => openForm()} type="button"><span className="data-cta-icon">P</span><span>Start your evaluation<small>Choose an account and markets</small></span><i aria-hidden="true">→</i></button></section>
+      <EvaluationDialog key={`${formOpen}-${selectedAccount}`} open={formOpen} initialAccount={selectedAccount} onClose={() => setFormOpen(false)} />
+      <SiteFooter onStart={() => openForm()} />
+    </main>
   );
 }
