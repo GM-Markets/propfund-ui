@@ -5,42 +5,79 @@ import { PageFrame, StartEvaluationButton } from "@/components/propfund/SiteChro
 
 export const metadata: Metadata = {
   title: "How it works | Propfund",
-  description: "Four clear steps from evaluation to weekly reward requests.",
+  description: "See how the Propfund evaluation, scaled account, and weekly reward cycle work.",
 };
 
 const steps = [
   {
-    title: "Choose your market.",
-    body: "Pick what you want to trade and your starting balance. The target and loss limits are shown before checkout.",
-    points: ["8% Forex target", "10% target elsewhere", "No deadline"],
+    title: "Choose your account",
+    body: "Pick a market and balance. Every target, limit, and evaluation fee is visible before checkout.",
+    points: ["$5K to $100K", "Four markets", "Terms up front"],
     illustration: "/illustrations/workflow.png",
   },
   {
-    title: "Trade to the target.",
-    body: "Trade the setups you already know. Pass once by hitting the target without crossing either loss limit.",
-    points: ["Manual trading", "Your own bots and EAs", "News trading"],
+    title: "Trade the setup",
+    body: "Trade manually or run your own automation. News, overnight, and weekend holds are allowed inside the account limits.",
+    points: ["Your own strategy", "News trading", "Overnight holds"],
   },
   {
-    title: "Move to a scaled account.",
-    body: "Once you pass, the target disappears. Keep the account inside its daily and trailing limits while you trade.",
-    points: ["No second phase", "No ongoing target", "Seven-day cycles"],
+    title: "Pass one evaluation",
+    body: "Reach the market target without breaching either 5% static loss limit. There is no second phase and no deadline.",
+    points: ["One target", "Two static limits", "Take your time"],
   },
   {
-    title: "Request rewards weekly.",
-    body: "After seven trading days, request eligible rewards every week and keep building toward a $2.5M simulated account.",
-    points: ["Weekly requests", "100% eligible split", "Quarterly scaling reviews"],
+    title: "Request rewards weekly",
+    body: "Move to a simulated scaled account. After seven trading days, request 100% of eligible rewards, then repeat each week.",
+    points: ["Seven trading days", "100% eligible split", "Up to $2.5M"],
     illustration: "/illustrations/steps.png",
   },
 ];
 
+function StepVisual({ index, illustration }: { index: number; illustration?: string }) {
+  if (illustration) {
+    return (
+      <div className="how-step-visual how-step-image" aria-hidden="true">
+        <Image src={illustration} alt="" width={2500} height={2500} sizes="(max-width: 760px) 42vw, 420px" unoptimized />
+      </div>
+    );
+  }
+
+  if (index === 1) {
+    return (
+      <div className="how-step-visual how-step-window" aria-hidden="true">
+        <div className="how-instrument-head"><span>Trading window</span><strong><i /> Open</strong></div>
+        <div className="how-window-track">
+          <i className="how-window-progress" />
+          <span><i />News</span>
+          <span><i />Overnight</span>
+          <span><i />Weekend</span>
+        </div>
+        <div className="how-window-foot"><span>Trade when the setup is there</span><strong>Within your limits</strong></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="how-step-visual how-step-pass" aria-hidden="true">
+      <div className="how-instrument-head"><span>Evaluation progress</span><strong>One phase</strong></div>
+      <svg viewBox="0 0 360 120" role="presentation">
+        <line className="how-pass-target" x1="0" y1="30" x2="360" y2="30" />
+        <line className="how-pass-limit" x1="0" y1="94" x2="360" y2="94" />
+        <path d="M0 86 C38 83 50 91 78 73 S126 73 151 60 S194 66 221 50 S266 55 291 38 S326 41 360 16" />
+        <circle className="how-pass-marker" cx="360" cy="16" r="4" />
+      </svg>
+      <div className="how-pass-foot"><span>5% static limits</span><strong>Target reached</strong></div>
+    </div>
+  );
+}
 export default function HowItWorksPage() {
   return (
     <PageFrame>
       <section className="route-hero">
         <HeroDotField />
         <div className="route-container">
-          <h1>Pass once. Know what comes next.</h1>
-          <p>One target, one set of loss limits, and a clear route to weekly reward requests.</p>
+          <h1>How Propfund works.</h1>
+          <p>Choose an account, reach the target, and move to a simulated scaled account. Reward requests open after seven trading days.</p>
           <div className="route-actions">
             <StartEvaluationButton className="route-primary" />
             <a className="route-secondary" href="/rules">Read the rules</a>
@@ -48,21 +85,26 @@ export default function HowItWorksPage() {
         </div>
       </section>
       <section className="route-section how-section">
-        <div className="route-container how-steps">
-          {steps.map((step) => (
-            <article className={step.illustration ? "how-step-card has-illustration" : "how-step-card"} key={step.title}>
-              <div className="how-step-copy"><h2>{step.title}</h2><p>{step.body}</p></div>
-              {step.illustration ? <Image src={step.illustration} alt="" width={2500} height={2500} sizes="(max-width: 760px) 42vw, 420px" unoptimized aria-hidden="true" /> : null}
-              <ul>{step.points.map((point) => <li key={point}>{point}</li>)}</ul>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="route-callout">
         <div className="route-container">
-          <h2>No second phase. No countdown.</h2>
-          <p>The evaluation checks whether you can reach a target without losing control of risk. Take the trades you actually want to take.</p>
-          <StartEvaluationButton className="route-primary" />
+          <div className="how-journey-head">
+            <h2>From evaluation to weekly rewards.</h2>
+            <p>One clear path, with the rules visible at every stage.</p>
+          </div>
+          <div className="how-program-strip" aria-label="Program summary">
+            <div><span>Evaluation</span><strong>One phase</strong></div>
+            <div><span>Trading period</span><strong>Unlimited</strong></div>
+            <div><span>Eligible split</span><strong>100%</strong></div>
+            <div><span>Scaling</span><strong>Up to $2.5M</strong></div>
+          </div>
+          <div className="how-steps">
+            {steps.map((step, index) => (
+              <article className={`how-step-card has-visual ${step.illustration ? "has-illustration" : ""}`} key={step.title}>
+                <StepVisual index={index} illustration={step.illustration} />
+                <div className="how-step-copy"><h3>{step.title}</h3><p>{step.body}</p></div>
+                <ul>{step.points.map((point) => <li key={point}>{point}</li>)}</ul>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </PageFrame>

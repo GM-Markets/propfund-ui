@@ -4,14 +4,14 @@ import "../propfund-marketing.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Propfund | One-Step Trading Evaluations",
+    default: "Propfund | Simulated Trading Evaluations",
     template: "%s",
   },
   description:
-    "One-step simulated trading evaluations with a 100% reward split, weekly rewards, and scaling up to $2.5M.",
+    "Complete one simulated trading evaluation, move to a scaled account, and request eligible rewards after every seven trading days.",
   openGraph: {
-    title: "Propfund | One-Step Trading Evaluations",
-    description: "Pass one evaluation. Keep 100% of eligible rewards.",
+    title: "Propfund | Simulated Trading Evaluations",
+    description: "One evaluation phase, no deadline, weekly eligible reward requests, and simulated account scaling up to $2.5M.",
     type: "website",
     images: [
       {
@@ -24,12 +24,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Propfund | One-Step Trading Evaluations",
-    description: "Pass one evaluation. Keep 100% of eligible rewards.",
+    title: "Propfund | Simulated Trading Evaluations",
+    description: "One evaluation phase, no deadline, weekly eligible reward requests, and simulated account scaling up to $2.5M.",
     images: ["/og.png"],
   },
   icons: {
-    icon: "/favicon.svg",
+    icon: "/brand/propfund-mark-dark.svg",
   },
 };
 

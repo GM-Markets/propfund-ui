@@ -5,16 +5,18 @@ import { useState } from "react";
 import { HeroDotField } from "@/components/propfund/HeroDotField";
 import { EvaluationDialog } from "@/components/propfund/EvaluationDialog";
 import { MaterialIcon } from "@/components/propfund/MaterialIcon";
+import { TradingTerminalMockup } from "@/components/propfund/TradingTerminalMockup";
+import { PointsProgram } from "@/components/propfund/PointsProgram";
 import { SiteFooter, SiteHeader } from "@/components/propfund/SiteChrome";
 import { pricingPlans } from "@/components/propfund/site-data";
 
 
 
 const questions = [
-  { q: "Is the account live capital?", a: "No. Both the evaluation and scaled account are simulated. Reward requests are based on eligible simulated profits." },
-  { q: "What do I need to pass?", a: "Hit your market’s target without breaching the daily loss or trailing drawdown limit. There is one phase and no deadline." },
-  { q: "Can I hold through news or the weekend?", a: "Yes, as long as the market is open and the position stays inside the published limits." },
-  { q: "When can I request a reward?", a: "After seven trading days on a scaled account. From then on, eligible rewards can be requested every week." },
+  { q: "Is this live trading capital?", a: "No. Both the evaluation and scaled account are simulated. Eligible rewards are based on qualifying realized simulated performance." },
+  { q: "What do I need to pass?", a: "Reach 8% in Forex or 10% in another supported market without breaching either 5% static loss limit. There is no second phase or deadline." },
+  { q: "Can I trade news, hold positions, or use an algo?", a: "Yes. You can trade news, hold overnight or over the weekend, and use automation you built and control." },
+  { q: "When can I request a reward?", a: "Your first eligible request opens after seven trading days on the scaled account. You can then request again every week." },
 ];
 
 function EvaluationVisual() {
@@ -44,7 +46,6 @@ function RulesVisual() {
 function RewardsVisual() {
   return (
     <div className="rewards-ui" aria-hidden="true">
-      <div className="reward-head"><span>Weekly rhythm</span><strong>Day 07</strong></div>
       <div className="day-track">{[1, 2, 3, 4, 5, 6, 7].map(day => <i className={day < 6 ? "complete" : "pending"} key={day} />)}</div>
     </div>
   );
@@ -61,98 +62,86 @@ function ScaleVisual() {
 }
 
 const heroFeatures = [
-  { title: "One evaluation", body: "Hit the target without crossing drawdown. That’s it.", visual: <EvaluationVisual /> },
-  { title: "No deadline", body: "Trade when the setup is there, not because the clock is running.", visual: <RulesVisual /> },
-  { title: "Weekly rewards", body: "After seven trading days, eligible rewards can be requested every week.", visual: <RewardsVisual /> },
-  { title: "Grow to $2.5M", body: "Keep performing and your simulated account can grow with you.", visual: <ScaleVisual /> },
+  { title: "A single evaluation phase", body: "Reach 8% in Forex or 10% in another supported market.", visual: <EvaluationVisual /> },
+  { title: "Two static 5% loss limits", body: "The balance and daily equity limits are measured from the starting balance.", visual: <RulesVisual /> },
+  { title: "Weekly reward requests", body: "Your first eligible request opens after seven trading days on the scaled account.", visual: <RewardsVisual /> },
+  { title: "Scaling up to $2.5M", body: "Qualifying quarterly performance can increase the simulated account balance.", visual: <ScaleVisual /> },
 ];
 
-const journeyTabs = [
-  {
-    label: "Evaluation",
-    title: "Hit one target. Then move on.",
-    body: "Pick an account, hit the target, and stay inside the loss limits. There is no second phase and no clock pushing you into a trade.",
-    stats: [["Performance target", "8-10%"], ["Maximum drawdown", "5%"], ["Trading period", "Unlimited"]],
-    statement: "Evaluation statement",
-    balanceLabel: "Simulated evaluation balance",
-    balance: "$25,000",
-    footer: [["Target", "8%"], ["Drawdown", "5%"], ["Time", "Unlimited"]],
-  },
-  {
-    label: "Scaled account",
-    title: "The test is over. Now trade.",
-    body: "Pass the evaluation and you move straight to a simulated scaled account. There is no second test and no ongoing profit target.",
-    stats: [["Starting allocation", "Account based"], ["Maximum scaling", "$2.5M"], ["Environment", "Simulated"]],
-    statement: "Scaled account",
-    balanceLabel: "Current simulated allocation",
-    balance: "$100,000",
-    footer: [["Status", "Active"], ["Drawdown", "5%"], ["Scale", "Up to $2.5M"]],
-  },
-  {
-    label: "Rewards",
-    title: "A weekly rhythm, not a long wait.",
-    body: "Trade for seven days, then request any eligible rewards. Keep the account in good standing and you can request again the following week.",
-    stats: [["First eligibility", "7 trading days"], ["Eligible split", "100%"], ["Request cycle", "Weekly"]],
-    statement: "Reward summary",
-    balanceLabel: "Eligible simulated performance",
-    balance: "$8,420",
-    footer: [["Split", "100%"], ["Cycle", "Weekly"], ["Status", "Eligible"]],
-  },
-];
-
-function JourneyVisual({ index }: { index: number }) {
-  if (index === 1) {
-    return (
-      <div className="journey-visual journey-scale" aria-hidden="true">
-        <div className="journey-scale-bars">
-          <div><span>$25K</span></div>
-          <div><span>$500K</span></div>
-          <div><span>$2.5M</span></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (index === 2) {
-    return (
-      <div className="journey-visual journey-rewards" aria-hidden="true">
-        <div className="journey-reward-head"><span>Eligible request</span><strong>Day 07</strong></div>
-        <div className="journey-reward-track">{[1, 2, 3, 4, 5, 6, 7].map((day) => <i key={day} />)}</div>
-      </div>
-    );
-  }
-
+function JourneyEvaluationStoryVisual() {
   return (
-    <div className="journey-visual journey-evaluation" aria-hidden="true">
-      <svg viewBox="0 0 560 150" role="presentation">
-        <line x1="0" y1="122" x2="560" y2="122" />
-        <line x1="0" y1="30" x2="560" y2="30" />
-        <path d="M0 128 C55 122 76 138 118 108 S182 104 224 79 S300 96 337 58 S405 65 450 36 S512 50 560 17" />
+    <div className="journey-story-visual journey-story-evaluation" aria-hidden="true">
+      <div className="story-evaluation-head">
+        <span>Evaluation progress</span>
+        <strong>
+          <span className="story-score story-score-start">6.4%</span>
+          <span className="story-score story-score-finish">9.2%</span>
+          <small>/ 8.0%</small>
+        </strong>
+      </div>
+      <svg viewBox="0 0 640 230" role="presentation">
+        <line className="story-bound story-target" x1="0" y1="58" x2="640" y2="58" />
+        <line className="story-bound story-drawdown" x1="0" y1="190" x2="640" y2="190" />
+        <path className="story-trade-path" d="M0 176 C52 164 70 184 112 150 S182 160 226 123 S298 139 341 101 S414 116 460 77 S522 91 558 55 S608 45 640 20" />
+        <circle className="story-target-dot" cx="640" cy="20" r="6" />
       </svg>
+      <div className="story-evaluation-foot"><span>5% static loss limits</span><strong>Target reached</strong></div>
+    </div>
+  );
+}
+
+function JourneyScaleStoryVisual() {
+  return (
+    <div className="journey-story-visual journey-story-scale" aria-hidden="true">
+      <div className="story-scale-rail" />
+      <div className="story-allocation story-allocation-start"><span>Start</span><strong>$25K</strong><small>simulated</small></div>
+      <div className="story-allocation story-allocation-mid"><span>Grow</span><strong>$500K</strong><small>simulated</small></div>
+      <div className="story-allocation story-allocation-max"><span>Scale</span><strong>$2.5M</strong><small>maximum simulated</small></div>
+    </div>
+  );
+}
+
+function JourneyRewardsStoryVisual() {
+  return (
+    <div className="journey-story-visual journey-story-rewards" aria-hidden="true">
+      <div className="story-reward-cycle">
+        <span>Trading days</span>
+        <div className="story-reward-track">{[1, 2, 3, 4, 5, 6, 7].map((day) => <i key={day}><small>{day}</small></i>)}</div>
+      </div>
+      <div className="story-reward-request"><span>Reward request</span><strong>Eligible</strong><small>100% of eligible rewards</small></div>
     </div>
   );
 }
 
 const markets = [
-  { name: "Forex", body: "Twenty-nine pairs across the global sessions you already trade.", detail: "See Forex", href: "/forex", illustration: "/illustrations/forex.png" },
-  { name: "Crypto", body: "Thirty crypto markets, open around the clock.", detail: "See Crypto", href: "/crypto", illustration: "/illustrations/crypto.png" },
-  { name: "Equities", body: "More than 1,000 US stocks and sector ETFs.", detail: "See Equities", href: "/equities", illustration: "/illustrations/equities.png" },
-  { name: "Commodities", body: "Six metals and energy markets for macro-driven setups.", detail: "See Commodities", href: "/commodities", illustration: "/illustrations/commodities.png" },
+  { name: "Forex", body: "29 major and cross pairs with an 8% evaluation target.", detail: "Explore Forex", href: "/forex", illustration: "/illustrations/forex.png" },
+  { name: "Crypto", body: "30 supported markets available seven days a week.", detail: "Explore Crypto", href: "/crypto", illustration: "/illustrations/crypto.png" },
+  { name: "Equities", body: "More than 1,000 US stocks and supported sector ETFs.", detail: "Explore Equities", href: "/equities", illustration: "/illustrations/equities.png" },
+  { name: "Commodities", body: "Gold, silver, energy, and industrial metals across global sessions.", detail: "Explore Commodities", href: "/commodities", illustration: "/illustrations/commodities.png" },
+];
+
+const marketTape = [
+  ["EUR / USD", "Forex"],
+  ["BTC", "Crypto"],
+  ["GOLD", "Commodities"],
+  ["US equities", "1,000+ names"],
+  ["ETH", "Crypto"],
+  ["GBP / JPY", "Forex"],
+  ["WTI OIL", "Commodities"],
+  ["Sector ETFs", "Equities"],
 ];
 
 const comparisons = [
-  { feature: "Evaluation", typical: "Often two phases", propfund: "One evaluation" },
-  { feature: "Reward split", typical: "Firm takes a share", propfund: "100% eligible rewards" },
-  { feature: "Trading period", typical: "Fixed deadline", propfund: "No deadline" },
-  { feature: "Scaling", typical: "Depends on the program", propfund: "Up to $2.5M simulated" },
+  { feature: "Evaluation structure", typical: "Often two phases", propfund: "One phase" },
+  { feature: "Reward split", typical: "Firm keeps a share", propfund: "100% of eligible rewards" },
+  { feature: "Time limit", typical: "A fixed deadline", propfund: "None" },
+  { feature: "Scaling ceiling", typical: "Varies by program", propfund: "Up to $2.5M simulated" },
 ];
 
 export default function Home() {
-  const [activeJourney, setActiveJourney] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState("$25K");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const journey = journeyTabs[activeJourney];
 
   function openForm(account = "$25K") {
     setSelectedAccount(account);
@@ -168,52 +157,71 @@ export default function Home() {
         <section className="hero" id="main-content">
           <HeroDotField />
           <div className="hero-laser-content">
-            <div className="hero-copy">
-              <h1>Pass once.<br />Trade your strategy.<br />Keep the upside.</h1>
-              <p>One evaluation. No deadline. Eligible reward requests every week.</p>
-              <button className="pill pill-light pill-large" onClick={() => openForm()} type="button">Start evaluation</button>
+            <div className="hero-primary-grid hero-primary-stack">
+              <div className="hero-copy">
+                <h1>Pass the evaluation.<br />Keep trading your strategy.</h1>
+                <p>No second phase or deadline. After you pass, trade seven days and request 100% of eligible rewards each week.</p>
+                <div className="hero-actions">
+                  <button className="pill pill-light pill-large" onClick={() => openForm()} type="button">Start evaluation</button>
+                  <a className="hero-secondary" href="/rules">See the rules <MaterialIcon name="arrow_forward" /></a>
+                </div>
+              </div>
+              <div className="hero-terminal-stage"><TradingTerminalMockup /></div>
             </div>
-            <div className="hero-feature-grid" aria-label="Program highlights">
-              {heroFeatures.map(feature => (
-                <article key={feature.title}>
-                  <div className="hero-feature-visual">{feature.visual}</div>
-                  <div className="hero-feature-copy"><h2>{feature.title}</h2><p>{feature.body}</p></div>
-                </article>
-              ))}
-            </div>
+          </div>
+        </section>
+        <section className="hero-feature-section" aria-label="Program highlights">
+          <div className="hero-feature-section-head">
+            <h2>Know the path before you place a trade.</h2>
+          </div>
+          <div className="hero-feature-grid">
+            {heroFeatures.map(feature => (
+              <article key={feature.title}>
+                <div className="hero-feature-visual">{feature.visual}</div>
+                <div className="hero-feature-copy"><h2>{feature.title}</h2><p>{feature.body}</p></div>
+              </article>
+            ))}
           </div>
         </section>
       </div>
 
-      <section className="product-section" id="model">
-        <div className="section-intro section-intro-light"><h2>One evaluation. Then you trade.</h2></div>
-        <div className="product-layout">
-          <div className="product-tabs" role="tablist" aria-label="Program journey">
-            {journeyTabs.map((tab, index) => (
-              <button className={activeJourney === index ? "active" : ""} id={`journey-tab-${index}`} key={tab.label} onClick={() => setActiveJourney(index)} role="tab" aria-selected={activeJourney === index} aria-controls="journey-panel" type="button"><span>0{index + 1}</span>{tab.label}</button>
-            ))}
-          </div>
-          <div className="product-panel" key={activeJourney} id="journey-panel" role="tabpanel" aria-labelledby={`journey-tab-${activeJourney}`}>
-            <div className="product-copy">
-              <h3>{journey.title}</h3>
-              <p>{journey.body}</p>
-              <dl>{journey.stats.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-            </div>
-            <div className="statement-stage">
-              <div className="statement-card">
-                <header><span>Propfund</span><span>{journey.statement}</span></header>
-                <div className="statement-account"><span>Account</span><strong>{journey.balance}</strong><p>{journey.balanceLabel}</p></div>
-                <JourneyVisual index={activeJourney} />
-                <div className="statement-data">{journey.footer.map(([label, value]) => <span key={label}>{label}<strong>{value}</strong></span>)}</div>
-              </div>
-              <div className="stage-note"><span>Rules visible before checkout</span><a href="#comparison">Compare the model <span aria-hidden="true">→</span></a></div>
-            </div>
-          </div>
+      <section className="market-tape" aria-label="Markets available on Propfund">
+        <div className="market-tape-track">
+          {[...marketTape, ...marketTape].map(([symbol, market], index) => {
+            const duplicate = index >= marketTape.length;
+            return (
+              <span aria-hidden={duplicate || undefined} key={`${symbol}-${index}`}>
+                <strong>{symbol}</strong>
+                <small>{market}</small>
+              </span>
+            );
+          })}
         </div>
       </section>
 
+      <section className="product-section" id="model">
+        <div className="section-intro section-intro-light"><h2>One evaluation. Then you trade.</h2><p>Pass once, move to a scaled account, and request eligible rewards every week.</p></div>
+        <div className="journey-story">
+          <article className="journey-story-card">
+            <div className="journey-story-copy"><span>Evaluation</span><h3>Reach one target.</h3><p>Hit 8% in Forex or 10% in another market without crossing either 5% static loss limit.</p></div>
+            <JourneyEvaluationStoryVisual />
+              <div className="stage-note"><span>Rules visible before checkout</span><a href="#comparison">Compare the model <span aria-hidden="true">→</span></a></div>
+          </article>
+          <article className="journey-story-card">
+            <div className="journey-story-copy"><span>Scaled account</span><h3>Keep your strategy.</h3><p>The target disappears after you pass. Trade the same way while the two static loss limits stay in place.</p></div>
+            <JourneyScaleStoryVisual />
+          </article>
+          <article className="journey-story-card">
+            <div className="journey-story-copy"><span>Rewards</span><h3>Request every week.</h3><p>Trade for seven days, then request 100% of eligible realized simulated profits while the account remains eligible.</p></div>
+            <JourneyRewardsStoryVisual />
+          </article>
+        </div>
+      </section>
+
+      <PointsProgram />
+
       <section className="markets-section" id="markets">
-        <div className="section-intro section-intro-light"><h2>Trade the markets you know.</h2></div>
+        <div className="section-intro section-intro-light"><h2>Trade the markets you know.</h2><p>Choose from Forex, crypto, US equities, and commodities without changing evaluation accounts.</p></div>
         <div className="market-bento">
           {markets.map((market) => (
             <a className="market-card" href={market.href} key={market.name}>
@@ -225,20 +233,20 @@ export default function Home() {
       </section>
 
       <section className="accounts-section" id="accounts">
-        <div className="section-intro section-intro-light"><h2>Pick your starting balance.</h2></div>
+        <div className="section-intro section-intro-light"><h2>Choose your account size.</h2><p>The rules stay the same from $5K to $100K. Only the starting simulated balance and fee change.</p></div>
         <div className="route-pricing-grid home-pricing-grid">
           {pricingPlans.map((plan) => (
             <article className={plan.size === "$25K" ? "featured" : ""} key={plan.size}>
               <div className="route-plan-head"><h3>{plan.size}</h3></div>
               <p>Starting simulated balance</p>
-              <div className="route-price"><strong>{plan.fee}</strong><small>evaluation fee</small></div>
+              <div className="route-price"><strong>{plan.fee}</strong><small><s>{plan.previousFee}</s> one-time fee</small></div>
               <dl>
                 <div><dt><MaterialIcon name="flag" />Target</dt><dd>{plan.target}</dd></div>
-                <div><dt><MaterialIcon name="shield" />Drawdown</dt><dd>{plan.drawdown}</dd></div>
+                <div><dt><MaterialIcon name="shield" />Static limits</dt><dd>{plan.drawdown}</dd></div>
                 <div><dt><MaterialIcon name="schedule" />Time</dt><dd>Unlimited</dd></div>
                 <div><dt><MaterialIcon name="trending_up" />Scaling</dt><dd>{plan.scale}</dd></div>
               </dl>
-              <button onClick={() => openForm(plan.size)} type="button">Start {plan.size} evaluation <MaterialIcon name="arrow_forward" /></button>
+              <button onClick={() => openForm(plan.size)} type="button">Start with {plan.size} <MaterialIcon name="arrow_forward" /></button>
             </article>
           ))}
         </div>
@@ -246,10 +254,10 @@ export default function Home() {
 
       <section className="comparison-table-section" id="comparison">
         <div className="comparison-table-inner">
-          <div className="comparison-table-head"><h2>A prop evaluation without the usual maze.</h2><p>One phase, no deadline, and the same straightforward limits at every account size.</p></div>
+          <div className="comparison-table-head"><h2>Compare the terms before you start.</h2><p>See the evaluation structure, time limit, reward split, and scaling ceiling side by side.</p></div>
           <div className="comparison-table-wrap">
             <table>
-              <thead><tr><th scope="col">What matters</th><th scope="col">Typical challenge</th><th scope="col">Propfund</th></tr></thead>
+              <thead><tr><th scope="col">Program term</th><th scope="col">Typical challenge</th><th scope="col">Propfund</th></tr></thead>
               <tbody>{comparisons.map(item => <tr key={item.feature}><th scope="row">{item.feature}</th><td data-label="Typical challenge">{item.typical}</td><td data-label="Propfund">{item.propfund}</td></tr>)}</tbody>
             </table>
           </div>
@@ -257,7 +265,7 @@ export default function Home() {
       </section>
 
       <section className="faq-section" id="faq">
-        <div className="faq-intro"><h2>A few things traders usually ask.</h2></div>
+        <div className="faq-intro"><h2>Questions traders usually ask.</h2></div>
         <div className="faq-list">{questions.map((item, index) => {
           const isOpen = openFaq === index;
           return (
@@ -268,8 +276,6 @@ export default function Home() {
           );
         })}</div>
       </section>
-
-      <section className="closing-section"><h2>Ready when you are.<br /><span>Pick an account and start.</span></h2><button className="data-cta" onClick={() => openForm()} type="button"><span className="data-cta-icon">P</span><span>Start your evaluation<small>Choose an account and markets</small></span><i aria-hidden="true">→</i></button></section>
       <EvaluationDialog key={`${formOpen}-${selectedAccount}`} open={formOpen} initialAccount={selectedAccount} onClose={() => setFormOpen(false)} />
       <SiteFooter onStart={() => openForm()} />
     </main>
