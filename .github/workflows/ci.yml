@@ -10,13 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 11.16.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -40,18 +40,19 @@ jobs:
           HSC_CLIENT_ID: ci_placeholder
           HSC_CLIENT_SECRET: ci_placeholder
           SESSION_COOKIE_SECRET: ci_placeholder_session_secret_min_32_bytes
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
           NEXT_PUBLIC_HSC_API_BASE_URL: http://localhost:8000
 
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 11.16.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm

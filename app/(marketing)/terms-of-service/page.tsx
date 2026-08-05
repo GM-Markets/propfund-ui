@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "Scaled accounts, rewards, and scaling",
-    paragraphs: ["Passing an evaluation may make you eligible for a simulated scaled account, subject to verification and account checks. Reward eligibility is based on qualifying realized simulated performance and the published cycle. Scaling is discretionary and depends on the performance and risk criteria shown in the program rules."],
+    paragraphs: ["Passing an evaluation may make you eligible for a simulated scaled account, subject to verification and account checks. Reward eligibility is based on qualifying realized simulated performance and the published cycle. Scaling follows the performance and risk criteria shown in the program rules."],
   },
   {
     title: "Payments and refunds",
@@ -54,5 +54,5 @@ const sections = [
 ];
 
 export default function TermsOfServicePage() {
-  return <LegalPage title="Terms of service" intro="The ground rules for using Propfund evaluations and scaled accounts." sections={sections} />;
+  return <LegalPage title="Terms of service" intro="The rules for buying an evaluation, using your account, and requesting eligible rewards." sections={sections} />;
 }

@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
     default: `${BRAND_NAME} — Trade with Our Capital`,
     template: `%s · ${BRAND_NAME}`,

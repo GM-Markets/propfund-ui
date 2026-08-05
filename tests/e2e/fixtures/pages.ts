@@ -20,6 +20,14 @@ export class MarketingPage {
   navLink(name: string | RegExp): Locator {
     return this.page.getByRole("banner").getByRole("link", { name });
   }
+
+  headerStartEvaluationButton(): Locator {
+    return this.page.getByRole("banner").getByRole("button", { name: "Start evaluation", exact: true });
+  }
+
+  evaluationDialog(): Locator {
+    return this.page.getByRole("dialog", { name: "Start your evaluation." });
+  }
 }
 
 export class LoginPage {
@@ -91,7 +99,7 @@ export class DocsPage {
   }
 
   sidebarLink(name: string): Locator {
-    return this.page.getByRole("link", { name, exact: true });
+    return this.page.getByRole("navigation", { name: "Documentation" }).getByRole("link", { name, exact: true });
   }
 }
 

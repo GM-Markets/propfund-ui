@@ -114,13 +114,25 @@ const marketIllustrations: Record<string, string> = {
   commodities: "/illustrations/commodities.png",
 };
 
-function MarketFeatureVisual({ title, body, market }: { title: string; body: string; market: MarketContent }) {
+function MarketFeatureVisual({ title, body, market, index }: { title: string; body: string; market: MarketContent; index: number }) {
   const copy = `${title} ${body}`.toLowerCase();
 
-  if (
-    (market.slug === "equities" && copy.includes("plenty to trade")) ||
-    (market.slug === "commodities" && copy.includes("metals and energy"))
-  ) {
+  if (index === 0 && (market.slug === "forex" || market.slug === "crypto")) {
+    const instruments = market.slug === "forex"
+      ? market.instruments.slice(0, 8)
+      : ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LTC"];
+    return (
+      <div className={`route-feature-visual feature-logo-cloud feature-logo-cloud-${market.slug}`} aria-hidden="true">
+        {instruments.map((item) => (
+          <span className="feature-logo-orb" key={item}>
+            <InstrumentMark item={item} market={market} />
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (index === 0 && (market.slug === "equities" || market.slug === "commodities")) {
     return (
       <div className={`route-feature-visual feature-market-cloud feature-market-cloud-${market.slug}`} aria-hidden="true">
         {market.instruments.map((item) => (
@@ -134,10 +146,12 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
   if (copy.includes("target") || copy.includes("10%") || copy.includes("8%")) {
     return (
       <div className="route-feature-visual feature-target" aria-hidden="true">
+        <strong className="feature-target-value">{market.target}</strong>
         <svg viewBox="0 0 320 104" role="presentation">
           <line x1="0" y1="78" x2="320" y2="78" />
           <line className="target-line" x1="0" y1="24" x2="320" y2="24" />
           <path d="M0 82 C38 80 52 87 82 68 S130 68 158 54 S204 58 230 42 S278 42 320 13" />
+          <circle className="feature-target-marker" cx="320" cy="13" r="4" />
         </svg>
       </div>
     );
@@ -146,18 +160,32 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
   if (copy.includes("deadline") || copy.includes("countdown") || copy.includes("minimum number")) {
     return (
       <div className="route-feature-visual feature-clock" aria-hidden="true">
-        <svg viewBox="0 0 320 118" role="presentation">
-          <circle cx="160" cy="59" r="45" />
-          <line className="clock-hand clock-hour" x1="160" y1="59" x2="160" y2="33" />
-          <line className="clock-hand clock-minute" x1="160" y1="59" x2="184" y2="59" />
-          <circle className="clock-center" cx="160" cy="59" r="4" />
-          <path className="clock-orbit" d="M107 59a53 53 0 1 1 106 0" />
-        </svg>
+        <div className="feature-clock-face">
+          <svg viewBox="0 0 320 118" role="presentation">
+            <circle cx="160" cy="59" r="45" />
+            <line className="clock-hand clock-hour" x1="160" y1="59" x2="160" y2="33" />
+            <line className="clock-hand clock-minute" x1="160" y1="59" x2="184" y2="59" />
+            <circle className="clock-center" cx="160" cy="59" r="4" />
+            <path className="clock-orbit" d="M107 59a53 53 0 1 1 106 0" />
+          </svg>
+          <strong className="feature-clock-infinity">?</strong>
+        </div>
       </div>
     );
   }
 
-  if (copy.includes("week") || copy.includes("open") || copy.includes("overnight") || copy.includes("reward") || copy.includes("seven")) {
+  if (copy.includes("overnight") || copy.includes("weekend") || copy.includes("news")) {
+    return (
+      <div className="route-feature-visual feature-session-window" aria-hidden="true">
+        <div className="feature-session-line" />
+        <span><MaterialIcon name="trending_up" /></span>
+        <span><MaterialIcon name="schedule" /></span>
+        <span><MaterialIcon name="shield" /></span>
+      </div>
+    );
+  }
+
+  if (copy.includes("week") || copy.includes("open") || copy.includes("reward") || copy.includes("seven")) {
     return (
       <div className="route-feature-visual feature-rhythm" aria-hidden="true">
         <div className="feature-day-track">{[1, 2, 3, 4, 5, 6, 7].map((day) => <i key={day} />)}</div>
@@ -168,7 +196,11 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
   if (copy.includes("automation") || copy.includes("manual") || copy.includes("bots") || copy.includes("your way") || copy.includes("process") || copy.includes("control")) {
     return (
       <div className="route-feature-visual feature-controls" aria-hidden="true">
-        <span><i /></span><span><i /></span><span><i /></span>
+        <div className="feature-control-rails">
+          <span><i /><small>Signal</small></span>
+          <span><i /><small>Risk</small></span>
+          <span><i /><small>Order</small></span>
+        </div>
       </div>
     );
   }
@@ -190,10 +222,10 @@ export function MarketPage({ market }: { market: MarketContent }) {
           <div className="market-route-illustration"><Image src={marketIllustrations[market.slug]} alt={`${market.name} market illustration`} width={2500} height={2500} sizes="(max-width: 760px) 90vw, 520px" unoptimized priority /></div>
         </div>
       </section>
-      <section className="route-metrics"><div className="route-container"><div><MaterialIcon className="route-metric-icon" name={metricIcons[0]} /><strong>{market.count}</strong><span>{supportedLabel}</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[1]} /><strong>{market.target}</strong><span>Performance target</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[2]} /><strong>5%</strong><span>Evaluation drawdown</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[3]} /><strong>{market.hours}</strong><span>Trading availability</span></div></div></section>
-      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>What matters in {market.name.toLowerCase()}.</h2><p>The target, the hours, and the freedom to trade your own way.</p></div><div className="route-feature-grid">{market.groups.map((group) => <article key={group.title}><MarketFeatureVisual title={group.title} body={group.body} market={market} /><h3>{group.title}</h3><p>{group.body}</p></article>)}</div></div></section>
-      <section className="route-section route-section-muted"><div className="route-container"><div className="route-section-head"><h2>Markets available.</h2><p>Choose the instruments you already know.</p></div><div className={`instrument-cloud instrument-cloud-${market.slug}`}>{market.instruments.map(item => <span className="instrument-item" key={item}><InstrumentMark item={item} market={market} /><span className="instrument-label">{item}</span></span>)}</div></div></section>
-      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>Start at the size that suits you.</h2><p>The rules stay the same at every account size.</p></div><PricingGrid compact /></div></section>
+      <section className="route-metrics"><div className="route-container"><div><MaterialIcon className="route-metric-icon" name={metricIcons[0]} /><strong>{market.count}</strong><span>{supportedLabel}</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[1]} /><strong>{market.target}</strong><span>Performance target</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[2]} /><strong>5%</strong><span>Each static loss limit</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[3]} /><strong>{market.hours}</strong><span>Trading hours</span></div></div></section>
+      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>Trading {market.name} with Propfund.</h2><p>See the supported instruments, target, and account guardrails.</p></div><div className="route-feature-grid">{market.groups.map((group, index) => <article key={group.title}><MarketFeatureVisual title={group.title} body={group.body} market={market} index={index} /><h3>{group.title}</h3><p>{group.body}</p></article>)}</div></div></section>
+      <section className="route-section route-section-muted"><div className="route-container"><div className="route-section-head"><h2>Supported instruments</h2><p>Choose from the markets listed below.</p></div><div className={`instrument-cloud instrument-cloud-${market.slug}`}>{market.instruments.map(item => <span className="instrument-item" key={item}><InstrumentMark item={item} market={market} /><span className="instrument-label">{item}</span></span>)}</div></div></section>
+      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>Choose an account size</h2><p>The rules stay the same. Only the starting simulated balance and fee change.</p></div><PricingGrid compact /></div></section>
     </PageFrame>
   );
 }

@@ -17,7 +17,7 @@ export default function DashboardError({ error, reset }: { error: Error; reset: 
         <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <AlertTriangle className="size-6" />
         </div>
-        <h2 className="text-lg font-semibold">Couldn't load this page</h2>
+        <h2 className="text-lg font-semibold">Couldn&apos;t load this page</h2>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
           The request to hyperscaled-api failed. This is often a temporary connectivity issue.
         </p>

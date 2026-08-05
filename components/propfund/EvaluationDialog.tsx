@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import {
@@ -101,11 +102,9 @@ export function EvaluationDialog({
         </button>
         {submitted ? (
           <div className="form-success">
-            <span className="wordmark-mark" aria-hidden="true">
-              P
-            </span>
-            <h2 id="signup-title">You&apos;re on the list.</h2>
-            <p>Thanks. We&apos;ll send the account details to the email you entered.</p>
+            <Image className="form-success-mark" src="/brand/propfund-mark-dark.svg" alt="" width={35} height={31} aria-hidden="true" />
+            <h2 id="signup-title">Request received.</h2>
+            <p>We&apos;ll email you as soon as evaluation access is ready.</p>
             <button className="form-submit" onClick={closeDialog} type="button">
               Done
             </button>
@@ -113,8 +112,9 @@ export function EvaluationDialog({
         ) : (
           <form onSubmit={onSubmit}>
             <div className="form-heading">
+              <Image className="dialog-wordmark" src="/brand/propfund-wordmark-dark.svg" alt="Propfund" width={201} height={36} />
               <h2 id="signup-title">Start your evaluation.</h2>
-              <p>Tell us what you trade and where you want to start.</p>
+              <p>Tell us who you are, then choose an account size and the markets you trade.</p>
             </div>
             <div className="field-row">
               <label>
@@ -127,7 +127,7 @@ export function EvaluationDialog({
               </label>
             </div>
             <label>
-              <span>Account type</span>
+              <span>Starting balance</span>
               <select
                 value={selectedAccount}
                 onChange={(event) => setSelectedAccount(event.target.value)}
@@ -140,7 +140,7 @@ export function EvaluationDialog({
               </select>
             </label>
             <fieldset>
-              <legend>Markets</legend>
+              <legend>Markets you trade</legend>
               <div className="market-options">
                 {marketNames.map((market) => (
                   <label
@@ -167,7 +167,7 @@ export function EvaluationDialog({
               disabled={selectedMarkets.length === 0 || submitting}
               type="submit"
             >
-              {submitting ? "Requesting…" : "Request access"}
+              {submitting ? "Sending..." : "Request evaluation access"}
             </button>
             <small>Simulated trading only. No financial advice.</small>
           </form>

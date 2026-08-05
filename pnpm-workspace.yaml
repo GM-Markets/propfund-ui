@@ -1,7 +1,17 @@
 # pnpm 11+ reads pnpm-specific settings from here (no longer from package.json#pnpm).
 # strictDepBuilds defaults to true, so dependencies with build scripts must be
 # explicitly allowed below or install fails with ERR_PNPM_IGNORED_BUILDS.
+packages:
+  - .
+
+overrides:
+  esbuild: 0.25.12
+  postcss: 8.5.23
+  sharp: 0.35.0
+  vite: 6.4.3
+
 allowBuilds:
   esbuild: true
   msw: true
   sharp: true
+  unrs-resolver: true

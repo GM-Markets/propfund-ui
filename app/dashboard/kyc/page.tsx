@@ -48,7 +48,7 @@ export default async function KycPage() {
       {verified ? (
         <Alert variant="success">
           <ShieldCheck />
-          <AlertTitle>You're verified</AlertTitle>
+          <AlertTitle>You&apos;re verified</AlertTitle>
           <AlertDescription>
             Your identity is confirmed. You have full access to trading and payouts.
           </AlertDescription>

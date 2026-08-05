@@ -59,7 +59,7 @@ export function KycStartButton() {
           <DialogHeader>
             <DialogTitle>Verify your identity</DialogTitle>
             <DialogDescription>
-              Complete the steps below. This window updates automatically when you're done.
+              Complete the steps below. This window updates automatically when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto rounded-lg">

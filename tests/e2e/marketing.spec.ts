@@ -12,28 +12,28 @@ test.describe("landing page", () => {
     const home = new MarketingPage(page);
     await home.goto();
 
-    await expect(home.heroHeading()).toContainText(/Trade with our capital/i);
-    await expect(home.navLink("Sign in")).toBeVisible();
-    await expect(home.navLink(/Start a challenge/)).toBeVisible();
+    await expect(home.heroHeading()).toContainText(/Pass the evaluation/i);
+    await expect(home.navLink("How it works")).toBeVisible();
+    await expect(home.headerStartEvaluationButton()).toBeVisible();
   });
 
-  test("'Start a challenge' navigates to signup", async ({ page }) => {
+  test("'Start evaluation' opens the evaluation dialog", async ({ page }) => {
     const home = new MarketingPage(page);
     await home.goto();
-    await home.navLink(/Start a challenge/).click();
-    await expect(page).toHaveURL(/\/signup$/);
+    await home.headerStartEvaluationButton().click();
+    await expect(home.evaluationDialog()).toBeVisible();
   });
 
-  test("'How it works' scrolls to the journey section", async ({ page }) => {
+  test("'How it works' opens the program guide", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: /How it works/i }).first().click();
-    await expect(page.locator("#how-it-works")).toBeVisible();
+    await expect(page).toHaveURL(/\/how-it-works$/);
   });
 
-  test("the header docs link opens the docs index", async ({ page }) => {
+  test("the header rules link opens the rules page", async ({ page }) => {
     const home = new MarketingPage(page);
     await home.goto();
-    await home.navLink("Docs").click();
-    await expect(page).toHaveURL(/\/docs$/);
+    await home.navLink("Rules").click();
+    await expect(page).toHaveURL(/\/rules$/);
   });
 });

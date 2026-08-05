@@ -38,5 +38,5 @@ const sections = [
 ];
 
 export default function RefundPolicyPage() {
-  return <LegalPage title="Refund policy" intro="When a charge may be refunded and how to ask." sections={sections} />;
+  return <LegalPage title="Refund policy" intro="When an evaluation fee can be reviewed for a refund." sections={sections} />;
 }
