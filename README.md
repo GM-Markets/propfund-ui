@@ -80,7 +80,7 @@ exchange it for a short-lived bearer token, then attach the end-user's
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| [Node.js](https://nodejs.org) | `20+` | See [`.nvmrc`](./.nvmrc). `nvm use` picks it up. |
+| [Node.js](https://nodejs.org) | `22.13+` | See [`.nvmrc`](./.nvmrc). `nvm use` picks it up. |
 | [pnpm](https://pnpm.io) | `11.16.0` | `corepack prepare pnpm@11.16.0 --activate`. npm / yarn / bun also work. |
 | **hyperscaled-api** | running | The platform API this app talks to — local (`http://localhost:8000`) or the hosted deployment at [staging.api.vantanetwork.io](https://api.staging.vantanetwork.io/docs). |
 | Stripe test keys | optional | Only needed to exercise the checkout UI. |
