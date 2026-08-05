@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function DocsSidebar() {
   const pathname = usePathname();
   return (
-    <nav className="space-y-6">
+    <nav aria-label="Documentation" className="space-y-6">
       {DOCS_NAV.map((group) => (
         <div key={group.title}>
           <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">

@@ -27,8 +27,8 @@ export function Brand({
   brand?: BrandKind;
 }) {
   if (brand === "hyperscaled") {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src="/brand/hyperscaled-wordmark.svg"
         alt="Hyperscaled"

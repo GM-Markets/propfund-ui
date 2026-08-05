@@ -187,7 +187,7 @@ export function ApiKeysClient({
           </DialogHeader>
           <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />
-            <span>You won't be able to view this secret again after closing.</span>
+            <span>You won&apos;t be able to view this secret again after closing.</span>
           </div>
           <code className="block break-all rounded-lg border border-border bg-background/60 p-3 font-mono text-xs">
             {secret}

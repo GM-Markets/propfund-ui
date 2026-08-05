@@ -166,7 +166,7 @@ export function WebhooksClient({ endpoints: initial }: { endpoints: Endpoint[] }
           <DialogHeader>
             <DialogTitle>Signing secret</DialogTitle>
             <DialogDescription>
-              Use this secret to verify the signature on incoming webhooks. It's shown only once.
+              Use this secret to verify the signature on incoming webhooks. It&apos;s shown only once.
             </DialogDescription>
           </DialogHeader>
           <code className="block break-all rounded-lg border border-border bg-background/60 p-3 font-mono text-xs">

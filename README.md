@@ -81,7 +81,7 @@ exchange it for a short-lived bearer token, then attach the end-user's
 | Tool | Version | Notes |
 |------|---------|-------|
 | [Node.js](https://nodejs.org) | `20+` | See [`.nvmrc`](./.nvmrc). `nvm use` picks it up. |
-| [pnpm](https://pnpm.io) | `9+` | `npm i -g pnpm`. npm / yarn / bun also work. |
+| [pnpm](https://pnpm.io) | `11.16.0` | `corepack prepare pnpm@11.16.0 --activate`. npm / yarn / bun also work. |
 | **hyperscaled-api** | running | The platform API this app talks to — local (`http://localhost:8000`) or the hosted deployment at [staging.api.vantanetwork.io](https://api.staging.vantanetwork.io/docs). |
 | Stripe test keys | optional | Only needed to exercise the checkout UI. |
 
@@ -163,6 +163,7 @@ prefixed `NEXT_PUBLIC_` is exposed to the browser — never put a secret there.
 | `HSC_SCOPE` | — | `api` | OAuth scope requested at the token endpoint. |
 | `SESSION_COOKIE_SECRET` | ✅ | — | 32+ byte random string used to sign the end-user session cookie. |
 | `SESSION_COOKIE_NAME` | — | `hsc_starter_session` | Name of the session cookie. |
+| `NEXT_PUBLIC_SITE_URL` | — | `http://localhost:3000` | Public site origin used to resolve canonical social metadata URLs. |
 | `NEXT_PUBLIC_HSC_API_BASE_URL` | ✅ | `http://localhost:8000` | API base URL used by browser-side widgets. |
 | `NEXT_PUBLIC_APP_NAME` | — | `Vanta Starter` | Display name shown in the UI. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | — | Stripe publishable key for the checkout UI. |

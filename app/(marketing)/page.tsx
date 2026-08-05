@@ -149,12 +149,13 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <>
       <a className="skip-link" href="#main-content">Skip to content</a>
       <SiteHeader onStart={() => openForm()} />
+      <main id="main-content">
 
       <div className="dark-shell">
-        <section className="hero" id="main-content">
+        <section className="hero">
           <HeroDotField />
           <div className="hero-laser-content">
             <div className="hero-primary-grid hero-primary-stack">
@@ -277,7 +278,8 @@ export default function Home() {
         })}</div>
       </section>
       <EvaluationDialog key={`${formOpen}-${selectedAccount}`} open={formOpen} initialAccount={selectedAccount} onClose={() => setFormOpen(false)} />
+      </main>
       <SiteFooter onStart={() => openForm()} />
-    </main>
+    </>
   );
 }
