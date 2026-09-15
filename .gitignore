@@ -4,6 +4,10 @@ out
 .log
 *.log
 
+# Host→Docker staging tree (BUILD_MODE=host deploy)
+.docker-dist/
+.docker-ssh/
+
 # Env files — never commit secrets. The example is intentionally tracked.
 .env
 .env.*

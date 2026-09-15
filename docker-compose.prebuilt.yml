@@ -1,0 +1,9 @@
+# Overlay for host-built deploys — pairs with Dockerfile.prebuilt.
+# Loaded by scripts/deploy.sh when BUILD_MODE=host (default).
+
+services:
+  propfund:
+    build:
+      context: .
+      dockerfile: Dockerfile.prebuilt
+      args: {}

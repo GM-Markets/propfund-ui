@@ -1,41 +1,50 @@
-# PropFund app — production compose stack.
-# Env is loaded from `.env` (see `.env.example`).
+# PropFund / Vanta UI — one stack per DEPLOY_ENV on the same host.
+# Example:
+#   DEPLOY_ENV=dev  V3_APP_PORT=5711 docker compose up -d --build
+#   DEPLOY_ENV=pvt  V3_APP_PORT=5611 docker compose up -d --build
+#   DEPLOY_ENV=prod V3_APP_PORT=5411 docker compose up -d --build
 #
-# Deploy: ./deploy.sh
+# Defaults (when V3_APP_PORT unset) are applied by scripts/deploy.sh.
 
-name: propfund
+name: propfund-${DEPLOY_ENV:-dev}
 
 services:
-  app:
-    container_name: propfund-app
+  propfund:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:5711}
         NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:6701}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-PropFund}
         NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-}
         NEXT_PUBLIC_PRIVY_CLIENT_ID: ${NEXT_PUBLIC_PRIVY_CLIENT_ID:-}
         NEXT_PUBLIC_HYPERLIQUID_WS_URL: ${NEXT_PUBLIC_HYPERLIQUID_WS_URL:-wss://api.hyperliquid.xyz/ws}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-    image: propfund-app:latest
+    container_name: propfund-${DEPLOY_ENV:-dev}
+    image: propfund-${DEPLOY_ENV:-dev}:latest
+    ports:
+      - "${V3_APP_PORT:-5711}:${V3_APP_PORT:-5711}"
     env_file:
-      - .env
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
     environment:
       NODE_ENV: production
-      PORT: "3000"
       HOSTNAME: 0.0.0.0
-    ports:
-      - "${APP_PORT:-3000}:3000"
+      PORT: ${V3_APP_PORT:-5711}
+      DEPLOY_ENV: ${DEPLOY_ENV:-dev}
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:'+(process.env.PORT||'5711')).then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 5s

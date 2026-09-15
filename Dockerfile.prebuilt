@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1.7
+#
+# Packages a host-built Next standalone output (no compile in Docker).
+# Used by: BUILD_MODE=host ./scripts/deploy.sh
+#
+# Expects `.docker-dist/` prepared by deploy.sh:
+#   public/, server.js, node_modules/, .next/static/, …
+
+FROM node:22-alpine
+WORKDIR /usr/src
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=5711
+
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+
+COPY .docker-dist/ ./
+
+USER nextjs
+EXPOSE 5711
+CMD ["node", "server.js"]

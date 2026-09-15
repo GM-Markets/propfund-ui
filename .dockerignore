@@ -33,3 +33,7 @@ vitest.config.ts
 README.md
 CONTRIBUTING.md
 deploy.sh
+scripts
+# Keep .docker-dist for BUILD_MODE=host (Dockerfile.prebuilt).
+Dockerfile
+docker-compose*.yml
