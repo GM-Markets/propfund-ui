@@ -1,27 +1,26 @@
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 
 import { DocsLink } from "@/components/docs/docs-link";
 import { PageHeader } from "@/components/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import * as hsc from "@/lib/hsc/client";
 
-import { TradingTerminal } from "./TradingTerminal";
+const TradingTerminal = dynamic(
+  () => import("./TradingTerminal").then((m) => ({ default: m.TradingTerminal })),
+  { loading: () => <Skeleton className="h-[28rem] rounded-xl" /> },
+);
 
 type Props = { searchParams: Promise<{ prop?: string }> };
 
 export default async function TradingPage({ searchParams }: Props) {
   const { prop } = await searchParams;
   const me = await hsc.auth.me().catch(() => null);
-  const accounts = me?.prop_accounts ?? (await hsc.payments.listPropAccounts().catch(() => []));
+  const accounts = me?.prop_accounts ?? [];
   if (accounts.length === 0) {
     redirect("/dashboard/checkout");
   }
   const selected = accounts.find((a) => a.id === prop) ?? accounts[0];
-  const status = me
-    ? { signed: me.agreement_signed, version: me.agreement_version }
-    : await hsc.agreements
-        .status()
-        .then((row) => ({ signed: row.signed, version: row.agreement_version }))
-        .catch(() => ({ signed: false, version: null }));
   return (
     <div>
       <PageHeader
@@ -33,8 +32,8 @@ export default async function TradingPage({ searchParams }: Props) {
       <TradingTerminal
         accounts={accounts}
         initialId={selected.id}
-        agreementSigned={status.signed}
-        agreementVersion={status.version ?? "2026-09-01"}
+        agreementSigned={Boolean(me?.agreement_signed)}
+        agreementVersion={me?.agreement_version ?? "2026-09-01"}
       />
     </div>
   );

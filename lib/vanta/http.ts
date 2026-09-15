@@ -1,7 +1,8 @@
+import { gatewayOrigin } from "@/lib/gateway/config";
+
 /** Browser calls go straight to the gateway `/van` prefix — not Next `/api/*`. */
 export function vantaBrowserBase(): string {
-  const gateway = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:6701").replace(/\/$/, "");
-  return `${gateway}/van`;
+  return `${gatewayOrigin()}/van`;
 }
 
 export function readBrowserApiError(parsed: unknown): { code: string; message?: string } {

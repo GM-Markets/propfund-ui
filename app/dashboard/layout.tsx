@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
-import * as hsc from "@/lib/hsc/client";
+import { getSessionTokenFromCookie } from "@/lib/session";
 
 // Auth-gated routes must render per-request so each visit reads the live
 // session cookie. Without this, Next prerenders /dashboard at build time (no
@@ -10,13 +10,7 @@ import * as hsc from "@/lib/hsc/client";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  let label = "";
-  try {
-    const me = await hsc.auth.me();
-    label = me.source || me.gateway_user_id || me.user_id;
-  } catch {
-    redirect("/login");
-  }
-
-  return <AppShell email={label}>{children}</AppShell>;
+  const token = await getSessionTokenFromCookie();
+  if (!token) redirect("/login");
+  return <AppShell>{children}</AppShell>;
 }

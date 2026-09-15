@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
 
 import { getPrivyClientId, isConfiguredPrivyAppId } from "@/lib/privy";
@@ -10,10 +9,7 @@ const CLIENT_ID = getPrivyClientId();
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
 
 export function PrivyAppProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || !isConfiguredPrivyAppId(APP_ID)) {
+  if (!isConfiguredPrivyAppId(APP_ID)) {
     return <>{children}</>;
   }
 
@@ -33,7 +29,7 @@ export function PrivyAppProvider({ children }: { children: React.ReactNode }) {
           walletChainType: "ethereum-only",
         },
         embeddedWallets: {
-          ethereum: { createOnLogin: "all-users" },
+          ethereum: { createOnLogin: "users-without-wallets" },
         },
       }}
     >

@@ -69,3 +69,79 @@ export const browserApiKeys = {
     vantaFetch<CreatedApiKey>("/v2/api-keys", { method: "POST", json: body }),
   revoke: (id: string) => vantaFetch<{ revoked?: boolean } | undefined>(`/v2/api-keys/${id}`, { method: "DELETE" }),
 };
+
+export type BrowserMe = {
+  user_id: string;
+  agreement_signed: boolean;
+  agreement_version: string | null;
+  prop_accounts: Array<{
+    id: string;
+    tier_id: string;
+    asset_class: string;
+    account_size: number;
+    status: string;
+    is_test?: boolean;
+  }>;
+};
+
+export type CopyTradeStatus = "active" | "paused" | "stopped";
+export type CopyMarkets = "all" | "perp" | "spot";
+
+export type CopySubscription = {
+  id: string;
+  prop_account_id: string;
+  leader_address: string;
+  scale_bps: number;
+  alloc_usd: number;
+  markets: CopyMarkets;
+  max_leverage: number;
+  status: CopyTradeStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CopyFill = {
+  id: string;
+  leader_tid: string;
+  coin: string;
+  side: string;
+  market_type: string;
+  leader_notional: number;
+  follower_value: number;
+  reduce_only: boolean;
+  status: "copied" | "skipped" | "failed";
+  error: string | null;
+  created_at: string;
+};
+
+function propAccountHeader(id: string): HeadersInit {
+  return { "X-Prop-Account": id };
+}
+
+export const browserAuth = {
+  me: () => vantaFetch<BrowserMe>("/v2/me"),
+};
+
+export const browserCopyTrade = {
+  list: (propAccountId: string) =>
+    vantaFetch<CopySubscription[]>("/v2/copy-trade/subscriptions", {
+      headers: propAccountHeader(propAccountId),
+    }),
+  start: (
+    propAccountId: string,
+    body: { leader_address: string; scale_bps?: number; alloc_usd?: number; markets?: CopyMarkets; max_leverage?: number },
+  ) =>
+    vantaFetch<CopySubscription>("/v2/copy-trade/subscriptions", {
+      method: "POST",
+      json: body,
+      headers: propAccountHeader(propAccountId),
+    }),
+  setStatus: (id: string, status: CopyTradeStatus) =>
+    vantaFetch<CopySubscription>(`/v2/copy-trade/subscriptions/${id}`, {
+      method: "POST",
+      json: { status },
+    }),
+  fills: (id: string) => vantaFetch<CopyFill[]>(`/v2/copy-trade/subscriptions/${id}/fills`),
+};
+
+export { percentToScaleBps, scaleBpsToPercent } from "./copy-scale";

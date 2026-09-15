@@ -10,6 +10,10 @@ vi.mock("@/lib/session", () => ({
   clearSessionCookie: vi.fn(),
   getSessionTokenFromCookie: vi.fn(),
 }));
+vi.mock("@/lib/gateway/client", () => ({
+  fetchGatewayMe: vi.fn().mockResolvedValue({ userId: "u1", address: "0xabc" }),
+  GatewayApiError: class GatewayApiError extends Error {},
+}));
 vi.mock("@/lib/hsc/client", () => ({
   auth: { me: vi.fn().mockResolvedValue({ user_id: "usr_1" }) },
   HscApiError: class HscApiError extends Error {},

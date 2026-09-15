@@ -124,6 +124,14 @@ describe("vanta() request helper", () => {
     expect(calls[0].headers.get("x-prop-account")).toBeNull();
   });
 
+  it("lists copy-trade subscriptions with X-Prop-Account", async () => {
+    const calls = mockResponses([{ json: [] }]);
+    const { copyTrade } = await import("./client");
+    await copyTrade.list("prop-1");
+    expect(calls[0].url).toContain("/v2/copy-trade/subscriptions");
+    expect(calls[0].headers.get("x-prop-account")).toBe("prop-1");
+  });
+
   it("closes on POST /v2/trading/close", async () => {
     const calls = mockResponses([{ json: { status: "ok" } }]);
     const { trading } = await import("./client");

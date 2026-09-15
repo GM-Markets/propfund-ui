@@ -214,6 +214,18 @@ export const API_CATALOG: ApiArea[] = [
     ],
   },
   {
+    id: "copy-trade",
+    title: "Copy trade",
+    description: "Mirror a Hyperliquid address onto the current prop account.",
+    docHref: "/docs/copy-trade",
+    endpoints: [
+      { method: "POST", path: "/v2/copy-trade/subscriptions", summary: "Start copying a leader address.", auth: "desk", note: "X-Api-Key or Privy Bearer, plus X-Prop-Account.", request: `{ "leader_address": "0x…", "scale_bps": 10000, "alloc_usd": 2500, "markets": "perp" }`, response: `{ "id": "copy_…", "leader_address": "0x…", "scale_bps": 10000, "alloc_usd": 2500, "markets": "perp", "status": "active" }` },
+      { method: "GET", path: "/v2/copy-trade/subscriptions", summary: "List subscriptions on this desk.", auth: "desk", note: "X-Api-Key or Privy Bearer, plus X-Prop-Account." },
+      { method: "POST", path: "/v2/copy-trade/subscriptions/{id}", summary: "Pause, resume, or stop.", auth: "desk", request: `{ "status": "paused" }` },
+      { method: "GET", path: "/v2/copy-trade/subscriptions/{id}/fills", summary: "Copied / skipped / failed fills.", auth: "desk" },
+    ],
+  },
+  {
     id: "admin",
     title: "Admin",
     description: "Operator endpoints for managing tenant apps (admin auth + TOTP).",

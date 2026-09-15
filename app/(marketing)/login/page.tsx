@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getIdentityToken, usePrivy } from "@privy-io/react-auth";
 
 import { establishSessionAction } from "@/app/actions/auth";
 import { SiteFooter, SiteHeader } from "@/components/propfund/SiteChrome";
-import { hasEmbeddedEthWallet, isConfiguredPrivyAppId } from "@/lib/privy";
+import { isConfiguredPrivyAppId } from "@/lib/privy";
 
 function afterLoginPath(account: string | null): string {
   if (!account) return "/dashboard";
@@ -66,12 +66,17 @@ function LoginCard({ account, signedOut = false }: { account?: string | null; si
   );
 }
 
+function shouldRetrySession(code: string, message: string): boolean {
+  const haystack = `${code} ${message}`.toLowerCase();
+  return /wallet|unauthorized|identity token|not found/.test(haystack);
+}
+
 function PrivyLogin({ account, signedOut }: { account: string | null; signedOut: boolean }) {
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, login, logout } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [openedDesk, setOpenedDesk] = useState(false);
-  const walletReady = hasEmbeddedEthWallet(user);
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (!signedOut || !ready || !authenticated) return;
@@ -79,30 +84,45 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
   }, [signedOut, ready, authenticated, logout]);
 
   async function openDesk() {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setError(null);
     setPending(true);
     try {
-      const token = (await getIdentityToken())?.trim();
-      if (!token) {
-        setError("Privy did not return an identity token. Enable identity tokens for this app.");
-        return;
+      let lastMessage = "Sign-in failed";
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const token = (await getIdentityToken())?.trim();
+        if (!token) {
+          lastMessage = "Privy did not return an identity token. Enable identity tokens for this app.";
+        } else {
+          const result = await establishSessionAction(token);
+          if (result.ok) {
+            window.location.assign(afterLoginPath(account));
+            return;
+          }
+          lastMessage = result.message;
+          if (!shouldRetrySession(result.code, result.message)) {
+            setError(result.message);
+            return;
+          }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 400));
       }
-      const result = await establishSessionAction(token);
-      if (result.ok) window.location.assign(afterLoginPath(account));
-      else setError(result.message);
+      setError(lastMessage);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed");
     } finally {
       setPending(false);
+      inFlight.current = false;
     }
   }
 
   useEffect(() => {
-    if (!openedDesk || !ready || !authenticated || !walletReady || pending) return;
+    if (!openedDesk || !ready || !authenticated) return;
     void openDesk();
     // Only after the trader clicks Continue — leftover Privy sessions must not auto-login.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openedDesk, ready, authenticated, walletReady]);
+  }, [openedDesk, ready, authenticated]);
 
   return (
     <div className="login-actions">
@@ -117,7 +137,7 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
         onClick={() => {
           setOpenedDesk(true);
           if (!authenticated) login();
-          else if (walletReady) void openDesk();
+          else void openDesk();
         }}
         disabled={!ready || pending}
       >

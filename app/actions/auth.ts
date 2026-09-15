@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { HscApiError, auth } from "@/lib/hsc/client";
+import { fetchGatewayMe, GatewayApiError } from "@/lib/gateway/client";
+import { auth, HscApiError } from "@/lib/hsc/client";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
 
 export type ActionResult<T = undefined> =
@@ -16,16 +17,25 @@ export async function establishSessionAction(identityToken: string): Promise<Act
   }
   await setSessionCookie(token, null);
   try {
-    await auth.me();
+    await fetchGatewayMe(token);
   } catch (error) {
     await clearSessionCookie();
     const message =
-      error instanceof HscApiError
+      error instanceof GatewayApiError
         ? error.message
         : error instanceof Error
           ? error.message
           : "Gateway rejected the identity token";
-    return { ok: false, code: error instanceof HscApiError ? error.code : "UNAUTHORIZED", message };
+    return { ok: false, code: error instanceof GatewayApiError ? error.code : "UNAUTHORIZED", message };
+  }
+  try {
+    await auth.me();
+  } catch (error) {
+    if (error instanceof HscApiError && (error.status === 401 || error.status === 403)) {
+      await clearSessionCookie();
+      return { ok: false, code: error.code, message: error.message };
+    }
+    // Desk claim is best-effort — session is the gateway profile.
   }
   return { ok: true };
 }

@@ -10,15 +10,19 @@ import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getGatewayMe } from "@/lib/gateway/client";
+import { identityFromGatewayProfile } from "@/lib/gateway/profile";
 import * as hsc from "@/lib/hsc/client";
 
 export default async function DashboardHome() {
-  const [meResult, kyc] = await Promise.all([
+  const [identity, meResult] = await Promise.all([
+    getGatewayMe()
+      .then((profile) => identityFromGatewayProfile(profile))
+      .catch(() => null),
     hsc.auth.me().then((data) => ({ ok: true as const, data })).catch((e) => ({
       ok: false as const,
-      message: e instanceof hsc.HscApiError ? `${e.code}: ${e.message}` : "Could not load your account.",
+      message: e instanceof hsc.HscApiError ? `${e.code}: ${e.message}` : "Could not reach /van.",
     })),
-    hsc.kyc.status().catch(() => null),
   ]);
   if (!meResult.ok) {
     return (
@@ -29,7 +33,7 @@ export default async function DashboardHome() {
         />
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Could not load /v2/me</CardTitle>
+            <CardTitle className="text-base">Could not reach the desk (`/van`)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p className="font-mono text-foreground">{meResult.message}</p>
@@ -44,13 +48,17 @@ export default async function DashboardHome() {
   const me = meResult.data;
   const accounts = me.prop_accounts ?? [];
 
-  const name = (me.source || me.user_id).slice(0, 10);
+  const name = identity?.name ?? "trader";
 
   return (
     <div>
       <PageHeader
         title={`Welcome back, ${name}`}
-        description="Your trading account at a glance."
+        description={
+          identity?.email
+            ? `${identity.email}${identity.wallet ? ` · ${identity.wallet.slice(0, 6)}…${identity.wallet.slice(-4)}` : ""}`
+            : "Your trading account at a glance."
+        }
         actions={
           <>
             <DocsLink href="/docs" label="Docs" />
@@ -72,10 +80,10 @@ export default async function DashboardHome() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Identity"
-          value={<StatusBadge status={kyc?.kyc_status} />}
+          value={<StatusBadge status={me.kyc_status} />}
           icon={ShieldCheck}
           hint={
-            kyc && kyc.kyc_status !== "verified" ? (
+            me.kyc_status !== "verified" ? (
               <Link href="/dashboard/kyc" className="text-primary hover:underline">
                 Complete verification →
               </Link>
@@ -135,11 +143,16 @@ export default async function DashboardHome() {
                     {a.asset_class} · ${Number(a.account_size).toLocaleString()}
                     {a.is_test ? " cash" : ""}
                   </div>
-                  <Button size="sm" asChild>
-                    <Link href={`/dashboard/trading?prop=${a.id}`}>
-                      Trade <ArrowRight />
-                    </Link>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/dashboard/copy-trade?prop=${a.id}`}>Copy</Link>
+                    </Button>
+                    <Button size="sm" asChild>
+                      <Link href={`/dashboard/trading?prop=${a.id}`}>
+                        Trade <ArrowRight />
+                      </Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
