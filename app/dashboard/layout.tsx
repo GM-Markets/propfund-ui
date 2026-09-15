@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { PrivyAppProvider } from "@/components/privy/PrivyAppProvider";
 import { getSessionTokenFromCookie } from "@/lib/session";
 
 // Auth-gated routes must render per-request so each visit reads the live
@@ -12,5 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const token = await getSessionTokenFromCookie();
   if (!token) redirect("/login");
-  return <AppShell>{children}</AppShell>;
+  return (
+    <PrivyAppProvider>
+      <AppShell>{children}</AppShell>
+    </PrivyAppProvider>
+  );
 }

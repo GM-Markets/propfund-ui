@@ -28,9 +28,11 @@ export default function TradingDocsPage() {
 
       <Callout type="info" title="Authenticate at the gateway">
         <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code> on{" "}
-        <code>{docsVanUrl("/v2/trading/*")}</code>. Mint the key in the{" "}
+        <code>{docsVanUrl("/v2/trading/*")}</code> (and{" "}
+        <code>/v2/copy-trade/*</code>). Mint the key in the{" "}
         <Link href="/docs/api-keys">API keys</Link> flow. Also send{" "}
-        <code>X-Prop-Account</code> unless the key is bound to one desk.
+        <code>X-Prop-Account</code> unless the key is bound to one desk. The
+        full key-callable list is on that page.
       </Callout>
 
       <Callout type="info" title="trade_pair is the Hyperliquid coin">

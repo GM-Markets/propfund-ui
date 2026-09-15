@@ -11,10 +11,14 @@ function labelFor(tier: { id: string; account_size: number; price_cents: number 
 }
 
 export default async function CheckoutPage() {
-  const [tiers, agreement] = await Promise.all([
+  const [tiers, me] = await Promise.all([
     hsc.payments.listTiers().catch(() => []),
-    hsc.agreements.status().catch(() => ({ signed: false, agreement_version: "2026-09-01" as string | null })),
+    hsc.auth.me().catch(() => null),
   ]);
+  const agreement = {
+    signed: me?.agreement_signed ?? false,
+    agreement_version: me?.agreement_version ?? "2026-09-01",
+  };
 
   const mapped: Tier[] = tiers
     .filter((t) => t.active && t.price_cents > 0)
@@ -38,13 +42,18 @@ export default async function CheckoutPage() {
     <div>
       <PageHeader
         title="Choose your challenge"
-        description="A $10K notional test account is already on your dashboard. Buy a challenge for a paid evaluation — pass once, no deadline, up to $2.5M scale."
+        description={
+          me?.dev_simulate
+            ? "Development — confirm payment success or failure instead of Privy. A $10K test desk is already on your dashboard."
+            : "A $10K notional test account is already on your dashboard. Buy a challenge for a paid evaluation — pass once, no deadline, up to $2.5M scale."
+        }
         actions={<DocsLink href="/docs/checkout" />}
       />
       <CheckoutPicker
         tiers={mapped}
         agreementSigned={agreement.signed}
         agreementVersion={agreement.agreement_version ?? "2026-09-01"}
+        devSimulate={me?.dev_simulate === true}
       />
     </div>
   );

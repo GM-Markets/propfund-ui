@@ -55,6 +55,15 @@ describe("vanta() request helper", () => {
     expect(calls[0].headers.get("authorization")).toBe("Bearer privy-id-token");
   });
 
+  it("reuses /v2/me within the local TTL", async () => {
+    cookieValue.mockReturnValue("privy-id-token");
+    const calls = mockResponses([{ json: { user_id: "u1" } }, { json: { user_id: "u2" } }]);
+    const { auth } = await import("./client");
+    await expect(auth.me()).resolves.toMatchObject({ user_id: "u1" });
+    await expect(auth.me()).resolves.toMatchObject({ user_id: "u1" });
+    expect(calls).toHaveLength(1);
+  });
+
   it("sends a JSON body + content-type when `json` is provided", async () => {
     const calls = mockResponses([{ json: { payment_id: "p1" } }]);
     const { payments } = await import("./client");

@@ -5,6 +5,21 @@ export function vantaBrowserBase(): string {
   return `${gatewayOrigin()}/van`;
 }
 
+export function unreachableDeskError(cause: unknown): { code: string; message: string } {
+  const host = vantaBrowserBase();
+  const raw = cause instanceof Error ? cause.message : "";
+  if (/failed to fetch|networkerror|load failed|econnrefused/i.test(raw)) {
+    return {
+      code: "VANTA_UNREACHABLE",
+      message: `Can't reach the desk at ${host}. Start the gateway (6701) and Vanta (6711).`,
+    };
+  }
+  return {
+    code: "VANTA_UNREACHABLE",
+    message: raw.trim() || `Can't reach the desk at ${host}.`,
+  };
+}
+
 export function readBrowserApiError(parsed: unknown): { code: string; message?: string } {
   if (!parsed || typeof parsed !== "object") return { code: "UNKNOWN" };
   const env = parsed as {

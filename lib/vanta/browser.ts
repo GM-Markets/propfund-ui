@@ -1,8 +1,7 @@
 "use client";
 
-import { getIdentityToken } from "@privy-io/react-auth";
-
-import { readBrowserApiError, vantaBrowserBase } from "@/lib/vanta/http";
+import { READ_TTL_MS, readCache } from "@/lib/ttl-cache";
+import { readBrowserApiError, unreachableDeskError, vantaBrowserBase } from "@/lib/vanta/http";
 
 export { readBrowserApiError, vantaBrowserBase } from "@/lib/vanta/http";
 
@@ -17,22 +16,48 @@ export class VantaBrowserError extends Error {
   }
 }
 
-export async function vantaFetch<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
-  const token = (await getIdentityToken())?.trim();
+let cachedToken: string | null = null;
+
+async function deskBearer(): Promise<string> {
+  if (cachedToken) return cachedToken;
+  let resp: Response;
+  try {
+    resp = await fetch("/api/session", { cache: "no-store" });
+  } catch (cause) {
+    const err = unreachableDeskError(cause);
+    throw new VantaBrowserError(503, err.code, err.message);
+  }
+  if (!resp.ok) {
+    throw new VantaBrowserError(401, "UNAUTHORIZED", "Sign in again to continue.");
+  }
+  const body = (await resp.json()) as { token?: string };
+  const token = body.token?.trim();
   if (!token) {
     throw new VantaBrowserError(401, "UNAUTHORIZED", "Sign in again to continue.");
   }
+  cachedToken = token;
+  return token;
+}
+
+export async function vantaFetch<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+  const token = await deskBearer();
 
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${token}`);
   if (init.json !== undefined) headers.set("Content-Type", "application/json");
 
-  const resp = await fetch(`${vantaBrowserBase()}${path}`, {
-    ...init,
-    headers,
-    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    cache: "no-store",
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(`${vantaBrowserBase()}${path}`, {
+      ...init,
+      headers,
+      body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
+      cache: "no-store",
+    });
+  } catch (cause) {
+    const err = unreachableDeskError(cause);
+    throw new VantaBrowserError(503, err.code, err.message);
+  }
   if (resp.status === 204) return undefined as T;
 
   const text = await resp.text();
@@ -119,7 +144,10 @@ function propAccountHeader(id: string): HeadersInit {
 }
 
 export const browserAuth = {
-  me: () => vantaFetch<BrowserMe>("/v2/me"),
+  me: async () => {
+    const token = await deskBearer();
+    return readCache.remember(`van:me:${token}`, () => vantaFetch<BrowserMe>("/v2/me"), READ_TTL_MS);
+  },
 };
 
 export const browserCopyTrade = {

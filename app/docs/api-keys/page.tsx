@@ -2,9 +2,14 @@ import Link from "next/link";
 
 import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
-import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
+import { Callout, DocSection, Endpoint, ParamTable, RouteTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
-import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
+import {
+  DESK_API_KEY_PLACEHOLDER,
+  DESK_API_KEY_ROUTES,
+  PUBLIC_GATEWAY_ORIGIN,
+  docsVanUrl,
+} from "@/lib/docs/public-api";
 
 export const metadata = { title: "API keys" };
 
@@ -48,9 +53,21 @@ export default function ApiKeysDocsPage() {
         />
         <Callout type="info" title="Where to send it">
           Host <code>{PUBLIC_GATEWAY_ORIGIN}</code>, path prefix{" "}
-          <code>/van</code>, header <code>X-Api-Key</code>. Trading routes only
-          — see <Link href="/docs/trading">Trading</Link>.
+          <code>/van</code>, header <code>X-Api-Key</code>. Also send{" "}
+          <code>X-Prop-Account</code> unless the key is bound to one desk.
         </Callout>
+      </DocSection>
+
+      <DocSection
+        title="APIs the key can call"
+        description="X-Api-Key is accepted only on these /van routes. Auth, KYC, checkout, payouts, and key admin reject it with 401."
+      >
+        <RouteTable rows={DESK_API_KEY_ROUTES} />
+        <p className="text-sm text-muted-foreground">
+          <code>GET /v2/trading/markets</code> is public and does not need a
+          key. See <Link href="/docs/trading">Trading</Link> and{" "}
+          <Link href="/docs/copy-trade">Copy trade</Link>.
+        </p>
       </DocSection>
 
       <DocSection title="Create a key">

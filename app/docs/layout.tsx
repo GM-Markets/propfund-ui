@@ -5,7 +5,6 @@ import { ArrowUpRight, BookOpen, LayoutDashboard } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsToc } from "@/components/docs/toc";
-import { PageFade } from "@/components/motion/page-fade";
 import { Button } from "@/components/ui/button";
 import { BRAND_NAME } from "@/lib/brand";
 import { PUBLIC_VAN_BASE } from "@/lib/docs/public-api";
@@ -56,7 +55,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </aside>
         <main className="min-w-0 flex-1 pb-16">
           <article className="max-w-3xl [&_h2]:scroll-mt-28 [&_h3]:scroll-mt-28">
-            <PageFade className="space-y-12">{children}</PageFade>
+            <div className="space-y-12">{children}</div>
           </article>
         </main>
         <aside className="sticky top-20 hidden h-[calc(100vh-6rem)] w-56 shrink-0 overflow-y-auto xl:block">

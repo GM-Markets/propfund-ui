@@ -25,6 +25,14 @@ export async function getKycSessionAction() {
   }
 }
 
+export async function simulateKycAction(outcome: "success" | "failure") {
+  try {
+    return { ok: true as const, data: await hsc.kyc.simulate({ outcome }) };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
 export async function listTiersAction() {
   try {
     return { ok: true as const, data: await hsc.payments.listTiers() };
@@ -50,6 +58,21 @@ export async function createCheckoutAction(input: {
 }) {
   try {
     return { ok: true as const, data: await hsc.payments.checkout(input) };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function simulateCheckoutAction(input: {
+  outcome: "success" | "failure";
+  tier_id: string;
+  market: string;
+  asset_class: string;
+  account_size: number;
+  amount_cents: number;
+}) {
+  try {
+    return { ok: true as const, data: await hsc.payments.simulate(input) };
   } catch (e) {
     return failure(e);
   }

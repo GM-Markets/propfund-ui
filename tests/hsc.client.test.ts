@@ -10,6 +10,7 @@ const originalFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = originalFetch;
   vi.restoreAllMocks();
+  vi.resetModules();
 });
 
 function mockResponses(responses: Array<{ status?: number; json: unknown }>) {

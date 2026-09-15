@@ -51,6 +51,10 @@ describe("fetchGatewayMe", () => {
     });
     expect(calls[0].url).toContain("/api/users/me");
     expect(calls[0].headers.get("authorization")).toBe("Bearer privy-id-token");
+
+    const { fetchGatewayMe: again } = await import("./client");
+    await again();
+    expect(calls).toHaveLength(1);
   });
 
   it("throws when the gateway rejects the token", async () => {

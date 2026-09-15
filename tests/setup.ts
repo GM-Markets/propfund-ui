@@ -1,4 +1,11 @@
 import "@testing-library/jest-dom/vitest";
+import { afterEach } from "vitest";
+
+import { readCache } from "@/lib/ttl-cache";
+
+afterEach(() => {
+  readCache.invalidate();
+});
 
 // ── Test environment variables ───────────────────────────────────────────────
 // Set BEFORE any module under test reads `lib/hsc/config.ts` (evaluated at

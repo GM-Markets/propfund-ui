@@ -83,9 +83,9 @@ export default async function DashboardHome() {
           value={<StatusBadge status={me.kyc_status} />}
           icon={ShieldCheck}
           hint={
-            me.kyc_status !== "verified" ? (
+            me.kyc_status !== "verified" || me.dev_simulate ? (
               <Link href="/dashboard/kyc" className="text-primary hover:underline">
-                Complete verification →
+                {me.dev_simulate ? "Simulate verification →" : "Complete verification →"}
               </Link>
             ) : (
               "You're verified and ready to trade."
@@ -98,7 +98,7 @@ export default async function DashboardHome() {
           icon={CreditCard}
           hint={
             <Link href="/dashboard/checkout" className="text-primary hover:underline">
-              Add an account →
+              {me.dev_simulate ? "Simulate a purchase →" : "Add an account →"}
             </Link>
           }
         />

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { CodeBlock } from "@/components/docs/code-block";
-import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
+import { Callout, DocSection, Endpoint, ParamTable, RouteTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
-import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
+import { DESK_API_KEY_PLACEHOLDER, DESK_API_KEY_ROUTES, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Copy trade" };
 
@@ -24,6 +24,15 @@ export default function CopyTradeDocsPage() {
           <code>{PUBLIC_GATEWAY_ORIGIN}</code> with an API key.
         </p>
       </header>
+
+      <Callout type="info" title="Call with an API key">
+        Same <code>X-Api-Key</code> as trading. Full list on{" "}
+        <Link href="/docs/api-keys">API keys</Link>.
+      </Callout>
+      <RouteTable
+        title="Copy-trade routes"
+        rows={DESK_API_KEY_ROUTES.filter((row) => row.path.startsWith("/v2/copy-trade"))}
+      />
 
       <Callout type="info" title="Sidecar, not the order path">
         Copy-trade polls <code>userFills</code> and calls the same virtual{" "}

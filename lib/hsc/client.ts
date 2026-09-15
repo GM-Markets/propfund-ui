@@ -9,6 +9,8 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 
+import { READ_TTL_MS, TIERS_TTL_MS, readCache } from "@/lib/ttl-cache";
+
 import { hscConfig } from "./config";
 
 export class HscApiError extends Error {
@@ -28,6 +30,18 @@ type Init = RequestInit & {
   authedAsUser?: boolean;
   sessionTokenOverride?: string;
 };
+
+async function sessionCacheKey(): Promise<string> {
+    return (await cookies()).get(hscConfig.sessionCookieName)?.value ?? "anon";
+}
+
+async function cachedUserGet<T>(name: string, load: () => Promise<T>, ttlMs = READ_TTL_MS): Promise<T> {
+    return readCache.remember(`${name}:${await sessionCacheKey()}`, load, ttlMs);
+}
+
+function dropCachedReads(): void {
+    readCache.invalidate();
+}
 
 async function hsc<T = unknown>(path: string, init: Init = {}): Promise<T> {
   const headers = new Headers(init.headers);
@@ -120,13 +134,14 @@ export type VantaMe = {
   partner?: { app_id: string; slug: string; name: string };
   kyc_status: string;
   kyc_verified_at: string | null;
+  dev_simulate?: boolean;
   agreement_signed: boolean;
   agreement_version: string | null;
   prop_accounts: PropAccountSummary[];
 };
 
 export const auth = {
-  me: cache(() => hsc<VantaMe>("/v2/me")),
+  me: cache(() => cachedUserGet("van:me", () => hsc<VantaMe>("/v2/me"))),
 };
 
 export const apps = {
@@ -143,39 +158,64 @@ export const apps = {
 
 export const kyc = {
   status: () =>
-    hsc<{
+    cachedUserGet("van:kyc", () =>
+      hsc<{
+        user_id: string;
+        kyc_provider: string | null;
+        kyc_status: "unverified" | "processing" | "needs_input" | "verified" | "failed";
+        kyc_verified_at: string | null;
+        kyc_failure_reason: string | null;
+        email?: string | null;
+        dev_simulate?: boolean;
+      }>("/v2/kyc/status"),
+    ),
+  simulate: async (body: { outcome: "success" | "failure" }) => {
+    const row = await hsc<{
       user_id: string;
       kyc_provider: string | null;
       kyc_status: "unverified" | "processing" | "needs_input" | "verified" | "failed";
       kyc_verified_at: string | null;
       kyc_failure_reason: string | null;
-    }>("/v2/kyc/status"),
-  stripeSession: () =>
-    hsc<{
+      email?: string | null;
+      dev_simulate?: boolean;
+    }>("/v2/kyc/simulate", { method: "POST", json: body });
+    dropCachedReads();
+    return row;
+  },
+  stripeSession: async () => {
+    const row = await hsc<{
       client_secret: string | null;
       verification_session_id: string | null;
       user_id: string;
       url: string | null;
       status: string;
       provider: "stripe_identity";
-    }>("/v2/kyc/stripe/session", { method: "POST" }),
+    }>("/v2/kyc/stripe/session", { method: "POST" });
+    dropCachedReads();
+    return row;
+  },
 };
 
 export const payments = {
   listTiers: () =>
-    hsc<
-      Array<{
-        id: string;
-        market: string;
-        asset_class: string;
-        account_size: number;
-        price_cents: number;
-        currency: string;
-        rule_pack_id: string;
-        kyc_optional: boolean;
-        active: boolean;
-      }>
-    >("/v2/payments/tiers"),
+    readCache.remember(
+      "van:tiers",
+      () =>
+        hsc<
+          Array<{
+            id: string;
+            market: string;
+            asset_class: string;
+            account_size: number;
+            price_cents: number;
+            currency: string;
+            rule_pack_id: string;
+            kyc_optional: boolean;
+            active: boolean;
+          }>
+        >("/v2/payments/tiers"),
+      TIERS_TTL_MS,
+    ),
   checkout: (body: {
     tier_id: string;
     market: string;
@@ -193,9 +233,40 @@ export const payments = {
       currency: string;
       status: string;
       tier_id: string;
-    }>("/v2/payments/checkout", { method: "POST", json: body }),
+    }>("/v2/payments/checkout", { method: "POST", json: body }).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
+  simulate: (body: {
+    outcome: "success" | "failure";
+    tier_id: string;
+    market: string;
+    asset_class: string;
+    account_size: number;
+    amount_cents: number;
+    currency?: string;
+  }) =>
+    hsc<{
+      payment: {
+        payment_id: string;
+        provider: string;
+        provider_payment_id: string | null;
+        client_secret: string | null;
+        amount_cents: number;
+        currency: string;
+        status: string;
+        tier_id: string;
+      };
+      account: PropAccountSummary | null;
+    }>("/v2/payments/simulate", { method: "POST", json: body }).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
   freeAccount: (body: { tier_id: string; asset_class: string; account_size: number; market?: string }) =>
-    hsc<PropAccountSummary>("/v2/payments/free", { method: "POST", json: body }),
+    hsc<PropAccountSummary>("/v2/payments/free", { method: "POST", json: body }).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
   listPropAccounts: () => hsc<PropAccountSummary[]>("/v2/payments/prop-accounts"),
   getPropAccount: (id: string) => hsc<PropAccountSummary>(`/v2/payments/prop-accounts/${id}`),
 };
@@ -224,10 +295,15 @@ export const agreements = {
     hsc<{ signed: boolean; signed_at: string; agreement_version: string }>(
       "/v2/agreements/sign",
       { method: "POST", json: body },
-    ),
+    ).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
   status: () =>
-    hsc<{ signed: boolean; signed_at: string | null; agreement_version: string | null }>(
-      "/v2/agreements/status",
+    cachedUserGet("van:agreement", () =>
+      hsc<{ signed: boolean; signed_at: string | null; agreement_version: string | null }>(
+        "/v2/agreements/status",
+      ),
     ),
   audits: () =>
     hsc<
@@ -250,12 +326,21 @@ export const apiKeys = {
       key_secret: string;
       key: string;
       prop_account_id: string | null;
-    }>("/v2/api-keys", { method: "POST", json: body }),
+    }>("/v2/api-keys", { method: "POST", json: body }).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
   list: () =>
-    hsc<Array<{ id: string; label: string; key_id: string; revoked_at: string | null }>>(
-      "/v2/api-keys",
+    cachedUserGet("van:keys", () =>
+      hsc<Array<{ id: string; label: string; key_id: string; revoked_at: string | null }>>(
+        "/v2/api-keys",
+      ),
     ),
-  revoke: (id: string) => hsc<{ revoked: boolean } | undefined>(`/v2/api-keys/${id}`, { method: "DELETE" }),
+  revoke: (id: string) =>
+    hsc<{ revoked: boolean } | undefined>(`/v2/api-keys/${id}`, { method: "DELETE" }).then((row) => {
+      dropCachedReads();
+      return row;
+    }),
 };
 
 export const trading = {

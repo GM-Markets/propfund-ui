@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { fetchGatewayMe, GatewayApiError } from "@/lib/gateway/client";
 import { auth, HscApiError } from "@/lib/hsc/client";
 import { clearSessionCookie, setSessionCookie } from "@/lib/session";
+import { readCache } from "@/lib/ttl-cache";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data?: T }
@@ -41,6 +42,7 @@ export async function establishSessionAction(identityToken: string): Promise<Act
 }
 
 export async function logoutAction(): Promise<void> {
+  readCache.invalidate();
   await clearSessionCookie();
-  redirect("/login?signedOut=1");
+  redirect("/login");
 }

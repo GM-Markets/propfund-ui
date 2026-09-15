@@ -10,7 +10,13 @@ const nextConfig: NextConfig = {
   // Required for the multi-stage Docker image (copies `.next/standalone`).
   output: "standalone",
   outputFileTracingRoot: process.cwd(),
-  experimental: { serverActions: { bodySizeLimit: "5mb" } },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
+  experimental: {
+    serverActions: { bodySizeLimit: "5mb" },
+    optimizePackageImports: ["lucide-react"],
+  },
   turbopack: {
     resolveAlias: {
       "@farcaster/mini-app-solana": emptyStubRel,

@@ -7,6 +7,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 
 import { hscConfig } from "@/lib/hsc/config";
+import { READ_TTL_MS, readCache } from "@/lib/ttl-cache";
 
 import { gatewayApiBase } from "./config";
 import { unwrapGatewayProfile, type GatewayProfile } from "./profile";
@@ -48,6 +49,10 @@ export async function fetchGatewayMe(sessionTokenOverride?: string): Promise<Gat
     throw new GatewayApiError(401, "UNAUTHORIZED", "Sign in again to continue.");
   }
 
+  return readCache.remember(`gw:me:${token}`, () => loadGatewayMe(token), READ_TTL_MS);
+}
+
+async function loadGatewayMe(token: string): Promise<GatewayProfile> {
   let resp: Response;
   try {
     resp = await fetch(`${gatewayApiBase()}/users/me`, {
@@ -88,5 +93,5 @@ export async function fetchGatewayMe(sessionTokenOverride?: string): Promise<Gat
   return profile;
 }
 
-/** One `/api/users/me` per server render. */
+/** One `/api/users/me` per server render; also reused across navigations for READ_TTL_MS. */
 export const getGatewayMe = cache(() => fetchGatewayMe());

@@ -30,6 +30,8 @@ const FRIENDLY: Record<string, string> = {
   V2_SUMSUB_NOT_CONFIGURED: "Identity verification isn't configured for this app yet.",
   V2_SUMSUB_HTTP: "Identity verification provider is temporarily unavailable.",
   V2_PAYMENTS_NOT_CONFIGURED: "Payments aren't configured for this app yet.",
+  V2_DEV_SIMULATE_DISABLED: "Simulated KYC and payments are only available in development.",
+  VANTA_UNREACHABLE: "Can't reach the desk service. Start the gateway and Vanta locally.",
 };
 
 export function friendlyError(code: string | undefined, fallback?: string): string {

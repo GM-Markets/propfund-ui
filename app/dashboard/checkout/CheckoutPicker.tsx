@@ -9,8 +9,10 @@ import {
   createCheckoutAction,
   createFreeAccountAction,
   listPropAccountsAction,
+  simulateCheckoutAction,
 } from "@/app/actions/onboarding";
 import { AgreementSignCard } from "@/components/agreement-sign-card";
+import { DevOutcomeDialog } from "@/components/dev-outcome-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,16 +41,21 @@ export function CheckoutPicker({
   tiers,
   agreementSigned,
   agreementVersion,
+  devSimulate = false,
 }: {
   tiers: Tier[];
   agreementSigned: boolean;
   agreementVersion: string;
+  devSimulate?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [signed, setSigned] = useState(agreementSigned);
+  const [simOpen, setSimOpen] = useState(false);
+  const [simTier, setSimTier] = useState<Tier | null>(null);
+  const [simPending, setSimPending] = useState(false);
   const baselineIds = useRef<Set<string>>(new Set());
 
   async function ensureAgreement(): Promise<boolean> {
@@ -107,6 +114,12 @@ export function CheckoutPicker({
         return;
       }
 
+      if (devSimulate) {
+        setSimTier(tier);
+        setSimOpen(true);
+        return;
+      }
+
       const r = await createCheckoutAction({
         tier_id: tier.id,
         market: tier.market ?? tier.asset_class,
@@ -121,6 +134,35 @@ export function CheckoutPicker({
       setPayOpen(true);
     } finally {
       setPending(null);
+    }
+  }
+
+  async function simulate(outcome: "success" | "failure") {
+    if (!simTier) return;
+    setSimPending(true);
+    try {
+      const r = await simulateCheckoutAction({
+        outcome,
+        tier_id: simTier.id,
+        market: simTier.market ?? simTier.asset_class,
+        asset_class: simTier.asset_class,
+        account_size: simTier.account_size,
+        amount_cents: simTier.amount_cents,
+      });
+      if (!r.ok) {
+        toast.error(friendlyError(r.code, r.message));
+        return;
+      }
+      setSimOpen(false);
+      router.refresh();
+      if (outcome === "success" && r.data?.account) {
+        toast.success("Account ready.");
+        router.push(`/dashboard/trading?prop=${r.data.account.id}`);
+        return;
+      }
+      toast.error("Simulated payment failed — no account created.");
+    } finally {
+      setSimPending(false);
     }
   }
 
@@ -169,7 +211,7 @@ export function CheckoutPicker({
                 variant={t.popular ? "default" : "outline"}
                 className="w-full"
               >
-                {t.amount_cents === 0 ? "Start free" : "Buy challenge"}
+                {t.amount_cents === 0 ? "Start free" : devSimulate ? "Simulate purchase" : "Buy challenge"}
               </Button>
             </CardFooter>
           </Card>
@@ -203,6 +245,15 @@ export function CheckoutPicker({
           )}
         </DialogContent>
       </Dialog>
+
+      <DevOutcomeDialog
+        open={simOpen}
+        pending={simPending}
+        title="Simulate payment"
+        description="Development only. Success creates the challenge account. Failure records a failed payment and leaves the desk unchanged."
+        onOpenChange={setSimOpen}
+        onChoose={(outcome) => void simulate(outcome)}
+      />
     </div>
   );
 }

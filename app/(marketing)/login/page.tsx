@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getIdentityToken, usePrivy } from "@privy-io/react-auth";
 
 import { establishSessionAction } from "@/app/actions/auth";
+import { PrivyAppProvider } from "@/components/privy/PrivyAppProvider";
 import { SiteFooter, SiteHeader } from "@/components/propfund/SiteChrome";
 import { isConfiguredPrivyAppId } from "@/lib/privy";
 
@@ -16,7 +17,7 @@ function afterLoginPath(account: string | null): string {
 
 export default function LoginPage() {
   return (
-    <>
+    <PrivyAppProvider>
       <SiteHeader />
       <main className="login-page">
         <Suspense fallback={<LoginCard />}>
@@ -24,7 +25,7 @@ export default function LoginPage() {
         </Suspense>
       </main>
       <SiteFooter />
-    </>
+    </PrivyAppProvider>
   );
 }
 
@@ -79,8 +80,11 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
   const inFlight = useRef(false);
 
   useEffect(() => {
-    if (!signedOut || !ready || !authenticated) return;
-    void logout();
+    if (!signedOut) return;
+    if (ready && authenticated) void logout();
+    if (window.location.pathname !== "/login" || window.location.search) {
+      window.history.replaceState(null, "", "/login");
+    }
   }, [signedOut, ready, authenticated, logout]);
 
   async function openDesk() {

@@ -2,9 +2,14 @@ import Link from "next/link";
 
 import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
-import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
+import { Callout, DocSection, Endpoint, RouteTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
-import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
+import {
+  DESK_API_KEY_PLACEHOLDER,
+  DESK_API_KEY_ROUTES,
+  PUBLIC_GATEWAY_ORIGIN,
+  docsVanUrl,
+} from "@/lib/docs/public-api";
 
 export const metadata = { title: "Authentication" };
 
@@ -28,7 +33,7 @@ export default function AuthDocsPage() {
 
       <DocSection
         title="Call the gateway with an API key"
-        description="Mint a key in the dashboard, then call /van/v2/trading/* on gate.propfund.io. No Privy token on the bot."
+        description="Mint a key in the dashboard, then call the trading and copy-trade routes on gate.propfund.io. No Privy token on the bot."
       >
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>
@@ -37,8 +42,8 @@ export default function AuthDocsPage() {
             <code>key_id.key_secret</code> — the secret is shown once.
           </li>
           <li>
-            Send <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code> to{" "}
-            <code>{docsVanUrl("/v2/trading/*")}</code>.
+            Send <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code> to the
+            routes below on <code>{PUBLIC_GATEWAY_ORIGIN}/van</code>.
           </li>
           <li>
             Include <code>X-Prop-Account</code> when the key is not already bound
@@ -52,10 +57,11 @@ export default function AuthDocsPage() {
   -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
   -H "X-Prop-Account: prop_..."`}
         />
-        <Callout type="warning" title="Trading routes only">
+        <RouteTable title="Desk routes that accept X-Api-Key" rows={DESK_API_KEY_ROUTES} />
+        <Callout type="warning" title="These routes only">
           <code>X-Api-Key</code> is accepted on <code>/van/v2/trading/*</code>{" "}
-          only. Auth, KYC, checkout, payouts, and key admin reject it with{" "}
-          <code>401</code>.
+          and <code>/van/v2/copy-trade/*</code>. Auth, KYC, checkout, payouts,
+          and key admin reject it with <code>401</code>.
         </Callout>
       </DocSection>
 

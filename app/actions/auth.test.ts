@@ -83,6 +83,6 @@ describe("logoutAction", () => {
   it("clears the session cookie and redirects to login", async () => {
     await logoutAction();
     expect(clearSessionCookie).toHaveBeenCalled();
-    expect(redirect).toHaveBeenCalledWith("/login?signedOut=1");
+    expect(redirect).toHaveBeenCalledWith("/login");
   });
 });

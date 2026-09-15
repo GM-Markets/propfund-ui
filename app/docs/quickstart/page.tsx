@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 import { CodeBlock } from "@/components/docs/code-block";
-import { Callout, DocSection } from "@/components/docs/blocks";
-import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, PUBLIC_VAN_BASE, docsVanUrl } from "@/lib/docs/public-api";
+import { Callout, DocSection, RouteTable } from "@/components/docs/blocks";
+import { DESK_API_KEY_PLACEHOLDER, DESK_API_KEY_ROUTES, PUBLIC_GATEWAY_ORIGIN, PUBLIC_VAN_BASE, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Quickstart" };
 
@@ -44,9 +44,10 @@ export default function QuickstartPage() {
         />
         <Callout type="tip" title="Base URL">
           <code>{PUBLIC_VAN_BASE}</code> — host <code>{PUBLIC_GATEWAY_ORIGIN}</code>,
-          prefix <code>/van</code>, header <code>X-Api-Key</code> on{" "}
-          <code>/v2/trading/*</code> only.
+          prefix <code>/van</code>, header <code>X-Api-Key</code> on trading
+          and copy-trade routes.
         </Callout>
+        <RouteTable title="Routes the key can call" rows={DESK_API_KEY_ROUTES} />
       </DocSection>
 
       <DocSection title="3. Place an order">
@@ -78,6 +79,9 @@ export default function QuickstartPage() {
           </li>
           <li>
             <Link href="/docs/trading">Trading</Link> — orders, close, desk-poll.
+          </li>
+          <li>
+            <Link href="/docs/copy-trade">Copy trade</Link> — follow a Hyperliquid address.
           </li>
         </ul>
       </DocSection>

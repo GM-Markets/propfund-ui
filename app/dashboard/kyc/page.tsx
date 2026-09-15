@@ -16,8 +16,12 @@ const STEPS = [
 ];
 
 export default async function KycPage() {
-  const status = await hsc.kyc.status().catch(() => null);
-  const verified = status?.kyc_status === "verified";
+  const me = await hsc.auth.me().catch(() => null);
+  const needsDetail = me?.kyc_status === "failed" || me?.kyc_status === "needs_input";
+  const status = needsDetail ? await hsc.kyc.status().catch(() => null) : null;
+  const kycStatus = status?.kyc_status ?? me?.kyc_status;
+  const devSimulate = status?.dev_simulate ?? me?.dev_simulate;
+  const verified = kycStatus === "verified";
 
   return (
     <div>
@@ -31,9 +35,13 @@ export default async function KycPage() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="text-base">Current status</CardTitle>
-            <CardDescription>Powered by Stripe Identity.</CardDescription>
+            <CardDescription>
+              {devSimulate
+                ? "Development — confirm success or failure instead of Stripe Identity."
+                : "Powered by Stripe Identity."}
+            </CardDescription>
           </div>
-          <StatusBadge status={status?.kyc_status} />
+          <StatusBadge status={kycStatus} />
         </CardHeader>
         {status?.kyc_failure_reason && (
           <CardContent>
@@ -45,37 +53,45 @@ export default async function KycPage() {
         )}
       </Card>
 
-      {verified ? (
-        <Alert variant="success">
+      {verified && (
+        <Alert variant="success" className="mb-6">
           <ShieldCheck />
           <AlertTitle>You&apos;re verified</AlertTitle>
           <AlertDescription>
             Your identity is confirmed. You have full access to trading and payouts.
           </AlertDescription>
         </Alert>
-      ) : (
+      )}
+
+      {(devSimulate || !verified) && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Start verification</CardTitle>
+            <CardTitle className="text-base">
+              {devSimulate ? "Simulate verification" : "Start verification"}
+            </CardTitle>
             <CardDescription>
-              It takes about two minutes. Have your ID ready.
+              {devSimulate
+                ? "Choose a simulated outcome. Success marks you verified; failure keeps payouts locked."
+                : "It takes about two minutes. Have your ID ready."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
-              {STEPS.map(({ icon: Icon, title, desc }, i) => (
-                <div key={title} className="rounded-lg border border-border bg-card/40 p-4">
-                  <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="size-4" />
+            {!devSimulate && (
+              <div className="mb-6 grid gap-4 sm:grid-cols-3">
+                {STEPS.map(({ icon: Icon, title, desc }, i) => (
+                  <div key={title} className="rounded-lg border border-border bg-card/40 p-4">
+                    <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="text-sm font-medium">
+                      {i + 1}. {title}
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">{desc}</div>
                   </div>
-                  <div className="text-sm font-medium">
-                    {i + 1}. {title}
-                  </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{desc}</div>
-                </div>
-              ))}
-            </div>
-            <KycStartButton />
+                ))}
+              </div>
+            )}
+            <KycStartButton devSimulate={devSimulate === true} />
           </CardContent>
         </Card>
       )}

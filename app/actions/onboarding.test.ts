@@ -10,6 +10,8 @@ import {
   getKycSessionAction,
   getKycStatusAction,
   listPropAccountsAction,
+  simulateCheckoutAction,
+  simulateKycAction,
 } from "./onboarding";
 
 const PROP = {
@@ -34,6 +36,7 @@ describe("onboarding actions", () => {
       kyc_status: "verified",
       kyc_verified_at: "2026-01-01",
       kyc_failure_reason: null,
+      dev_simulate: true,
     });
     const r = await getKycStatusAction();
     expect(r).toMatchObject({ ok: true, data: { kyc_status: "verified" } });
@@ -68,6 +71,53 @@ describe("onboarding actions", () => {
     const r = await createCheckoutAction(input);
     expect(spy).toHaveBeenCalledWith(input);
     expect(r).toMatchObject({ ok: true, data: { client_secret: "cs_1", provider: "privy" } });
+  });
+
+  it("simulateKycAction applies the chosen outcome", async () => {
+    const spy = vi.spyOn(hsc.kyc, "simulate").mockResolvedValue({
+      user_id: "u1",
+      kyc_provider: "stripe_identity",
+      kyc_status: "verified",
+      kyc_verified_at: "2026-01-01",
+      kyc_failure_reason: null,
+      dev_simulate: true,
+    });
+    const r = await simulateKycAction("success");
+    expect(spy).toHaveBeenCalledWith({ outcome: "success" });
+    expect(r).toMatchObject({ ok: true, data: { kyc_status: "verified" } });
+  });
+
+  it("simulateCheckoutAction provisions on success", async () => {
+    const spy = vi.spyOn(hsc.payments, "simulate").mockResolvedValue({
+      payment: {
+        payment_id: "pay_sim",
+        provider: "privy",
+        provider_payment_id: "sim_success_pay_sim",
+        client_secret: null,
+        amount_cents: 8400,
+        currency: "usd",
+        status: "succeeded",
+        tier_id: "tier_25k",
+      },
+      account: PROP,
+    });
+    const r = await simulateCheckoutAction({
+      outcome: "success",
+      tier_id: "tier_25k",
+      market: "crypto",
+      asset_class: "crypto",
+      account_size: 25_000,
+      amount_cents: 8400,
+    });
+    expect(spy).toHaveBeenCalledWith({
+      outcome: "success",
+      tier_id: "tier_25k",
+      market: "crypto",
+      asset_class: "crypto",
+      account_size: 25_000,
+      amount_cents: 8400,
+    });
+    expect(r).toMatchObject({ ok: true, data: { account: { id: "p1" } } });
   });
 
   it("createFreeAccountAction returns the provisioned account", async () => {

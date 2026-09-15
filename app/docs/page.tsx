@@ -50,7 +50,7 @@ const FLOWS = [
   {
     href: "/docs/api-keys",
     title: "API keys",
-    desc: "Mint key_id.key_secret and call the gateway trading API.",
+    desc: "Mint key_id.key_secret and call trading and copy-trade APIs.",
     icon: KeyRound,
   },
   {
@@ -104,7 +104,8 @@ export default function DocsIndexPage() {
               <code>{PUBLIC_GATEWAY_ORIGIN}</code> with{" "}
               <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code>. The gateway
               proxies <code>/van</code> to the virtual desk. Keys work on{" "}
-              <code>/van/v2/trading/*</code> only.
+              <code>/van/v2/trading/*</code> and{" "}
+              <code>/van/v2/copy-trade/*</code>.
             </p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground">
               <li>
@@ -121,7 +122,9 @@ export default function DocsIndexPage() {
                 Copy <code>key_id.key_secret</code> — the secret is shown once.
               </li>
               <li>
-                Send requests to <code>{docsVanUrl("/v2/trading/*")}</code>.
+                Send requests to <code>{docsVanUrl("/v2/trading/*")}</code> or{" "}
+                <code>{docsVanUrl("/v2/copy-trade/*")}</code>. See the full
+                list on <Link href="/docs/api-keys">API keys</Link>.
               </li>
             </ol>
             <p className="mt-4 text-xs text-muted-foreground">

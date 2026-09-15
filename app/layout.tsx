@@ -4,7 +4,6 @@ import { GeistSans } from "geist/font/sans";
 
 import "./globals.css";
 
-import { PrivyAppProvider } from "@/components/privy/PrivyAppProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -22,10 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <PrivyAppProvider>
-          {children}
-          <Toaster />
-        </PrivyAppProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

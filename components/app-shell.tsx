@@ -57,7 +57,12 @@ function shortWallet(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-function UserMenu({ name, email, wallet }: PublicIdentity) {
+function UserMenu({
+  name,
+  email,
+  wallet,
+  onSignOut,
+}: PublicIdentity & { onSignOut?: () => Promise<void> }) {
   const initials = (email ?? name).slice(0, 2).toUpperCase();
   const [pending, startTransition] = React.useTransition();
 
@@ -83,7 +88,14 @@ function UserMenu({ name, email, wallet }: PublicIdentity) {
           className="text-foreground"
           onSelect={() => {
             startTransition(() => {
-              void logoutAction();
+              void (async () => {
+                try {
+                  await onSignOut?.();
+                } catch {
+                  // Cookie + /login redirect still run.
+                }
+                await logoutAction();
+              })();
             });
           }}
         >
@@ -112,7 +124,15 @@ function UserMenuSlot({ identity }: { identity?: PublicIdentity }) {
 }
 
 function PrivyUserMenu() {
-  return <UserMenu {...usePrivyIdentity()} />;
+  const { logout, authenticated } = usePrivy();
+  return (
+    <UserMenu
+      {...usePrivyIdentity()}
+      onSignOut={async () => {
+        if (authenticated) await logout();
+      }}
+    />
+  );
 }
 
 export function AppShell({ identity, children }: { identity?: PublicIdentity; children: React.ReactNode }) {

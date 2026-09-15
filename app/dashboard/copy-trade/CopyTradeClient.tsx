@@ -54,20 +54,33 @@ function money(n: number): string {
   return `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-export function CopyTradeClient({ initialAccountId }: { initialAccountId?: string }) {
-  const [me, setMe] = useState<BrowserMe | null>(null);
-  const [accountId, setAccountId] = useState(initialAccountId ?? "");
+function pickAccount(me: BrowserMe, preferred?: string) {
+  return me.prop_accounts.find((a) => a.id === preferred) ?? me.prop_accounts[0];
+}
+
+export function CopyTradeClient({
+  initialAccountId,
+  initialMe,
+}: {
+  initialAccountId?: string;
+  initialMe?: BrowserMe | null;
+}) {
+  const seeded = initialMe ? pickAccount(initialMe, initialAccountId) : undefined;
+  const [me, setMe] = useState<BrowserMe | null>(initialMe ?? null);
+  const [accountId, setAccountId] = useState(seeded?.id ?? initialAccountId ?? "");
   const [subs, setSubs] = useState<CopySubscription[]>([]);
   const [fills, setFills] = useState<CopyFill[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [leader, setLeader] = useState("");
-  const [allocUsd, setAllocUsd] = useState("");
+  const [allocUsd, setAllocUsd] = useState(
+    seeded ? String(Math.round(Number(seeded.account_size) * 0.25)) : "",
+  );
   const [scalePct, setScalePct] = useState("100");
   const [maxLev, setMaxLev] = useState("5");
   const [markets, setMarkets] = useState<CopyMarkets>("perp");
-  const [signed, setSigned] = useState(false);
+  const [signed, setSigned] = useState(initialMe?.agreement_signed ?? false);
 
   const accounts = useMemo(() => me?.prop_accounts ?? [], [me]);
   const selected = useMemo(() => accounts.find((a) => a.id === accountId) ?? accounts[0], [accounts, accountId]);
@@ -97,11 +110,11 @@ export function CopyTradeClient({ initialAccountId }: { initialAccountId?: strin
     let cancelled = false;
     (async () => {
       try {
-        const id = await loadMe();
+        const id = initialMe ? (seeded?.id ?? accountId) : await loadMe();
         if (!cancelled && id) await loadSubs(id);
       } catch (e) {
         if (!cancelled) {
-          toast.error(e instanceof VantaBrowserError ? friendlyError(e.code, e.message) : "Could not load copy trade.");
+          toast.error(e instanceof VantaBrowserError ? friendlyError(e.code, e.message) : "Could not load copy trade. Is the gateway running?");
         }
       } finally {
         if (!cancelled) setLoading(false);
