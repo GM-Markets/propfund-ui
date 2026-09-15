@@ -13,10 +13,11 @@ set -euo pipefail
 #   pnpm deploy:dev
 #
 # Build modes:
-#   BUILD_MODE=host   (default) — `next build` on the host (uses local .next/cache,
-#                     usually much faster), then Docker only packages standalone output.
-#   BUILD_MODE=docker — full `next build` inside Docker.
-#                     Use on CI / machines without a warm local install.
+#   BUILD_MODE=host   (default on Node ≥22) — `next build` on the host (uses
+#                     local .next/cache), then Docker only packages standalone.
+#   BUILD_MODE=docker — full `next build` inside Docker (Node 22 + pnpm 11).
+#                     Auto-selected when host Node is <22 (EC2 Node 18 cannot
+#                     install this repo's pnpm 11 lockfile).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
@@ -121,6 +122,11 @@ export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-propfund-${DEPLOY_ENV}}"
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
+NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo 18)"
+if [[ -z "${BUILD_MODE:-}" && "$NODE_MAJOR" -lt 22 ]]; then
+  BUILD_MODE=docker
+  echo "Node $(node -v) cannot install the pnpm 11 lockfile — using BUILD_MODE=docker"
+fi
 BUILD_MODE="$(printf '%s' "${BUILD_MODE:-host}" | tr '[:upper:]' '[:lower:]')"
 case "$BUILD_MODE" in
   host|docker) ;;
@@ -181,7 +187,10 @@ ensure_host_next() {
 
   echo "Host next binary missing — installing deps…"
   if [[ -f pnpm-lock.yaml ]]; then
-    host_pnpm install --frozen-lockfile
+    if ! host_pnpm install --frozen-lockfile; then
+      echo "Frozen lockfile rejected — retrying without --frozen-lockfile"
+      host_pnpm install --no-frozen-lockfile
+    fi
   else
     npm ci --no-audit --no-fund
   fi
