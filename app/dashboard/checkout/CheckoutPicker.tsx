@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import {
   createCheckoutAction,
   createFreeAccountAction,
+  forgetDeskReadsAction,
   listPropAccountsAction,
   simulateCheckoutAction,
 } from "@/app/actions/onboarding";
@@ -81,8 +82,9 @@ export function CheckoutPicker({
       await new Promise((res) => setTimeout(res, 1500));
     }
     setProvisioning(false);
-    router.refresh();
     if (newId) {
+      await forgetDeskReadsAction();
+      await router.refresh();
       toast.success("Account ready.");
       router.push(`/dashboard/trading?prop=${newId}`);
     } else {
@@ -107,6 +109,7 @@ export function CheckoutPicker({
         });
         if (r.ok && r.data) {
           toast.success("Free account provisioned.");
+          await router.refresh();
           router.push(`/dashboard/trading?prop=${r.data.id}`);
         } else if (!r.ok) {
           toast.error(friendlyError(r.code, r.message));
@@ -154,7 +157,7 @@ export function CheckoutPicker({
         return;
       }
       setSimOpen(false);
-      router.refresh();
+      await router.refresh();
       if (outcome === "success" && r.data?.account) {
         toast.success("Account ready.");
         router.push(`/dashboard/trading?prop=${r.data.account.id}`);

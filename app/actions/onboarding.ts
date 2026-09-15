@@ -1,8 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import * as hsc from "@/lib/hsc/client";
 
 import type { ActionResult } from "./auth";
+
+function revalidateDesk(): void {
+  revalidatePath("/dashboard", "layout");
+}
 
 function failure(e: unknown): ActionResult {
   if (e instanceof hsc.HscApiError) return { ok: false, code: e.code, message: e.message };
@@ -19,7 +25,9 @@ export async function getKycStatusAction() {
 
 export async function getKycSessionAction() {
   try {
-    return { ok: true as const, data: await hsc.kyc.stripeSession() };
+    const data = await hsc.kyc.stripeSession();
+    revalidateDesk();
+    return { ok: true as const, data };
   } catch (e) {
     return failure(e);
   }
@@ -27,7 +35,9 @@ export async function getKycSessionAction() {
 
 export async function simulateKycAction(outcome: "success" | "failure") {
   try {
-    return { ok: true as const, data: await hsc.kyc.simulate({ outcome }) };
+    const data = await hsc.kyc.simulate({ outcome });
+    revalidateDesk();
+    return { ok: true as const, data };
   } catch (e) {
     return failure(e);
   }
@@ -43,7 +53,9 @@ export async function listTiersAction() {
 
 export async function signAgreementAction(input: { agreement_version: string; signature_name: string }) {
   try {
-    return { ok: true as const, data: await hsc.agreements.sign(input) };
+    const data = await hsc.agreements.sign(input);
+    revalidateDesk();
+    return { ok: true as const, data };
   } catch (e) {
     return failure(e);
   }
@@ -72,10 +84,20 @@ export async function simulateCheckoutAction(input: {
   amount_cents: number;
 }) {
   try {
-    return { ok: true as const, data: await hsc.payments.simulate(input) };
+    const data = await hsc.payments.simulate(input);
+    if (input.outcome === "success" && data.account) {
+      hsc.dropCachedReads();
+      revalidateDesk();
+    }
+    return { ok: true as const, data };
   } catch (e) {
     return failure(e);
   }
+}
+
+export async function forgetDeskReadsAction() {
+  hsc.dropCachedReads();
+  revalidateDesk();
 }
 
 export async function createFreeAccountAction(input: {
@@ -85,7 +107,9 @@ export async function createFreeAccountAction(input: {
   market?: string;
 }) {
   try {
-    return { ok: true as const, data: await hsc.payments.freeAccount(input) };
+    const data = await hsc.payments.freeAccount(input);
+    revalidateDesk();
+    return { ok: true as const, data };
   } catch (e) {
     return failure(e);
   }

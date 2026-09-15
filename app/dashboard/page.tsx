@@ -15,7 +15,7 @@ import { identityFromGatewayProfile } from "@/lib/gateway/profile";
 import * as hsc from "@/lib/hsc/client";
 
 export default async function DashboardHome() {
-  const [identity, meResult] = await Promise.all([
+  const [identity, meResult, listed] = await Promise.all([
     getGatewayMe()
       .then((profile) => identityFromGatewayProfile(profile))
       .catch(() => null),
@@ -23,6 +23,7 @@ export default async function DashboardHome() {
       ok: false as const,
       message: e instanceof hsc.HscApiError ? `${e.code}: ${e.message}` : "Could not reach /van.",
     })),
+    hsc.payments.listPropAccounts().catch(() => null),
   ]);
   if (!meResult.ok) {
     return (
@@ -46,7 +47,7 @@ export default async function DashboardHome() {
     );
   }
   const me = meResult.data;
-  const accounts = me.prop_accounts ?? [];
+  const accounts = listed ?? me.prop_accounts ?? [];
 
   const name = identity?.name ?? "trader";
 

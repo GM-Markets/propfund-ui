@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import * as hsc from "@/lib/hsc/client";
 
@@ -88,6 +89,7 @@ describe("onboarding actions", () => {
   });
 
   it("simulateCheckoutAction provisions on success", async () => {
+    const drop = vi.spyOn(hsc, "dropCachedReads");
     const spy = vi.spyOn(hsc.payments, "simulate").mockResolvedValue({
       payment: {
         payment_id: "pay_sim",
@@ -118,6 +120,34 @@ describe("onboarding actions", () => {
       amount_cents: 8400,
     });
     expect(r).toMatchObject({ ok: true, data: { account: { id: "p1" } } });
+    expect(drop).toHaveBeenCalled();
+  });
+
+  it("simulateCheckoutAction does not drop cache on a failed payment", async () => {
+    const drop = vi.spyOn(hsc, "dropCachedReads");
+    vi.spyOn(hsc.payments, "simulate").mockResolvedValue({
+      payment: {
+        payment_id: "pay_fail",
+        provider: "privy",
+        provider_payment_id: "sim_failure_pay_fail",
+        client_secret: null,
+        amount_cents: 8400,
+        currency: "usd",
+        status: "failed",
+        tier_id: "tier_25k",
+      },
+      account: null,
+    });
+    const r = await simulateCheckoutAction({
+      outcome: "failure",
+      tier_id: "tier_25k",
+      market: "crypto",
+      asset_class: "crypto",
+      account_size: 25_000,
+      amount_cents: 8400,
+    });
+    expect(r).toMatchObject({ ok: true, data: { account: null } });
+    expect(drop).not.toHaveBeenCalled();
   });
 
   it("createFreeAccountAction returns the provisioned account", async () => {

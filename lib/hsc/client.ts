@@ -39,7 +39,7 @@ async function cachedUserGet<T>(name: string, load: () => Promise<T>, ttlMs = RE
     return readCache.remember(`${name}:${await sessionCacheKey()}`, load, ttlMs);
 }
 
-function dropCachedReads(): void {
+export function dropCachedReads(): void {
     readCache.invalidate();
 }
 
@@ -233,10 +233,7 @@ export const payments = {
       currency: string;
       status: string;
       tier_id: string;
-    }>("/v2/payments/checkout", { method: "POST", json: body }).then((row) => {
-      dropCachedReads();
-      return row;
-    }),
+    }>("/v2/payments/checkout", { method: "POST", json: body }),
   simulate: (body: {
     outcome: "success" | "failure";
     tier_id: string;
@@ -259,7 +256,7 @@ export const payments = {
       };
       account: PropAccountSummary | null;
     }>("/v2/payments/simulate", { method: "POST", json: body }).then((row) => {
-      dropCachedReads();
+      if (row.account) dropCachedReads();
       return row;
     }),
   freeAccount: (body: { tier_id: string; asset_class: string; account_size: number; market?: string }) =>

@@ -50,7 +50,7 @@ export function KycStartButton({ devSimulate = false }: { devSimulate?: boolean 
         return;
       }
       setDialogOpen(false);
-      router.refresh();
+      await router.refresh();
     } finally {
       setPending(false);
     }

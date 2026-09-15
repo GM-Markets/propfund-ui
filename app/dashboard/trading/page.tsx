@@ -16,7 +16,10 @@ type Props = { searchParams: Promise<{ prop?: string }> };
 export default async function TradingPage({ searchParams }: Props) {
   const { prop } = await searchParams;
   const me = await hsc.auth.me().catch(() => null);
-  const accounts = me?.prop_accounts ?? [];
+  let accounts = me?.prop_accounts ?? [];
+  if (prop && !accounts.some((a) => a.id === prop)) {
+    accounts = await hsc.payments.listPropAccounts().catch(() => accounts);
+  }
   if (accounts.length === 0) {
     redirect("/dashboard/checkout");
   }
