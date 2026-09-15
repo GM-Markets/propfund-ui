@@ -49,7 +49,7 @@ export function PerpPicker({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left text-sm"
       >
-        <span className="min-w-0 flex-1 truncate font-medium">{value}</span>
+        <span className="min-w-0 flex-1 truncate font-medium">{displayCoin(value)}</span>
         {selected && selected.mid > 0 ? (
           <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
             {formatPx(selected.mid)}
@@ -89,7 +89,7 @@ export function PerpPicker({
                       setQ("");
                     }}
                   >
-                    <span className="min-w-0 truncate font-medium">{m.coin}</span>
+                    <span className="min-w-0 truncate font-medium">{displayCoin(m.coin)}</span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                       {m.mid > 0 ? formatPx(m.mid) : "—"}
                     </span>

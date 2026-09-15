@@ -45,6 +45,26 @@ describe("subscribeHlAllMids", () => {
 
   afterEach(() => {
     globalThis.WebSocket = OriginalWebSocket;
+    vi.unstubAllGlobals();
+  });
+
+  it("fetchHlAllMids posts type allMids and parses the map", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ BTC: "76956.5", "@107": "0.2" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { fetchHlAllMids } = await import("./all-mids");
+    await expect(fetchHlAllMids()).resolves.toEqual({ BTC: "76956.5", "@107": "0.2" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.hyperliquid.xyz/info",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ type: "allMids" }),
+      }),
+    );
   });
 
   it("subscribes allMids and fans HL frames to the listener", async () => {

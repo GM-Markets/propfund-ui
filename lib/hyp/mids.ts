@@ -37,7 +37,9 @@ export function midFromTape(
   market: { coin: string; wire?: string; mid?: number },
 ): number {
   if (mids) {
-    for (const key of [market.wire, market.coin, `${market.coin}/USDC`, `${market.coin}-USDC`]) {
+    const coin = market.coin ?? "";
+    const bare = coin.includes(":") ? coin.slice(coin.indexOf(":") + 1) : coin;
+    for (const key of [market.wire, coin, bare, `${coin}/USDC`, `${coin}-USDC`, `${bare}/USDC`]) {
       if (!key) continue;
       const n = Number(mids[key] ?? mids[key.toUpperCase()]);
       if (Number.isFinite(n) && n > 0) return n;
@@ -62,31 +64,21 @@ export function overlayMarketMids<T extends { coin: string; wire?: string; mid: 
   return changed ? next : markets;
 }
 
+/** Real perp tickers only — not spots (`@107`) or prediction-market ids (`#25551`). */
 export function isPerpTapeCoin(coin: string): boolean {
-  if (!coin || coin.startsWith("@")) return false;
+  if (!coin || coin.startsWith("@") || coin.startsWith("#")) return false;
+  if (!/[A-Za-z]/.test(coin)) return false;
   const upper = coin.toUpperCase();
   return upper !== "USDC" && upper !== "USDT";
 }
 
 /**
- * Catalog plus every perp on the live `allMids` tape. The picker must not
- * stay on the 4-coin fallback when the websocket is already streaming.
+ * Overlay live `allMids` prices onto the Hyperliquid meta catalog.
+ * Do not invent picker rows from the tape — allMids also carries `#id` prediction markets.
  */
 export function mergeTapePerps<T extends { coin: string; wire?: string; mid: number; max_leverage: number }>(
   catalog: T[],
   mids: HypMids | undefined,
 ): T[] {
-  const byCoin = new Map<string, T>();
-  for (const row of overlayMarketMids(catalog, mids)) {
-    byCoin.set(row.coin, row);
-  }
-  if (mids) {
-    for (const [coin, px] of Object.entries(mids)) {
-      if (!isPerpTapeCoin(coin) || byCoin.has(coin)) continue;
-      const mid = Number(px);
-      if (!(mid > 0)) continue;
-      byCoin.set(coin, { coin, wire: coin, mid, max_leverage: 50 } as T);
-    }
-  }
-  return [...byCoin.values()].sort((a, b) => a.coin.localeCompare(b.coin));
+  return overlayMarketMids(catalog, mids);
 }

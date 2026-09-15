@@ -7,6 +7,7 @@ import { closePositionAction, deskPollAction, listMarketsAction, submitOrderActi
 import { AgreementSignCard } from "@/components/agreement-sign-card";
 import { friendlyError } from "@/lib/errors";
 import type { PropAccountSummary } from "@/lib/hsc/client";
+import { fetchHlCanonicalPerps, fetchHlHip3Perps, fetchHlSpotCatalog } from "@/lib/hl/info";
 import { getHypMidsSnapshot, subscribeHypMidsStore } from "@/lib/hyp/mids-feed";
 import { mergeTapePerps, midFromTape, overlayMarketMids } from "@/lib/hyp/mids";
 
@@ -72,10 +73,22 @@ export function TradingTerminal({
   }
 
   async function refreshMarkets() {
-    const r = await listMarketsAction();
-    if (r.ok && r.data) {
-      if (r.data.markets?.length) setMarkets(r.data.markets);
-      if (r.data.spots?.length) setSpots(r.data.spots);
+    const [canonical, hlSpots, vanta] = await Promise.all([
+      fetchHlCanonicalPerps().catch(() => null),
+      fetchHlSpotCatalog().catch(() => null),
+      listMarketsAction(),
+    ]);
+    if (canonical?.length) setMarkets(canonical);
+    else if (vanta.ok && vanta.data?.markets?.length) setMarkets(vanta.data.markets);
+    if (hlSpots?.length) setSpots(hlSpots);
+    else if (vanta.ok && vanta.data?.spots?.length) setSpots(vanta.data.spots);
+    const hip3 = await fetchHlHip3Perps().catch(() => null);
+    if (hip3?.length) {
+      setMarkets((prev) => {
+        const byCoin = new Map(prev.map((row) => [row.coin, row]));
+        for (const row of hip3) byCoin.set(row.coin, row);
+        return [...byCoin.values()].sort((a, b) => a.coin.localeCompare(b.coin));
+      });
     }
   }
 
@@ -98,7 +111,8 @@ export function TradingTerminal({
   const livePositions = useMemo(() => {
     if (!snap) return [];
     return snap.positions.map((pos) => {
-      const row = (pos.market_type === "spot" ? liveSpots : liveMarkets).find((m) => m.coin === pos.coin);
+      const bookForPos = pos.market_type === "spot" ? liveSpots : liveMarkets;
+      const row = bookForPos.find((m) => m.coin === pos.coin || m.wire === pos.coin);
       const mark = midFromTape(mids, row ?? { coin: pos.coin ?? "", wire: pos.coin, mid: pos.mark_price });
       return markLivePosition(pos, mark);
     });
@@ -106,6 +120,9 @@ export function TradingTerminal({
   const liveBalance = useMemo(() => liveDeskBalance(snap?.balance, livePositions), [snap, livePositions]);
 
   useEffect(() => {
+    if (book.length > 0 && !book.some((m) => m.coin === pair)) {
+      setPair(book[0].coin);
+    }
     const maxLev = book.find((m) => m.coin === pair)?.max_leverage;
     if (maxLev && Number(leverage) > maxLev) setLeverage(String(maxLev));
   }, [book, pair, leverage]);

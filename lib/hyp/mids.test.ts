@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeTapePerps, midFromTape, overlayMarketMids, parseHypMids } from "./mids";
+import { isPerpTapeCoin, mergeTapePerps, midFromTape, overlayMarketMids, parseHypMids } from "./mids";
 
 const MIDS = { BTC: "78469.5", "@107": "1.23" };
 
@@ -35,15 +35,30 @@ describe("overlayMarketMids", () => {
   });
 });
 
+describe("isPerpTapeCoin", () => {
+  it("keeps tickers and drops spots and prediction ids", () => {
+    expect(isPerpTapeCoin("BTC")).toBe(true);
+    expect(isPerpTapeCoin("xyz:GOLD")).toBe(true);
+    expect(isPerpTapeCoin("@107")).toBe(false);
+    expect(isPerpTapeCoin("#25551")).toBe(false);
+    expect(isPerpTapeCoin("12090")).toBe(false);
+  });
+});
+
 describe("mergeTapePerps", () => {
-  it("expands the 4-coin fallback with every perp on the tape", () => {
+  it("overlays tape mids and ignores prediction-market ids", () => {
     const catalog = [
       { coin: "BTC", wire: "BTC", mid: 1, max_leverage: 40 },
       { coin: "ETH", wire: "ETH", mid: 2, max_leverage: 25 },
     ];
-    const next = mergeTapePerps(catalog, { BTC: "76939.5", DOGE: "0.14", "@107": "0.2" });
-    expect(next.map((row) => row.coin)).toEqual(["BTC", "DOGE", "ETH"]);
-    expect(next.find((row) => row.coin === "BTC")?.mid).toBe(76939.5);
-    expect(next.find((row) => row.coin === "DOGE")).toMatchObject({ mid: 0.14, max_leverage: 50 });
+    const next = mergeTapePerps(catalog, {
+      BTC: "76939.5",
+      DOGE: "0.14",
+      "@107": "0.2",
+      "#25551": "0.5",
+    });
+    expect(next.map((row) => row.coin)).toEqual(["BTC", "ETH"]);
+    expect(next.find((row) => row.coin === "BTC")).toMatchObject({ mid: 76939.5, max_leverage: 40 });
+    expect(next.find((row) => row.coin === "ETH")?.max_leverage).toBe(25);
   });
 });
