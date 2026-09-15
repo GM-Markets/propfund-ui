@@ -8,12 +8,11 @@ import type { ActionResult } from "./auth";
  * Live, read-only "Run it now" examples for the docs pages.
  *
  * Every operation here is a GET-style read so a developer can safely poke the
- * API from the browser. Calls go through the app's server-side OAuth client
- * credentials plus the signed-in user's session cookie — exactly the same path
- * the rest of the app uses. Mutating endpoints are intentionally omitted.
+ * API from the browser. Calls use the signed-in Privy session cookie — the
+ * same Bearer the rest of the app sends to the Flo gateway. Mutating
+ * endpoints are intentionally omitted.
  */
 export type DocsOperation =
-  | "oauth.me"
   | "apps.me"
   | "auth.me"
   | "kyc.status"
@@ -38,8 +37,6 @@ async function firstPropId(): Promise<string | undefined> {
 
 async function run(op: DocsOperation): Promise<unknown> {
   switch (op) {
-    case "oauth.me":
-      return hsc.oauth.me();
     case "apps.me":
       return hsc.apps.me();
     case "auth.me":

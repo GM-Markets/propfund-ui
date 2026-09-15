@@ -4,6 +4,7 @@ import "../propfund-marketing.css";
 
 export const metadata: Metadata = {
   title: {
+    absolute: "Propfund | Simulated Trading Evaluations",
     default: "Propfund | Simulated Trading Evaluations",
     template: "%s",
   },

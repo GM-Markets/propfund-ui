@@ -51,6 +51,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 function UserMenu({ email }: { email: string }) {
   const initials = email.slice(0, 2).toUpperCase();
+  const [pending, startTransition] = React.useTransition();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +68,18 @@ function UserMenu({ email }: { email: string }) {
           <div className="truncate text-sm font-medium text-foreground">{email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <form action={logoutAction}>
-          <button type="submit" className="w-full">
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-foreground">
-              <LogOut />
-              Sign out
-            </DropdownMenuItem>
-          </button>
-        </form>
+        <DropdownMenuItem
+          disabled={pending}
+          className="text-foreground"
+          onSelect={() => {
+            startTransition(() => {
+              void logoutAction();
+            });
+          }}
+        >
+          <LogOut />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -95,7 +101,7 @@ export function AppShell({ email, children }: { email: string; children: React.R
           <NavLinks />
         </div>
         <div className="rounded-lg border border-border bg-card/60 p-3 text-xs text-muted-foreground">
-          Built on <span className="font-medium text-foreground">hyperscaled-api</span>
+          Simulated desk · 100% eligible rewards
         </div>
       </aside>
 
@@ -137,7 +143,7 @@ export function AppShell({ email, children }: { email: string; children: React.R
             <UserMenu email={email} />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
           <PageFade>{children}</PageFade>
         </main>
       </div>

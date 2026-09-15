@@ -41,9 +41,8 @@ export default function KycDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:8000/v2/kyc/sumsub/token \\
-  -H "Authorization: Bearer <app_access_token>" \\
-  -H "X-Session-Token: <user_session_token>"`}
+            code={`curl -X POST http://localhost:5400/van/v2/kyc/stripe/session \\
+  -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock
             lang="typescript"

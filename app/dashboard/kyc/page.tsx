@@ -31,7 +31,7 @@ export default async function KycPage() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="text-base">Current status</CardTitle>
-            <CardDescription>Powered by Sumsub ID + liveness.</CardDescription>
+            <CardDescription>Powered by Stripe Identity.</CardDescription>
           </div>
           <StatusBadge status={status?.kyc_status} />
         </CardHeader>

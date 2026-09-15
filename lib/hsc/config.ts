@@ -1,29 +1,15 @@
 /**
- * Single source of truth for the hyperscaled-api connection.
+ * Flo gateway connection. Auth is the gateway's job.
  *
- * Never imported on the client (the `HSC_CLIENT_SECRET` here is sensitive).
- * All network calls flow through `lib/hsc/client.ts` server-side.
+ * This app sends the Privy identity token as `Authorization: Bearer`.
+ * The gateway verifies it and proxies `/van` to Vanta with `x-user-*`.
  */
 import "server-only";
 
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing required env var: ${name}`);
-  return v;
-}
+const gateway = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(/\/$/, "");
 
 export const hscConfig = {
-  baseUrl: process.env.HSC_API_BASE_URL ?? "http://localhost:8000",
-  clientId: process.env.HSC_CLIENT_ID ?? "",
-  clientSecret: process.env.HSC_CLIENT_SECRET ?? "",
-  scope: process.env.HSC_SCOPE ?? "api",
-  webhookSecret: process.env.HSC_WEBHOOK_SECRET ?? "",
-  sessionCookieName: process.env.SESSION_COOKIE_NAME ?? "hsc_starter_session",
-  sessionCookieSecret: process.env.SESSION_COOKIE_SECRET ?? "",
+  baseUrl: process.env.VANTA_API_BASE_URL ?? process.env.HSC_API_BASE_URL ?? `${gateway}/van`,
+  webhookSecret: process.env.VANTA_WEBHOOK_SECRET ?? process.env.HSC_WEBHOOK_SECRET ?? "",
+  sessionCookieName: process.env.SESSION_COOKIE_NAME ?? "vanta_privy_session",
 };
-
-export function assertReady(): void {
-  requireEnv("HSC_CLIENT_ID");
-  requireEnv("HSC_CLIENT_SECRET");
-  requireEnv("SESSION_COOKIE_SECRET");
-}

@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { HeroDotField } from "@/components/propfund/HeroDotField";
-import { EvaluationDialog } from "@/components/propfund/EvaluationDialog";
 import { MaterialIcon } from "@/components/propfund/MaterialIcon";
 import { TradingTerminalMockup } from "@/components/propfund/TradingTerminalMockup";
 import { PointsProgram } from "@/components/propfund/PointsProgram";
@@ -139,19 +139,12 @@ const comparisons = [
 ];
 
 export default function Home() {
-  const [formOpen, setFormOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState("$25K");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  function openForm(account = "$25K") {
-    setSelectedAccount(account);
-    setFormOpen(true);
-  }
 
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <SiteHeader onStart={() => openForm()} />
+      <SiteHeader />
       <main id="main-content">
 
       <div className="dark-shell">
@@ -163,7 +156,7 @@ export default function Home() {
                 <h1>Pass the evaluation.<br />Keep trading your strategy.</h1>
                 <p>No second phase or deadline. After you pass, trade seven days and request 100% of eligible rewards each week.</p>
                 <div className="hero-actions">
-                  <button className="pill pill-light pill-large" onClick={() => openForm()} type="button">Start evaluation</button>
+                  <Link className="pill pill-light pill-large" href="/login">Start evaluation</Link>
                   <a className="hero-secondary" href="/rules">See the rules <MaterialIcon name="arrow_forward" /></a>
                 </div>
               </div>
@@ -247,7 +240,7 @@ export default function Home() {
                 <div><dt><MaterialIcon name="schedule" />Time</dt><dd>Unlimited</dd></div>
                 <div><dt><MaterialIcon name="trending_up" />Scaling</dt><dd>{plan.scale}</dd></div>
               </dl>
-              <button onClick={() => openForm(plan.size)} type="button">Start with {plan.size} <MaterialIcon name="arrow_forward" /></button>
+              <Link href={`/login?account=${encodeURIComponent(plan.size)}`}>Start with {plan.size} <MaterialIcon name="arrow_forward" /></Link>
             </article>
           ))}
         </div>
@@ -277,9 +270,8 @@ export default function Home() {
           );
         })}</div>
       </section>
-      <EvaluationDialog key={`${formOpen}-${selectedAccount}`} open={formOpen} initialAccount={selectedAccount} onClose={() => setFormOpen(false)} />
       </main>
-      <SiteFooter onStart={() => openForm()} />
+      <SiteFooter />
     </>
   );
 }

@@ -36,12 +36,10 @@ jobs:
         run: pnpm build
         env:
           # Build-time placeholders so `next build` doesn't fail on missing env.
-          HSC_API_BASE_URL: http://localhost:8000
-          HSC_CLIENT_ID: ci_placeholder
-          HSC_CLIENT_SECRET: ci_placeholder
-          SESSION_COOKIE_SECRET: ci_placeholder_session_secret_min_32_bytes
+          NEXT_PUBLIC_GATEWAY_URL: http://localhost:5400
+          VANTA_API_BASE_URL: http://localhost:5400/van
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
-          NEXT_PUBLIC_HSC_API_BASE_URL: http://localhost:8000
+          NEXT_PUBLIC_PRIVY_APP_ID: ci_placeholder
 
   e2e:
     runs-on: ubuntu-latest
@@ -65,8 +63,6 @@ jobs:
       - name: Run e2e tests
         run: pnpm test:e2e
         env:
-          HSC_API_BASE_URL: http://localhost:8000
-          HSC_CLIENT_ID: ci_placeholder
-          HSC_CLIENT_SECRET: ci_placeholder
-          SESSION_COOKIE_SECRET: ci_placeholder_session_secret_min_32_bytes
-          NEXT_PUBLIC_HSC_API_BASE_URL: http://localhost:8000
+          NEXT_PUBLIC_GATEWAY_URL: http://localhost:5400
+          VANTA_API_BASE_URL: http://localhost:5400/van
+          NEXT_PUBLIC_PRIVY_APP_ID: ci_placeholder

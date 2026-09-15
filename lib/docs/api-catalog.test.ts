@@ -7,7 +7,6 @@ const VALID_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
 // Mirrors the DocsOperation union in app/actions/docs.ts. Kept here as runtime
 // data so the catalog's `runOp` references can be validated against it.
 const VALID_RUN_OPS = new Set([
-  "oauth.me",
   "apps.me",
   "auth.me",
   "kyc.status",

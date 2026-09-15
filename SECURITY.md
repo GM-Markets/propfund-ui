@@ -22,11 +22,11 @@ the issue before any public disclosure.
 
 ## Scope & secret hygiene
 
-This starter is a **client/BFF** app — its only secrets are the OAuth
-`HSC_CLIENT_SECRET` and `SESSION_COOKIE_SECRET`.
+This starter is a **client/BFF** app. It stores the Privy identity token in an
+httpOnly cookie and sends it to the Flo gateway. There is no app OAuth secret.
 
-- Never expose `HSC_CLIENT_SECRET` to the browser. It must only be used inside
-  Server Actions / route handlers.
+- Never expose the Privy identity token to client-side JavaScript beyond Privy
+  itself. The BFF copies it into an httpOnly cookie.
 - Only `NEXT_PUBLIC_*` variables are safe for client exposure.
 - All `.env*` files are gitignored. If you ever commit a secret, **rotate it**
   immediately — removing it from history is not enough.

@@ -2,7 +2,7 @@
  * PropFund brand tokens shared by the logo SVG, theme docs, and diagram accents.
  * HSL channel strings match CSS variables in app/globals.css.
  */
-export const BRAND_NAME = "PropFund";
+export const BRAND_NAME = "Propfund";
 
 /** Greek capital Phi — contemporary fund mark. */
 export const BRAND_MARK_LETTER = "Φ";

@@ -10,6 +10,9 @@ describe("friendlyError", () => {
     expect(friendlyError("V2_EMAIL_TAKEN")).toBe(
       "An account with this email already exists. Try signing in.",
     );
+    expect(friendlyError("V2_AGREEMENT_REQUIRED")).toBe(
+      "Sign the current agreement before you trade or buy a challenge.",
+    );
   });
 
   it("prefers the known code over a provided fallback", () => {
@@ -20,6 +23,12 @@ describe("friendlyError", () => {
 
   it("uses the fallback for an unknown code", () => {
     expect(friendlyError("V2_SOMETHING_NEW", "Server said no")).toBe("Server said no");
+  });
+
+  it("explains a spot sell with no inventory", () => {
+    expect(friendlyError("V2_VALIDATION", "spot sell exceeds long inventory")).toBe(
+      "You can only sell spot you already hold.",
+    );
   });
 
   it("ignores a JSON-blob fallback so raw envelopes never reach the UI", () => {

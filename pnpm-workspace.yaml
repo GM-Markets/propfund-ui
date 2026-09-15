@@ -11,7 +11,11 @@ overrides:
   vite: 6.4.3
 
 allowBuilds:
+  '@reown/appkit': false
+  bufferutil: false
   esbuild: true
+  keccak: false
   msw: true
   sharp: true
   unrs-resolver: true
+  utf-8-validate: false

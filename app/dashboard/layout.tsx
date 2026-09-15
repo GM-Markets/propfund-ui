@@ -10,13 +10,13 @@ import * as hsc from "@/lib/hsc/client";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  let email = "";
+  let label = "";
   try {
     const me = await hsc.auth.me();
-    email = me.email;
+    label = me.source || me.gateway_user_id || me.user_id;
   } catch {
     redirect("/login");
   }
 
-  return <AppShell email={email}>{children}</AppShell>;
+  return <AppShell email={label}>{children}</AppShell>;
 }

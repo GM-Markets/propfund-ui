@@ -12,150 +12,76 @@ export default function QuickstartPage() {
         <p className="text-sm font-medium text-primary">Getting started</p>
         <h1 className="text-3xl font-semibold tracking-tight">Quickstart</h1>
         <p className="text-lg text-muted-foreground">
-          Run the full stack locally — the <code>hyperscaled-api</code> backend
-          plus this <code>vanta-starter</code> frontend — in about ten minutes.
+          Run this app against the Flo gateway and Vanta. Auth is Privy — the
+          gateway verifies the identity token and proxies <code>/van</code>.
         </p>
       </header>
 
       <Callout type="info" title="What you'll need">
-        Python 3.11+, Node 20+ with <code>pnpm</code>, Docker Desktop, and the
-        Stripe CLI (only for testing payments/payouts locally).
+        Node 20+ with <code>pnpm</code>, a running Flo gateway (default{" "}
+        <code>http://localhost:5400</code>), Vanta behind it, and the same Privy
+        app id as GM Markets.
       </Callout>
 
-      <DocSection title="1. Start Postgres & Redis" description="The API persists tenants, users, and payments in Postgres and uses Redis for caching/rate-limits.">
+      <DocSection
+        title="1. Start the gateway and Vanta"
+        description="This UI never talks to Vanta directly. All /van calls go through the Flo gateway."
+      >
         <CodeBlock
           lang="bash"
-          filename="hyperscaled-api"
-          code={`# from the hyperscaled-api repo root
-docker compose up -d        # Postgres (5433) + Redis (6379)
-docker compose ps`}
+          filename="flo"
+          code={`# gateway — verifies Privy JWT, injects x-user-*, proxies /van
+# vanta — desk, checkout, KYC (AWS Secrets Manager, not dotenv)`}
         />
-        <Callout type="warning" title="Port 5433, not 5432">
-          The compose file maps Postgres to host port <code>5433</code> to avoid
-          colliding with a native Postgres on <code>5432</code>. Make sure{" "}
-          <code>V2_DATABASE_URL</code> points at <code>5433</code>.
+        <Callout type="tip" title="No second login">
+          There is no <code>client_id</code>, <code>client_secret</code>, or{" "}
+          <code>/v2/oauth/token</code>. Desk bots use a Vanta-minted{" "}
+          <code>X-Api-Key</code> on <code>/van/v2/trading/*</code> only.
         </Callout>
       </DocSection>
 
-      <DocSection title="2. Configure & migrate the API">
+      <DocSection title="2. Configure & run this app">
         <CodeBlock
           lang="bash"
-          filename="hyperscaled-api"
-          code={`conda activate hyperscaled        # or your venv
-pip install -e .
-
-cp .env.example .env              # then fill in the values below
-alembic upgrade head              # create all tables`}
+          filename="propfund-ui/.env.local"
+          code={`NEXT_PUBLIC_GATEWAY_URL=http://localhost:5400
+VANTA_API_BASE_URL=http://localhost:5400/van
+NEXT_PUBLIC_PRIVY_APP_ID=
+SESSION_COOKIE_NAME=vanta_privy_session`}
         />
         <CodeBlock
           lang="bash"
-          filename="hyperscaled-api/.env (essentials)"
-          code={`V2_DATABASE_URL=postgresql+asyncpg://hyperscaled:hyperscaled@localhost:5433/hyperscaled_api
-V2_REDIS_URL=redis://localhost:6379/0
-SESSION_ENCRYPTION_KEY=<openssl rand -base64 32>
-
-# Stripe (test mode)
-V2_STRIPE_SECRET_KEY=sk_test_...
-V2_STRIPE_PUBLISHABLE_KEY=pk_test_...
-V2_STRIPE_WEBHOOK_SECRET=whsec_...
-V2_STRIPE_CONNECT_RETURN_URL=http://localhost:3000/dashboard/payouts
-V2_STRIPE_CONNECT_REFRESH_URL=http://localhost:3000/dashboard/payouts
-
-# Sumsub KYC
-V2_SUMSUB_APP_TOKEN=...
-V2_SUMSUB_SECRET_KEY=...
-
-# Email OTP (SMTP relay)
-V2_SMTP_HOST=smtp-relay.gmail.com
-V2_SMTP_USERNAME=...
-V2_SMTP_PASSWORD=...
-
-# Validator / trading network
-HYPERSCALED_VALIDATOR_API_KEY=...`}
-        />
-      </DocSection>
-
-      <DocSection title="3. Run the API">
-        <CodeBlock
-          lang="bash"
-          filename="hyperscaled-api"
-          code={`uvicorn hyperscaled_api.main:app --reload --port 8000`}
-        />
-        <p className="text-sm text-muted-foreground">
-          The interactive API reference (Swagger UI) is now live at{" "}
-          <code>http://localhost:8000/docs</code>.
-        </p>
-      </DocSection>
-
-      <DocSection title="4. Create an admin + register your app (tenant)" description="Each app that integrates is a tenant with its own OAuth client credentials. Create them from the admin dashboard — no production terminal required.">
-        <CodeBlock
-          lang="bash"
-          filename="hyperscaled-api"
-          code={`# bootstrap the first admin from env vars, then sign in at /admin
-ADMIN_EMAIL=you@taoshi.io ADMIN_PASSWORD=... python -m hyperscaled_api.scripts.bootstrap_admin
-
-# open the admin dashboard, set up 2FA, then "Register app"
-open http://localhost:8000/admin`}
-        />
-        <Callout type="tip" title="Save the client secret">
-          Registering an app returns a <code>client_id</code> and a{" "}
-          <code>client_secret</code> shown <strong>once</strong>. Copy them into
-          the frontend env below.
-        </Callout>
-      </DocSection>
-
-      <DocSection title="5. Configure & run this app">
-        <CodeBlock
-          lang="bash"
-          filename="vanta-starter/.env.local"
-          code={`HSC_API_BASE_URL=http://localhost:8000
-HSC_CLIENT_ID=hsc_...
-HSC_CLIENT_SECRET=hsk_...
-HSC_SCOPE=api
-
-SESSION_COOKIE_NAME=hsc_starter_session
-SESSION_COOKIE_SECRET=<32+ char secret>
-
-NEXT_PUBLIC_HSC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...`}
-        />
-        <CodeBlock
-          lang="bash"
-          filename="vanta-starter"
+          filename="propfund-ui"
           code={`pnpm install
 pnpm dev          # http://localhost:3000`}
         />
       </DocSection>
 
-      <DocSection title="6. (Optional) Forward Stripe webhooks" description="Payments and Connect status updates arrive via webhook. Forward them to the API while developing.">
+      <DocSection title="3. Sign in">
+        <p className="text-sm text-muted-foreground">
+          Open <Link href="/login">/login</Link>, continue with Privy, then call{" "}
+          <code>GET /van/v2/me</code>. That attaches the user to the Flo tenant
+          and claims the complimentary $10K notional test desk.
+        </p>
         <CodeBlock
           lang="bash"
-          filename="terminal"
-          code={`# use --api-key so the CLI listens on the SAME Stripe account as your keys
-stripe listen \\
-  --api-key sk_test_... \\
-  --forward-to localhost:8000/v2/webhooks/stripe
-
-# copy the whsec_... it prints into V2_STRIPE_WEBHOOK_SECRET, then restart uvicorn`}
+          filename="curl"
+          code={`curl http://localhost:5400/van/v2/me \\
+  -H "Authorization: Bearer <privy_identity_token>"`}
         />
-        <Callout type="warning" title="Restart after changing .env">
-          <code>uvicorn --reload</code> does not reload environment variables.
-          Restart the process after editing <code>.env</code>.
-        </Callout>
       </DocSection>
 
       <DocSection title="Next steps">
         <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
           <li>
-            <Link href="/docs/authentication">Authentication</Link> — how tokens
-            and sessions work.
+            <Link href="/docs/authentication">Authentication</Link> — how the
+            gateway Bearer path works.
           </li>
           <li>
             <Link href="/docs/kyc">Identity / KYC</Link> — verify a trader.
           </li>
           <li>
-            <Link href="/docs/checkout">Checkout</Link> — sell your first
-            challenge.
+            <Link href="/docs/checkout">Checkout</Link> — sell a paid challenge.
           </li>
         </ul>
       </DocSection>

@@ -17,11 +17,11 @@ test.describe("landing page", () => {
     await expect(home.headerStartEvaluationButton()).toBeVisible();
   });
 
-  test("'Start evaluation' opens the evaluation dialog", async ({ page }) => {
+  test("'Start evaluation' opens login", async ({ page }) => {
     const home = new MarketingPage(page);
     await home.goto();
     await home.headerStartEvaluationButton().click();
-    await expect(home.evaluationDialog()).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test("'How it works' opens the program guide", async ({ page }) => {

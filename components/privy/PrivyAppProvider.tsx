@@ -1,0 +1,43 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { PrivyProvider } from "@privy-io/react-auth";
+
+import { getPrivyClientId, isConfiguredPrivyAppId } from "@/lib/privy";
+
+const APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
+const CLIENT_ID = getPrivyClientId();
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
+
+export function PrivyAppProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !isConfiguredPrivyAppId(APP_ID)) {
+    return <>{children}</>;
+  }
+
+  return (
+    <PrivyProvider
+      appId={APP_ID}
+      clientId={CLIENT_ID}
+      config={{
+        loginMethodsAndOrder: {
+          primary: ["google", "email"],
+          overflow: ["wallet"],
+        },
+        appearance: {
+          theme: "light",
+          accentColor: "#d997d2",
+          logo: siteUrl ? `${siteUrl}/brand/propfund-wordmark-dark.svg` : undefined,
+          walletChainType: "ethereum-only",
+        },
+        embeddedWallets: {
+          ethereum: { createOnLogin: "all-users" },
+        },
+      }}
+    >
+      {children}
+    </PrivyProvider>
+  );
+}

@@ -17,25 +17,28 @@ import { highlight } from "@/lib/docs/highlight";
 
 export const metadata = { title: "API reference" };
 
-const BASE = process.env.NEXT_PUBLIC_HSC_API_BASE_URL ?? "http://localhost:8000";
+const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(
+  /\/$/,
+  "",
+);
+const BASE = process.env.VANTA_API_BASE_URL ?? `${GATEWAY}/van`;
 const SWAGGER_URL = `${BASE}/docs`;
 
 const BEARER: Record<AuthKind, string | null> = {
   public: null,
   provider: null,
-  app: "<app_access_token>",
-  user: "<app_access_token>",
+  app: "<privy_identity_token>",
+  user: "<privy_identity_token>",
   admin: "<admin_token>",
-  partner: "<partner_api_key>",
-  "partner-trader": "<partner_api_key>",
-  "partner-session": "<partner_api_key>",
+  partner: "<desk_api_key>",
+  "partner-trader": "<desk_api_key>",
+  "partner-session": "<desk_api_key>",
 };
 
 function buildCurl(ep: Endpoint): string {
   const lines: string[] = [`curl -X ${ep.method} ${BASE}${ep.path} \\`];
   const bearer = BEARER[ep.auth];
   if (bearer) lines.push(`  -H "Authorization: Bearer ${bearer}" \\`);
-  if (ep.auth === "user") lines.push(`  -H "X-Session-Token: <user_session_token>" \\`);
   if (ep.auth === "partner-trader") lines.push(`  -H "Trader-ID: <hl_wallet | subaccount_id>" \\`);
   if (ep.note?.includes("X-Prop-Account")) lines.push(`  -H "X-Prop-Account: <prop_account_id>" \\`);
   if (ep.request) {
@@ -110,8 +113,9 @@ export default async function ApiReferencePage() {
 
       <Callout type="tip" title="Run reads without leaving the page">
         Endpoints marked with a “Run it now” button execute live against your
-        environment using the app&apos;s server-side credentials and your signed-in
-        session. Sign in to the dashboard first for authenticated reads.
+        environment using your signed-in Privy session (the same Bearer the rest
+        of the app sends to the Flo gateway). Sign in to the dashboard first
+        for authenticated reads.
       </Callout>
 
       <ApiReferenceExplorer areas={areas} />

@@ -13,8 +13,11 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
-        NEXT_PUBLIC_HSC_API_BASE_URL: ${NEXT_PUBLIC_HSC_API_BASE_URL:-http://localhost:8000}
+        NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:6701}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-PropFund}
+        NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-}
+        NEXT_PUBLIC_PRIVY_CLIENT_ID: ${NEXT_PUBLIC_PRIVY_CLIENT_ID:-}
+        NEXT_PUBLIC_HYPERLIQUID_WS_URL: ${NEXT_PUBLIC_HYPERLIQUID_WS_URL:-wss://api.hyperliquid.xyz/ws}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     image: propfund-app:latest
     env_file:

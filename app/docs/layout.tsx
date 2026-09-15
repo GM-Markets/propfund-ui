@@ -18,9 +18,9 @@ export const metadata: Metadata = {
     "Developer documentation for building on hyperscaled-api: auth, KYC, payments, payouts, trading, API keys and webhooks.",
 };
 
-const SWAGGER_URL = `${
-  process.env.NEXT_PUBLIC_HSC_API_BASE_URL ?? "http://localhost:8000"
-}/docs`;
+const SWAGGER_URL = `${(
+  process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400"
+).replace(/\/$/, "")}/van/docs`;
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (

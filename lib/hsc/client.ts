@@ -1,19 +1,14 @@
 /**
- * Thin typed wrapper around hyperscaled-api's REST surface.
+ * Typed BFF client for Vanta through the Flo gateway (`/van`).
  *
- * The single ``hsc(path, init)`` helper handles:
- *   1. Bearer OAuth (client-credentials, cached).
- *   2. Optional end-user ``X-Session-Token`` from the request's cookie.
- *   3. JSON encode/decode + structured error throwing.
- *
- * Domain functions below wrap each endpoint as a typed call.
+ * Sends the Privy identity token as Bearer. The gateway authenticates;
+ * this client never spoofs `x-user-*`.
  */
 import "server-only";
 
 import { cookies } from "next/headers";
 
 import { hscConfig } from "./config";
-import { getAppAccessToken } from "./oauth";
 
 export class HscApiError extends Error {
   constructor(
@@ -34,9 +29,7 @@ type Init = RequestInit & {
 };
 
 async function hsc<T = unknown>(path: string, init: Init = {}): Promise<T> {
-  const token = await getAppAccessToken();
   const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
 
   if (init.json !== undefined) {
     headers.set("Content-Type", "application/json");
@@ -45,7 +38,9 @@ async function hsc<T = unknown>(path: string, init: Init = {}): Promise<T> {
   if (init.authedAsUser !== false) {
     const session =
       init.sessionTokenOverride ?? (await cookies()).get(hscConfig.sessionCookieName)?.value;
-    if (session) headers.set("X-Session-Token", session);
+    if (session) {
+      headers.set("Authorization", `Bearer ${session}`);
+    }
   }
 
   const resp = await fetch(`${hscConfig.baseUrl}${path}`, {
@@ -58,20 +53,12 @@ async function hsc<T = unknown>(path: string, init: Init = {}): Promise<T> {
   const text = await resp.text();
   const parsed = text ? safeJson(text) : null;
   if (!resp.ok) {
-    // The API surfaces errors in two shapes: FastAPI's `{ detail: {...} }` and
-    // the platform envelope `{ error: {...} }`. Prefer either's structured
-    // fields; only fall back to the status text so we never leak a raw JSON
-    // blob into the UI.
-    const env = parsed as {
-      detail?: { code?: string; message?: string; retryable?: boolean };
-      error?: { code?: string; message?: string; retryable?: boolean };
-    };
-    const d = env?.detail ?? env?.error;
+    const err = readApiError(parsed);
     throw new HscApiError(
       resp.status,
-      d?.code ?? "UNKNOWN",
-      d?.message ?? (typeof parsed === "string" ? parsed : resp.statusText),
-      Boolean(d?.retryable),
+      err.code,
+      err.message ?? (typeof parsed === "string" ? parsed : resp.statusText),
+      err.retryable,
     );
   }
   return parsed as T;
@@ -85,75 +72,44 @@ function safeJson(text: string): unknown {
   }
 }
 
-// ── domain calls ────────────────────────────────────────────────────────
+/** Vanta uses `{ error }`, older FastAPI uses `{ detail }`, the gateway uses `{ type, message }`. */
+function readApiError(parsed: unknown): { code: string; message?: string; retryable: boolean } {
+  if (!parsed || typeof parsed !== "object") {
+    return { code: "UNKNOWN", retryable: false };
+  }
+  const env = parsed as {
+    code?: string;
+    type?: string;
+    message?: string;
+    retryable?: boolean;
+    detail?: { code?: string; message?: string; retryable?: boolean };
+    error?: { code?: string; message?: string; retryable?: boolean };
+  };
+  const nested = env.detail ?? env.error;
+  const code = nested?.code ?? env.code ?? env.type;
+  return {
+    code: typeof code === "string" && code ? code : "UNKNOWN",
+    message: nested?.message ?? env.message,
+    retryable: Boolean(nested?.retryable ?? env.retryable),
+  };
+}
 
-export const auth = {
-  signup: (email: string, password: string) =>
-    hsc<{ user_id: string; email: string; email_verified: boolean; otp_sent: boolean }>(
-      "/v2/auth/signup",
-      { method: "POST", json: { email, password }, authedAsUser: false },
-    ),
-  verifyEmail: (email: string, code: string) =>
-    hsc<{
-      user_id: string;
-      email: string;
-      email_verified: boolean;
-      session_token?: string;
-      session_expires_at?: string;
-    }>("/v2/auth/verify-email", {
-      method: "POST",
-      json: { email, code },
-      authedAsUser: false,
-    }),
-  resendOtp: (email: string) =>
-    hsc<{ sent: boolean }>("/v2/auth/resend-otp", {
-      method: "POST",
-      json: { email },
-      authedAsUser: false,
-    }),
-  // When the user has TOTP enabled and no `totp_code` is supplied, the API
-  // responds with `{ mfa_required: true }` and no session token — the caller
-  // must re-submit with the second factor. The session/user fields are only
-  // populated once authentication is fully complete.
-  login: (email: string, password: string, totp_code?: string) =>
-    hsc<{
-      user_id?: string;
-      email?: string;
-      session_token?: string;
-      session_expires_at?: string;
-      mfa_required: boolean;
-    }>("/v2/auth/login", {
-      method: "POST",
-      json: { email, password, totp_code },
-      authedAsUser: false,
-    }),
-  logout: (session_token: string) =>
-    hsc<{ revoked: boolean }>("/v2/auth/sessions/revoke", {
-      method: "POST",
-      json: { session_token },
-      authedAsUser: false,
-    }),
-  me: () => hsc<{ user_id: string; email: string; app_id: string }>("/v2/auth/me"),
-  requestReset: (email: string) =>
-    hsc<{ sent: boolean }>("/v2/auth/password-reset/request", {
-      method: "POST",
-      json: { email },
-      authedAsUser: false,
-    }),
-  confirmReset: (email: string, token: string, new_password: string) =>
-    hsc<{ reset: boolean }>("/v2/auth/password-reset/confirm", {
-      method: "POST",
-      json: { email, token, new_password },
-      authedAsUser: false,
-    }),
+export type VantaMe = {
+  user_id: string;
+  gateway_user_id: string | null;
+  source_type: string;
+  source: string;
+  app_id: string;
+  partner?: { app_id: string; slug: string; name: string };
+  kyc_status: string;
+  kyc_verified_at: string | null;
+  agreement_signed: boolean;
+  agreement_version: string | null;
+  prop_accounts: PropAccountSummary[];
 };
 
-export const oauth = {
-  me: () =>
-    hsc<{ app_id: string; slug: string; entity_hotkey: string; scopes: string[] }>(
-      "/v2/oauth/me",
-      { authedAsUser: false },
-    ),
+export const auth = {
+  me: () => hsc<VantaMe>("/v2/me"),
 };
 
 export const apps = {
@@ -162,10 +118,10 @@ export const apps = {
       app_id: string;
       slug: string;
       name: string;
-      entity_hotkey: string;
+      entity_hotkey: string | null;
       allowed_scopes: string[];
       active: boolean;
-    }>("/v2/apps/me", { authedAsUser: false }),
+    }>("/v2/apps/me"),
 };
 
 export const kyc = {
@@ -177,14 +133,32 @@ export const kyc = {
       kyc_verified_at: string | null;
       kyc_failure_reason: string | null;
     }>("/v2/kyc/status"),
-  sumsubToken: () =>
-    hsc<{ token: string; user_id: string; level_name: string; applicant_id: string | null }>(
-      "/v2/kyc/sumsub/token",
-      { method: "POST" },
-    ),
+  stripeSession: () =>
+    hsc<{
+      client_secret: string | null;
+      verification_session_id: string | null;
+      user_id: string;
+      url: string | null;
+      status: string;
+      provider: "stripe_identity";
+    }>("/v2/kyc/stripe/session", { method: "POST" }),
 };
 
 export const payments = {
+  listTiers: () =>
+    hsc<
+      Array<{
+        id: string;
+        market: string;
+        asset_class: string;
+        account_size: number;
+        price_cents: number;
+        currency: string;
+        rule_pack_id: string;
+        kyc_optional: boolean;
+        active: boolean;
+      }>
+    >("/v2/payments/tiers"),
   checkout: (body: {
     tier_id: string;
     market: string;
@@ -195,90 +169,37 @@ export const payments = {
   }) =>
     hsc<{
       payment_id: string;
-      stripe_payment_intent_id: string;
-      client_secret: string;
+      provider: string;
+      provider_payment_id: string | null;
+      client_secret: string | null;
       amount_cents: number;
       currency: string;
       status: string;
+      tier_id: string;
     }>("/v2/payments/checkout", { method: "POST", json: body }),
-  freeAccount: (body: { tier_id: string; asset_class: string; account_size: number }) =>
+  freeAccount: (body: { tier_id: string; asset_class: string; account_size: number; market?: string }) =>
     hsc<PropAccountSummary>("/v2/payments/free", { method: "POST", json: body }),
-  listPropAccounts: () =>
-    hsc<PropAccountSummary[]>("/v2/payments/prop-accounts"),
-  getPropAccount: (id: string) =>
-    hsc<PropAccountSummary>(`/v2/payments/prop-accounts/${id}`),
+  listPropAccounts: () => hsc<PropAccountSummary[]>("/v2/payments/prop-accounts"),
+  getPropAccount: (id: string) => hsc<PropAccountSummary>(`/v2/payments/prop-accounts/${id}`),
 };
 
 export type PropAccountSummary = {
   id: string;
   tier_id: string;
+  market?: string;
   asset_class: string;
   account_size: number;
   status: string;
+  payment_id?: string | null;
+  provider?: string;
+  provider_payment_id?: string | null;
+  eliminated_at?: string | null;
+  elimination_reason?: string | null;
+  equity_at_burn?: number | null;
   subaccount_id: number | null;
   subaccount_uuid: string | null;
   synthetic_hotkey: string | null;
-  stripe_payment_intent_id: string | null;
-};
-
-export const connect = {
-  createAccount: (country = "US") =>
-    hsc<{
-      id: string;
-      stripe_account_id: string;
-      onboarding_url: string;
-      status: string;
-      payouts_enabled: boolean;
-      charges_enabled: boolean;
-      details_submitted: boolean;
-    }>("/v2/connect/accounts", { method: "POST", json: { country } }),
-  list: () =>
-    hsc<Array<{
-      id: string;
-      stripe_account_id: string;
-      status: string | null;
-      payouts_enabled: boolean;
-      charges_enabled: boolean;
-      details_submitted: boolean;
-      bank_name: string | null;
-      last4: string | null;
-      country: string | null;
-    }>>("/v2/connect/accounts"),
-  refreshLink: (stripeAccountId: string) =>
-    hsc<{ onboarding_url: string }>(
-      `/v2/connect/accounts/${stripeAccountId}/onboarding-link`,
-      { method: "POST" },
-    ),
-};
-
-export const payouts = {
-  request: (body: { amount_cents: number; prop_account_id?: string }) =>
-    hsc<PayoutResponse>("/v2/payouts/request", { method: "POST", json: body }),
-  submit: (payoutId: string) =>
-    hsc<PayoutResponse>(`/v2/payouts/${payoutId}/submit`, { method: "POST" }),
-  list: () => hsc<PayoutResponse[]>("/v2/payouts"),
-  estimate: (propAccountId?: string) =>
-    hsc<PayoutEstimate>("/v2/payouts/estimate", {
-      headers: propAccountIdHeader(propAccountId),
-    }),
-};
-
-export type PayoutEstimate = {
-  amount_usd: number;
-  amount_cents: number;
-  currency: string;
-  available: boolean;
-};
-
-export type PayoutResponse = {
-  id: string;
-  amount_cents: number;
-  currency: string;
-  status: string;
-  stripe_transfer_id: string | null;
-  failure_reason: string | null;
-  requested_at: string | null;
-  completed_at: string | null;
+  is_test?: boolean;
 };
 
 export const agreements = {
@@ -310,66 +231,56 @@ export const apiKeys = {
       label: string;
       key_id: string;
       key_secret: string;
+      key: string;
       prop_account_id: string | null;
     }>("/v2/api-keys", { method: "POST", json: body }),
-  list: () => hsc<Array<{ id: string; label: string; key_id: string; revoked_at: string | null }>>(
-    "/v2/api-keys",
-  ),
-  revoke: (id: string) =>
-    hsc<{ revoked: boolean }>(`/v2/api-keys/${id}`, { method: "DELETE" }),
+  list: () =>
+    hsc<Array<{ id: string; label: string; key_id: string; revoked_at: string | null }>>(
+      "/v2/api-keys",
+    ),
+  revoke: (id: string) => hsc<{ revoked: boolean } | undefined>(`/v2/api-keys/${id}`, { method: "DELETE" }),
 };
 
 export const trading = {
-  submit: (body: Record<string, unknown>, propAccountId?: string) =>
-    hsc<TradingResult>("/v2/trading/orders", {
+  submit: (
+    body: {
+      trade_pair: string;
+      market_type: "perp" | "spot";
+      side: "buy" | "sell";
+      quantity?: number;
+      value?: number;
+      leverage?: number;
+    },
+    propAccountId?: string,
+  ) =>
+    hsc<Record<string, unknown>>("/v2/trading/orders", {
       method: "POST",
       json: body,
       headers: propAccountIdHeader(propAccountId),
     }),
-  close: (trade_pair: string, propAccountId?: string) =>
-    hsc<TradingResult>("/v2/trading/orders/close", {
-      method: "POST",
-      json: { trade_pair },
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  bulkClose: (position_uuids: string[], propAccountId?: string) =>
-    hsc<TradingResult>("/v2/trading/orders/bulk-close", {
-      method: "POST",
-      json: { position_uuids },
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  cancel: (order_uuid: string, trade_pair: string, propAccountId?: string) =>
-    hsc<TradingResult>(
-      `/v2/trading/orders/${order_uuid}?trade_pair=${encodeURIComponent(trade_pair)}`,
-      { method: "DELETE", headers: propAccountIdHeader(propAccountId) },
-    ),
-  edit: (order_uuid: string, body: Record<string, unknown>, propAccountId?: string) =>
-    hsc<TradingResult>(`/v2/trading/orders/${order_uuid}/edit`, {
+  close: (body: { trade_pair?: string; market_type?: "perp" | "spot"; position_id?: string }, propAccountId?: string) =>
+    hsc<Record<string, unknown>>("/v2/trading/close", {
       method: "POST",
       json: body,
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  tpSl: (body: Record<string, unknown>, propAccountId?: string) =>
-    hsc<TradingResult>("/v2/trading/orders/tp-sl", {
-      method: "POST",
-      json: body,
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  positions: (propAccountId?: string) =>
-    hsc<Array<Record<string, unknown>>>("/v2/trading/positions", {
       headers: propAccountIdHeader(propAccountId),
     }),
   orders: (propAccountId?: string) =>
-    hsc<Array<Record<string, unknown>>>("/v2/trading/orders", {
+    hsc<Array<Record<string, unknown>> | { orders?: Array<Record<string, unknown>> }>(
+      "/v2/trading/orders",
+      { headers: propAccountIdHeader(propAccountId) },
+    ),
+  positions: (propAccountId?: string) =>
+    hsc<{ positions?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>(
+      "/v2/trading/positions",
+      { headers: propAccountIdHeader(propAccountId) },
+    ),
+  balance: (propAccountId?: string) =>
+    hsc<Record<string, unknown>>("/v2/trading/balance", {
       headers: propAccountIdHeader(propAccountId),
     }),
   history: (propAccountId?: string) =>
-    hsc<Array<Record<string, unknown>>>("/v2/trading/history", {
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  balance: (propAccountId?: string) =>
-    hsc<{ account_size: number; status: string; subaccount_info?: Record<string, unknown> }>(
-      "/v2/trading/balance",
+    hsc<Array<Record<string, unknown>> | { history?: Array<Record<string, unknown>> }>(
+      "/v2/trading/history",
       { headers: propAccountIdHeader(propAccountId) },
     ),
   deskPoll: (propAccountId?: string) =>
@@ -377,15 +288,21 @@ export const trading = {
       positions: Array<Record<string, unknown>>;
       orders: Array<Record<string, unknown>>;
       history: Array<Record<string, unknown>>;
-      balance: { account_size: number; status: string };
+      balance: {
+        account_size: number;
+        status: string;
+        cash?: number;
+        equity?: number;
+        used_margin?: number;
+        unrealized_pnl?: number;
+        realized_pnl?: number;
+      };
     }>("/v2/trading/desk-poll", { headers: propAccountIdHeader(propAccountId) }),
-};
-
-type TradingResult = {
-  success: boolean;
-  order_uuid: string | null;
-  message: string | null;
-  processing_time: number | null;
+  markets: () =>
+    hsc<{
+      markets: Array<{ coin: string; mid: number; max_leverage: number; wire?: string }>;
+      spots?: Array<{ coin: string; mid: number; max_leverage: number; wire?: string }>;
+    }>("/v2/trading/markets"),
 };
 
 function propAccountIdHeader(id?: string): Record<string, string> {
@@ -413,5 +330,60 @@ export const webhooks = {
       }>
     >("/v2/webhook-endpoints"),
   remove: (id: string) =>
-    hsc<{ deactivated: boolean }>(`/v2/webhook-endpoints/${id}`, { method: "DELETE" }),
+    hsc<{ deactivated: boolean }>(`/v2/webhook-endpoints/${id}`, {
+      method: "DELETE",
+      authedAsUser: true,
+    }),
+};
+
+export type ConnectAccount = {
+  id: string;
+  stripe_account_id: string;
+  onboarding_url?: string;
+  status: string | null;
+  payouts_enabled: boolean;
+  charges_enabled: boolean;
+  details_submitted: boolean;
+};
+
+export type PayoutResponse = {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  status: string;
+  stripe_transfer_id: string | null;
+  failure_reason: string | null;
+  requested_at: string | null;
+  completed_at: string | null;
+};
+
+export type PayoutEstimate = {
+  amount_usd: number;
+  amount_cents: number;
+  currency: string;
+  available: boolean;
+};
+
+/** Payouts / Connect are not on the latest Vanta surface yet. */
+export const connect = {
+  list: async (): Promise<ConnectAccount[]> => [],
+  createAccount: async (_country = "US"): Promise<ConnectAccount & { onboarding_url: string }> => {
+    throw new HscApiError(501, "V2_NOT_IMPLEMENTED", "Connect payouts are not on this Vanta API yet");
+  },
+  refreshLink: async (_stripeAccountId: string): Promise<{ onboarding_url: string }> => {
+    throw new HscApiError(501, "V2_NOT_IMPLEMENTED", "Connect payouts are not on this Vanta API yet");
+  },
+};
+
+export const payouts = {
+  list: async (): Promise<PayoutResponse[]> => [],
+  estimate: async (_propAccountId?: string): Promise<PayoutEstimate> => ({
+    amount_usd: 0,
+    amount_cents: 0,
+    currency: "usd",
+    available: false,
+  }),
+  request: async (_body: { amount_cents: number; prop_account_id?: string }): Promise<PayoutResponse> => {
+    throw new HscApiError(501, "V2_NOT_IMPLEMENTED", "Reward payouts are not on this Vanta API yet");
+  },
 };

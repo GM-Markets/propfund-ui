@@ -1,8 +1,6 @@
 /**
- * End-user session cookie management.
- *
- * The cookie value is the API-issued JWT (X-Session-Token). We set it
- * httpOnly + secure so it never leaks to client JS.
+ * End-user session cookie — the Privy identity token sent as
+ * `Authorization: Bearer` to the Flo gateway `/van` routes.
  */
 import "server-only";
 
@@ -31,7 +29,16 @@ export async function setSessionCookie(
 
 export async function clearSessionCookie(): Promise<void> {
   const jar = await cookies();
-  jar.delete(hscConfig.sessionCookieName);
+  jar.set({
+    name: hscConfig.sessionCookieName,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
 }
 
 export async function getSessionTokenFromCookie(): Promise<string | undefined> {

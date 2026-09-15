@@ -1,63 +1,51 @@
 import { DocsLink } from "@/components/docs/docs-link";
 import { PageHeader } from "@/components/page-header";
+import * as hsc from "@/lib/hsc/client";
 
-import { CheckoutPicker } from "./CheckoutPicker";
+import { CheckoutPicker, type Tier } from "./CheckoutPicker";
 
-export type Tier = {
-  id: string;
-  label: string;
-  account_size: number;
-  amount_cents: number;
-  asset_class: string;
-  popular?: boolean;
-  features: string[];
-};
+function labelFor(tier: { id: string; account_size: number; price_cents: number }): string {
+  if (tier.price_cents === 0) return "Free trial";
+  const size = tier.account_size >= 1000 ? `$${(tier.account_size / 1000).toFixed(0)}K` : `$${tier.account_size}`;
+  return `${size} evaluation`;
+}
 
-const TIERS: Tier[] = [
-  {
-    id: "trial",
-    label: "Free Trial",
-    account_size: 10_000,
-    amount_cents: 0,
-    asset_class: "crypto",
-    features: ["$10,000 simulated", "Crypto markets", "No card required"],
-  },
-  {
-    id: "challenge_25k",
-    label: "Challenge 25K",
-    account_size: 25_000,
-    amount_cents: 19900,
-    asset_class: "crypto",
-    features: ["$25,000 account", "Crypto markets", "Profit split on payout"],
-  },
-  {
-    id: "challenge_50k",
-    label: "Challenge 50K",
-    account_size: 50_000,
-    amount_cents: 34900,
-    asset_class: "crypto",
-    popular: true,
-    features: ["$50,000 account", "Crypto markets", "Priority payouts"],
-  },
-  {
-    id: "challenge_100k",
-    label: "Challenge 100K",
-    account_size: 100_000,
-    amount_cents: 49900,
-    asset_class: "crypto",
-    features: ["$100,000 account", "Crypto markets", "Highest limits"],
-  },
-];
+export default async function CheckoutPage() {
+  const [tiers, agreement] = await Promise.all([
+    hsc.payments.listTiers().catch(() => []),
+    hsc.agreements.status().catch(() => ({ signed: false, agreement_version: "2026-09-01" as string | null })),
+  ]);
 
-export default function CheckoutPage() {
+  const mapped: Tier[] = tiers
+    .filter((t) => t.active && t.price_cents > 0)
+    .sort((a, b) => a.price_cents - b.price_cents || a.account_size - b.account_size)
+    .map((t) => ({
+      id: t.id,
+      label: labelFor(t),
+      account_size: t.account_size,
+      amount_cents: t.price_cents,
+      asset_class: t.asset_class,
+      market: t.market,
+      popular: t.id === "tier_25k",
+      features: [
+        `$${t.account_size.toLocaleString()} simulated`,
+        `${t.market} markets`,
+        t.price_cents === 0 ? "No card required" : "One-phase evaluation · 100% split",
+      ],
+    }));
+
   return (
     <div>
       <PageHeader
         title="Choose your challenge"
-        description="Buy a funded challenge or start with a free trial account."
+        description="A $10K notional test account is already on your dashboard. Buy a challenge for a paid evaluation — pass once, no deadline, up to $2.5M scale."
         actions={<DocsLink href="/docs/checkout" />}
       />
-      <CheckoutPicker tiers={TIERS} />
+      <CheckoutPicker
+        tiers={mapped}
+        agreementSigned={agreement.signed}
+        agreementVersion={agreement.agreement_version ?? "2026-09-01"}
+      />
     </div>
   );
 }

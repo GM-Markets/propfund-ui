@@ -22,11 +22,7 @@ export class MarketingPage {
   }
 
   headerStartEvaluationButton(): Locator {
-    return this.page.getByRole("banner").getByRole("button", { name: "Start evaluation", exact: true });
-  }
-
-  evaluationDialog(): Locator {
-    return this.page.getByRole("dialog", { name: "Start your evaluation." });
+    return this.page.getByRole("banner").getByRole("link", { name: "Start evaluation", exact: true });
   }
 }
 
@@ -46,7 +42,7 @@ export class LoginPage {
   }
 
   submit(): Locator {
-    return this.page.getByRole("button", { name: /sign in/i });
+    return this.page.getByRole("button", { name: /continue/i });
   }
 
   async fill(email: string, password: string) {

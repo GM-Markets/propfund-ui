@@ -25,6 +25,7 @@ const FRIENDLY: Record<string, string> = {
   // tenant a wider ``allowed_scopes`` list.
   V2_INVALID_SCOPE: "This app isn't allowed to request that capability. Contact support.",
   V2_SCOPE_MISSING: "This app doesn't have permission to access that resource.",
+  V2_AGREEMENT_REQUIRED: "Sign the current agreement before you trade or buy a challenge.",
   V2_KYC_NOT_CONFIGURED: "Identity verification isn't available right now.",
   V2_SUMSUB_NOT_CONFIGURED: "Identity verification isn't configured for this app yet.",
   V2_SUMSUB_HTTP: "Identity verification provider is temporarily unavailable.",
@@ -32,6 +33,9 @@ const FRIENDLY: Record<string, string> = {
 };
 
 export function friendlyError(code: string | undefined, fallback?: string): string {
+  if (fallback?.includes("spot sell exceeds long inventory")) {
+    return "You can only sell spot you already hold.";
+  }
   if (code && FRIENDLY[code]) return FRIENDLY[code];
   if (fallback && fallback.trim() && !fallback.trim().startsWith("{")) return fallback;
   return FRIENDLY.UNKNOWN;

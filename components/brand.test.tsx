@@ -5,16 +5,24 @@ import { Brand } from "./brand";
 import { BRAND_NAME } from "@/lib/brand";
 
 describe("Brand", () => {
-  it("renders the PropFund SVG lockup by default", () => {
+  it("renders the Propfund wordmark by default", () => {
     const { getByRole } = render(<Brand />);
-    const svg = getByRole("img", { name: BRAND_NAME });
-    expect(svg.tagName.toLowerCase()).toBe("svg");
+    const img = getByRole("img", { name: BRAND_NAME }) as HTMLImageElement;
+    expect(img.tagName.toLowerCase()).toBe("img");
+    expect(img.getAttribute("src")).toContain("propfund-wordmark-light.svg");
   });
 
-  it("renders the mark-only SVG when the wordmark is hidden", () => {
+  it("renders the mark-only lockup when the wordmark is hidden", () => {
     const { getByRole } = render(<Brand showWordmark={false} />);
-    const svg = getByRole("img", { name: BRAND_NAME });
-    expect(svg.getAttribute("viewBox")).toBe("0 0 32 32");
+    const img = getByRole("img", { name: BRAND_NAME }) as HTMLImageElement;
+    expect(img.getAttribute("src")).toContain("propfund-mark-light.svg");
+  });
+
+  it("renders the paper wordmark on light surfaces", () => {
+    const { getByRole } = render(<Brand variant="onPaper" />);
+    expect(getByRole("img", { name: BRAND_NAME }).getAttribute("src")).toContain(
+      "propfund-wordmark-dark.svg",
+    );
   });
 
   it("renders the Hyperscaled wordmark as an <img>", () => {

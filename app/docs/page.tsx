@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  ArrowUpRight,
   CreditCard,
   KeyRound,
   ShieldCheck,
@@ -13,9 +12,10 @@ import { Callout } from "@/components/docs/blocks";
 
 export const metadata = { title: "Introduction" };
 
-const ADMIN_URL = `${
-  process.env.NEXT_PUBLIC_HSC_API_BASE_URL ?? "http://localhost:8000"
-}/admin`;
+const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(
+  /\/$/,
+  "",
+);
 
 const FLOWS = [
   {
@@ -26,7 +26,7 @@ const FLOWS = [
   {
     href: "/docs/authentication",
     title: "Authentication",
-    desc: "OAuth client credentials for your app + per-user sessions.",
+    desc: "Privy identity token through the Flo gateway — no app OAuth.",
     icon: KeyRound,
   },
   {
@@ -82,7 +82,7 @@ export default function DocsIndexPage() {
           The Hyperscaled API gives you everything behind a modern prop firm —
           identity verification, payments, funded accounts, live trading, and
           payouts — behind one multi-tenant REST API. This is the documentation
-          for the same endpoints that power the <strong>PropFund</strong> reference
+          for the same endpoints that power the <strong>Propfund</strong> reference
           app you&apos;re looking at.
         </p>
       </header>
@@ -99,53 +99,38 @@ export default function DocsIndexPage() {
               1
             </span>
             <h2 className="text-lg font-semibold tracking-tight">
-              Get your credentials
+              Sign in with Privy
             </h2>
           </div>
           <div className="rounded-xl border border-border bg-card/40 p-5">
             <p className="text-sm text-muted-foreground">
-              Each integrating app is a <strong>tenant</strong> with its own
-              OAuth <code>client_id</code> and <code>client_secret</code>. Request
-              access and, once approved, you&apos;ll get a one-time link to
-              retrieve them:
+              Same identity as GM Markets. This app stores the Privy identity
+              token and sends it as <code>Authorization: Bearer</code> to{" "}
+              <code>{GATEWAY}/van</code>. The Flo gateway verifies the JWT and
+              proxies to Vanta — there is no app <code>client_id</code> /{" "}
+              <code>client_secret</code>.
             </p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground">
               <li>
-                Submit the <strong>Request access</strong> form (company, contact,
-                use case).
+                Set <code>NEXT_PUBLIC_PRIVY_APP_ID</code> and{" "}
+                <code>NEXT_PUBLIC_GATEWAY_URL</code>.
               </li>
               <li>
-                We provision your network identity and <strong>approve</strong> the
-                request — approval is manual.
+                Run the Flo gateway and Vanta, then open{" "}
+                <Link href="/login" className="text-primary hover:underline">
+                  Sign in
+                </Link>
+                .
               </li>
               <li>
-                You receive an email with a <strong>one-time link</strong> to
-                reveal your <code>client_id</code> and <code>client_secret</code>{" "}
-                (the secret is shown <strong>once</strong>).
+                First <code>GET /van/v2/me</code> attaches the user and claims
+                the complimentary $10K notional test desk.
               </li>
             </ol>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Link
-                href="/request-access"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Request access <ArrowRight className="size-3.5" />
-              </Link>
-              <a
-                href={ADMIN_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-card"
-              >
-                Admin console (operators) <ArrowUpRight className="size-3.5" />
-              </a>
-            </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Running locally? You can self-approve from the admin console — see
-              the <Link href="/docs/quickstart">Quickstart</Link>. Confirm an
-              app&apos;s <code>client_id</code> and scopes anytime via{" "}
-              <code>GET /v2/apps/me</code>; the secret is rotate-only and never
-              readable again.
+              Desk bots use a Vanta-minted <code>X-Api-Key</code> on{" "}
+              <code>/van/v2/trading/*</code> only. See the{" "}
+              <Link href="/docs/quickstart">Quickstart</Link>.
             </p>
           </div>
         </div>
@@ -162,20 +147,12 @@ export default function DocsIndexPage() {
           <CodeBlock
             lang="bash"
             filename="Your first request"
-            code={`# 1. Exchange your app credentials for an access token
-curl -X POST http://localhost:8000/v2/oauth/token \\
-  -H "Content-Type: application/json" \\
-  -d '{"grant_type":"client_credentials","client_id":"hsc_...","client_secret":"hsk_...","scope":"api"}'
-
-# 2. Use the token to call the API
-curl http://localhost:8000/v2/auth/me \\
-  -H "Authorization: Bearer <access_token>" \\
-  -H "X-Session-Token: <end_user_session>"`}
+            code={`curl http://localhost:5400/van/v2/me \\
+  -H "Authorization: Bearer <privy_identity_token>"`}
           />
-          <Callout type="tip" title="Two layers of auth">
-            Your <strong>app</strong> authenticates with OAuth client credentials.
-            Your <strong>end users</strong> get a session token after signing up /
-            logging in, passed as <code>X-Session-Token</code>. See{" "}
+          <Callout type="tip" title="Auth is on the gateway">
+            Send the Privy identity token. The Flo gateway verifies it and proxies{" "}
+            <code>/van</code> to Vanta. See{" "}
             <Link href="/docs/authentication">Authentication</Link>.
           </Callout>
         </div>

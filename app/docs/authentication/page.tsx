@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 
 import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
-import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
+import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
 
 export const metadata = { title: "Authentication" };
 
-const ADMIN_URL = `${
-  process.env.NEXT_PUBLIC_HSC_API_BASE_URL ?? "http://localhost:8000"
-}/admin`;
+const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(/\/$/, "");
 
 export default function AuthDocsPage() {
   return (
@@ -24,215 +21,59 @@ export default function AuthDocsPage() {
           <DocsLink href="/login" label="Try it" />
         </div>
         <p className="text-lg text-muted-foreground">
-          Two layers: your <strong>app</strong> authenticates with OAuth client
-          credentials; your <strong>end users</strong> authenticate with email +
-          password (and optional TOTP) and carry a session token.
+          Same as GM Markets: the <strong>Flo gateway</strong> verifies the Privy
+          identity token. This app only stores that token and sends it as{" "}
+          <code>Authorization: Bearer</code> to <code>/van</code>.
         </p>
       </header>
 
-      <DocSection title="Get your credentials" description="Before any token exchange you need a client_id and client_secret. Request access, and once an operator approves you'll get a one-time link to retrieve them.">
+      <DocSection
+        title="Sign in"
+        description="Privy issues the identity token. The dashboard BFF copies it into an httpOnly cookie and every Vanta call goes through the gateway."
+      >
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+          <li>Trader signs in with Privy (same app as GM Markets).</li>
           <li>
-            Submit the <strong>Request access</strong> form with your company,
-            contact email, and intended use.
+            This UI stores the identity token and calls{" "}
+            <code>{GATEWAY}/van/v2/me</code> with{" "}
+            <code>Authorization: Bearer &lt;token&gt;</code>.
           </li>
           <li>
-            An operator provisions your network identity and{" "}
-            <strong>approves</strong> the request (manual review).
-          </li>
-          <li>
-            You receive an email with a <strong>one-time link</strong> that
-            reveals your <code>client_id</code> and <code>client_secret</code>{" "}
-            — the secret is displayed <strong>once</strong>, so store it in your
-            secret manager.
-          </li>
-          <li>
-            Put them in this app&apos;s env as <code>HSC_CLIENT_ID</code> and{" "}
-            <code>HSC_CLIENT_SECRET</code> (see{" "}
-            <Link href="/docs/quickstart">Quickstart</Link>).
+            The gateway checks the JWT, injects <code>x-user-id</code> /{" "}
+            <code>x-user-address</code> / <code>x-user-role</code>, and proxies to
+            Vanta.
           </li>
         </ol>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/request-access"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Request access
-          </Link>
-          <a
-            href={ADMIN_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-card"
-          >
-            Admin console (operators) <ArrowUpRight className="size-3.5" />
-          </a>
-        </div>
-        <Callout type="info" title="Why approval is manual">
-          Each tenant maps to a vanta-network <code>entity_hotkey</code> that is
-          minted out-of-band on Bittensor. We provision that first, then approve
-          your request and issue OAuth credentials scoped to your tenant.
-        </Callout>
-        <Endpoint method="GET" path="/v2/apps/me" auth="app">
-          <p className="text-sm text-muted-foreground">
-            Confirm which tenant a key resolves to and which scopes it has. The
-            secret is never returned — rotate it in the admin console if lost.
-          </p>
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{
-  "app_id": "app_...",
-  "slug": "company-a",
-  "name": "Company A",
-  "entity_hotkey": "5ABC...",
-  "allowed_scopes": ["api"],
-  "active": true
-}`}
-          />
-          <ApiTester operation="apps.me" method="GET" path="/v2/apps/me" />
-        </Endpoint>
-      </DocSection>
-
-      <DocSection title="App token (OAuth client credentials)" description="Exchange your client_id/client_secret for a short-lived bearer token. Do this server-side only — never expose the secret to the browser.">
-        <Endpoint method="POST" path="/v2/oauth/token" auth="public">
-          <ParamTable
-            title="Request body"
-            rows={[
-              { name: "grant_type", type: "string", required: true, desc: '"client_credentials"' },
-              { name: "client_id", type: "string", required: true, desc: "Your app's client id (hsc_…)" },
-              { name: "client_secret", type: "string", required: true, desc: "Your app's secret (hsk_…)" },
-              { name: "scope", type: "string", required: false, desc: 'Defaults to "api"' },
-            ]}
-          />
-          <CodeBlock
-            lang="bash"
-            filename="curl"
-            code={`curl -X POST http://localhost:8000/v2/oauth/token \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "grant_type": "client_credentials",
-    "client_id": "hsc_...",
-    "client_secret": "hsk_...",
-    "scope": "api"
-  }'`}
-          />
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{
-  "access_token": "eyJhbGciOiJI...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "scope": "api"
-}`}
-          />
-        </Endpoint>
-        <Callout type="warning" title="Server-side only">
-          The client secret must never reach the browser. In this app all calls
-          flow through <code>lib/hsc/client.ts</code> on the server, which caches
-          the token automatically.
+        <Callout type="info" title="No app OAuth">
+          There is no client id, client secret, or <code>/v2/oauth/token</code>.
+          Desk bots use a Vanta-minted <code>X-Api-Key</code> on{" "}
+          <code>/van/v2/trading/*</code> only.
         </Callout>
       </DocSection>
 
-      <DocSection title="End-user sessions" description="Once your app is authenticated, you create and authenticate the people who use it. A successful signup verification or login returns a session_token to send as X-Session-Token on subsequent calls.">
-        <Endpoint method="POST" path="/v2/auth/signup" auth="app">
-          <CodeBlock
-            lang="json"
-            filename="Request body"
-            code={`{ "email": "trader@example.com", "password": "correct horse battery staple" }`}
-          />
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{
-  "user_id": "usr_...",
-  "email": "trader@example.com",
-  "email_verified": false,
-  "otp_sent": true
-}`}
-          />
-        </Endpoint>
-
-        <Endpoint method="POST" path="/v2/auth/verify-email" auth="app">
-          <CodeBlock
-            lang="json"
-            filename="Request body"
-            code={`{ "email": "trader@example.com", "code": "123456" }`}
-          />
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{
-  "user_id": "usr_...",
-  "email": "trader@example.com",
-  "email_verified": true,
-  "session_token": "sess_...",
-  "session_expires_at": "2026-06-29T00:00:00Z"
-}`}
-          />
-        </Endpoint>
-
-        <Endpoint method="POST" path="/v2/auth/login" auth="app">
-          <ParamTable
-            title="Request body"
-            rows={[
-              { name: "email", type: "string", required: true, desc: "User email" },
-              { name: "password", type: "string", required: true, desc: "User password" },
-              { name: "totp_code", type: "string", required: false, desc: "6-digit TOTP if MFA is enabled" },
-            ]}
-          />
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{
-  "user_id": "usr_...",
-  "email": "trader@example.com",
-  "session_token": "sess_...",
-  "session_expires_at": "2026-06-29T00:00:00Z",
-  "mfa_required": false
-}`}
-          />
-        </Endpoint>
-
-        <p className="text-sm text-muted-foreground">
-          Other endpoints in this group:{" "}
-          <code>POST /v2/auth/resend-otp</code>,{" "}
-          <code>POST /v2/auth/password-reset/request</code>,{" "}
-          <code>POST /v2/auth/password-reset/confirm</code>,{" "}
-          <code>POST /v2/auth/sessions/revoke</code> (logout).
-        </p>
-      </DocSection>
-
-      <DocSection title="Who am I?" description="Verify a session and resolve the current user. Pass both the app bearer token and the user's X-Session-Token.">
-        <Endpoint method="GET" path="/v2/auth/me" auth="user">
+      <DocSection title="Who am I?" description="First authenticated call after login. Provisions the Vanta user and claims the $10K notional test desk.">
+        <Endpoint method="GET" path="/v2/me" auth="user">
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl http://localhost:8000/v2/auth/me \\
-  -H "Authorization: Bearer <app_access_token>" \\
-  -H "X-Session-Token: <user_session_token>"`}
+            code={`curl ${GATEWAY}/van/v2/me \\
+  -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock
             lang="typescript"
             filename="lib/hsc/client.ts"
             code={`import { auth } from "@/lib/hsc/client";
 
-const me = await auth.me();
-// { user_id: "usr_...", email: "...", app_id: "app_..." }`}
+const me = await auth.me();`}
           />
-          <CodeBlock
-            lang="json"
-            filename="200 OK"
-            code={`{ "user_id": "usr_...", "email": "trader@example.com", "app_id": "app_..." }`}
-          />
-          <ApiTester operation="auth.me" method="GET" path="/v2/auth/me" />
+          <ApiTester operation="auth.me" method="GET" path="/v2/me" />
         </Endpoint>
       </DocSection>
 
-      <Callout type="tip" title="Full API reference">
-        Every endpoint, schema, and error code is documented in the live Swagger
-        UI at <code>/docs</code> on the API. See also the{" "}
+      <Callout type="tip" title="Configure this app">
+        Set <code>NEXT_PUBLIC_PRIVY_APP_ID</code> and{" "}
+        <code>NEXT_PUBLIC_GATEWAY_URL</code> (default{" "}
+        <code>http://localhost:5400</code>). See the{" "}
         <Link href="/docs/quickstart">Quickstart</Link>.
       </Callout>
     </>

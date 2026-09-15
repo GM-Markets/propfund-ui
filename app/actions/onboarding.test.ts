@@ -7,21 +7,20 @@ import * as hsc from "@/lib/hsc/client";
 import {
   createCheckoutAction,
   createFreeAccountAction,
+  getKycSessionAction,
   getKycStatusAction,
-  getSumsubTokenAction,
   listPropAccountsAction,
 } from "./onboarding";
 
 const PROP = {
   id: "p1",
-  tier_id: "starter",
+  tier_id: "tier_25k",
   asset_class: "crypto",
-  account_size: 50_000,
-  status: "active",
-  subaccount_id: null,
-  subaccount_uuid: null,
+  account_size: 25_000,
+  status: "evaluation",
+  subaccount_id: 1,
+  subaccount_uuid: "p1",
   synthetic_hotkey: null,
-  stripe_payment_intent_id: null,
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -31,7 +30,7 @@ describe("onboarding actions", () => {
   it("getKycStatusAction returns the status payload", async () => {
     vi.spyOn(hsc.kyc, "status").mockResolvedValue({
       user_id: "u1",
-      kyc_provider: "sumsub",
+      kyc_provider: "stripe_identity",
       kyc_status: "verified",
       kyc_verified_at: "2026-01-01",
       kyc_failure_reason: null,
@@ -40,49 +39,50 @@ describe("onboarding actions", () => {
     expect(r).toMatchObject({ ok: true, data: { kyc_status: "verified" } });
   });
 
-  it("getSumsubTokenAction maps a not-configured error", async () => {
-    vi.spyOn(hsc.kyc, "sumsubToken").mockRejectedValue(
-      new hsc.HscApiError(400, "V2_SUMSUB_NOT_CONFIGURED", "no"),
+  it("getKycSessionAction maps a not-configured error", async () => {
+    vi.spyOn(hsc.kyc, "stripeSession").mockRejectedValue(
+      new hsc.HscApiError(400, "V2_STRIPE_NOT_CONFIGURED", "no"),
     );
-    const r = await getSumsubTokenAction();
-    expect(r).toMatchObject({ ok: false, code: "V2_SUMSUB_NOT_CONFIGURED" });
+    const r = await getKycSessionAction();
+    expect(r).toMatchObject({ ok: false, code: "V2_STRIPE_NOT_CONFIGURED" });
   });
 
-  it("createCheckoutAction forwards the input and returns the intent", async () => {
+  it("createCheckoutAction forwards the input and returns the Privy session", async () => {
     const input = {
-      tier_id: "starter",
-      market: "all",
+      tier_id: "tier_25k",
+      market: "crypto",
       asset_class: "crypto",
-      account_size: 50_000,
-      amount_cents: 9900,
+      account_size: 25_000,
+      amount_cents: 8400,
     };
     const spy = vi.spyOn(hsc.payments, "checkout").mockResolvedValue({
       payment_id: "pay_1",
-      stripe_payment_intent_id: "pi_1",
+      provider: "privy",
+      provider_payment_id: "prv_1",
       client_secret: "cs_1",
-      amount_cents: 9900,
+      amount_cents: 8400,
       currency: "usd",
       status: "requires_payment_method",
+      tier_id: "tier_25k",
     });
     const r = await createCheckoutAction(input);
     expect(spy).toHaveBeenCalledWith(input);
-    expect(r).toMatchObject({ ok: true, data: { client_secret: "cs_1" } });
+    expect(r).toMatchObject({ ok: true, data: { client_secret: "cs_1", provider: "privy" } });
   });
 
   it("createFreeAccountAction returns the provisioned account", async () => {
     vi.spyOn(hsc.payments, "freeAccount").mockResolvedValue(PROP);
     const r = await createFreeAccountAction({
-      tier_id: "free",
+      tier_id: "tier_demo",
       asset_class: "crypto",
-      account_size: 25_000,
+      account_size: 10_000,
     });
     expect(r).toMatchObject({ ok: true, data: { id: "p1" } });
   });
 
-  it("listPropAccountsAction returns the account list", async () => {
+  it("listPropAccountsAction returns accounts", async () => {
     vi.spyOn(hsc.payments, "listPropAccounts").mockResolvedValue([PROP]);
     const r = await listPropAccountsAction();
-    expect(r).toMatchObject({ ok: true });
-    expect((r as { ok: true; data: unknown[] }).data).toHaveLength(1);
+    expect(r).toMatchObject({ ok: true, data: [{ id: "p1" }] });
   });
 });

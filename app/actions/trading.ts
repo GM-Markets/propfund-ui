@@ -17,18 +17,22 @@ export async function deskPollAction(propAccountId?: string) {
   }
 }
 
+export async function listMarketsAction() {
+  try {
+    return { ok: true as const, data: await hsc.trading.markets() };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
 export async function submitOrderAction(
   body: {
     trade_pair: string;
-    order_type: "LONG" | "SHORT" | "FLAT";
-    leverage?: number;
-    value?: number;
+    market_type: "perp" | "spot";
+    side: "buy" | "sell";
     quantity?: number;
-    execution_type?: "MARKET" | "LIMIT" | "STOP_LIMIT" | "BRACKET";
-    limit_price?: number;
-    stop_price?: number;
-    take_profit?: number;
-    stop_loss?: number;
+    value?: number;
+    leverage?: number;
   },
   propAccountId?: string,
 ) {
@@ -39,52 +43,12 @@ export async function submitOrderAction(
   }
 }
 
-export async function closePositionAction(trade_pair: string, propAccountId?: string) {
-  try {
-    return { ok: true as const, data: await hsc.trading.close(trade_pair, propAccountId) };
-  } catch (e) {
-    return failure(e);
-  }
-}
-
-export async function bulkClosePositionsAction(
-  position_uuids: string[],
+export async function closePositionAction(
+  body: { trade_pair: string; market_type?: "perp" | "spot" },
   propAccountId?: string,
 ) {
   try {
-    return { ok: true as const, data: await hsc.trading.bulkClose(position_uuids, propAccountId) };
-  } catch (e) {
-    return failure(e);
-  }
-}
-
-export async function cancelOrderAction(
-  order_uuid: string,
-  trade_pair: string,
-  propAccountId?: string,
-) {
-  try {
-    return { ok: true as const, data: await hsc.trading.cancel(order_uuid, trade_pair, propAccountId) };
-  } catch (e) {
-    return failure(e);
-  }
-}
-
-export async function editOrderAction(
-  order_uuid: string,
-  body: Record<string, unknown>,
-  propAccountId?: string,
-) {
-  try {
-    return { ok: true as const, data: await hsc.trading.edit(order_uuid, body, propAccountId) };
-  } catch (e) {
-    return failure(e);
-  }
-}
-
-export async function setTpSlAction(body: Record<string, unknown>, propAccountId?: string) {
-  try {
-    return { ok: true as const, data: await hsc.trading.tpSl(body, propAccountId) };
+    return { ok: true as const, data: await hsc.trading.close(body, propAccountId) };
   } catch (e) {
     return failure(e);
   }

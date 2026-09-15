@@ -16,12 +16,11 @@ See the [README](./README.md) for full setup. The short version:
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in HSC_* credentials + SESSION_COOKIE_SECRET
+cp .env.example .env.local   # NEXT_PUBLIC_GATEWAY_URL + NEXT_PUBLIC_PRIVY_APP_ID
 pnpm dev
 ```
 
-You'll need a running `hyperscaled-api` (local or hosted) for anything that
-hits the network.
+You'll need a running Flo gateway and Vanta for anything that hits the network.
 
 ## Before you open a PR
 

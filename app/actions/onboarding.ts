@@ -17,9 +17,25 @@ export async function getKycStatusAction() {
   }
 }
 
-export async function getSumsubTokenAction() {
+export async function getKycSessionAction() {
   try {
-    return { ok: true as const, data: await hsc.kyc.sumsubToken() };
+    return { ok: true as const, data: await hsc.kyc.stripeSession() };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function listTiersAction() {
+  try {
+    return { ok: true as const, data: await hsc.payments.listTiers() };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function signAgreementAction(input: { agreement_version: string; signature_name: string }) {
+  try {
+    return { ok: true as const, data: await hsc.agreements.sign(input) };
   } catch (e) {
     return failure(e);
   }
@@ -43,6 +59,7 @@ export async function createFreeAccountAction(input: {
   tier_id: string;
   asset_class: string;
   account_size: number;
+  market?: string;
 }) {
   try {
     return { ok: true as const, data: await hsc.payments.freeAccount(input) };

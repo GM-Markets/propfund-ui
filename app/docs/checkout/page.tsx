@@ -53,9 +53,8 @@ export default function CheckoutDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:8000/v2/payments/checkout \\
-  -H "Authorization: Bearer <app_access_token>" \\
-  -H "X-Session-Token: <user_session_token>" \\
+            code={`curl -X POST http://localhost:5400/van/v2/payments/checkout \\
+  -H "Authorization: Bearer <privy_identity_token>" \\
   -H "Content-Type: application/json" \\
   -d '{
     "tier_id": "tier_25k",

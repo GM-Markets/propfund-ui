@@ -34,9 +34,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { presentedApiKey } from "@/lib/api-key";
 import { friendlyError } from "@/lib/errors";
+import { VantaBrowserError, browserApiKeys } from "@/lib/vanta/browser";
 
-type Key = { id: string; label: string; key_id: string; revoked_at: string | null };
+type Key = { id: string; label: string; key_id?: string; key_prefix?: string; revoked_at: string | null };
 
 const NONE = "__none__";
 
@@ -57,37 +59,41 @@ export function ApiKeysClient({
     if (!label.trim()) return;
     setCreating(true);
     try {
-      const r = await fetch("/api/api-keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          label,
-          prop_account_id: propAccount === NONE ? undefined : propAccount,
-        }),
+      const data = await browserApiKeys.create({
+        label,
+        prop_account_id: propAccount === NONE ? undefined : propAccount,
       });
-      const data = await r.json();
-      if (!r.ok) {
-        toast.error(friendlyError(data.code, data.message));
+      const secret = presentedApiKey(data);
+      if (!secret) {
+        toast.error("Key created, but the secret was missing.");
         return;
       }
-      setSecret(`${data.key_id}.${data.key_secret}`);
-      setKeys([{ id: data.id, label: data.label, key_id: data.key_id, revoked_at: null }, ...keys]);
+      setSecret(secret);
+      setKeys([{ id: data.id, label: data.label, key_id: data.key_id ?? data.id, revoked_at: null }, ...keys]);
       setLabel("");
       setPropAccount(NONE);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create key.");
+      toast.error(
+        e instanceof VantaBrowserError
+          ? friendlyError(e.code, e.message)
+          : e instanceof Error
+            ? e.message
+            : "Failed to create key.",
+      );
     } finally {
       setCreating(false);
     }
   }
 
   async function revoke(id: string) {
-    const r = await fetch(`/api/api-keys/${id}`, { method: "DELETE" });
-    if (r.ok) {
+    try {
+      await browserApiKeys.revoke(id);
       setKeys(keys.map((k) => (k.id === id ? { ...k, revoked_at: new Date().toISOString() } : k)));
       toast.success("Key revoked.");
-    } else {
-      toast.error("Couldn't revoke key.");
+    } catch (e) {
+      toast.error(
+        e instanceof VantaBrowserError ? friendlyError(e.code, e.message) : "Couldn't revoke key.",
+      );
     }
   }
 
@@ -158,7 +164,7 @@ export function ApiKeysClient({
                   <TableRow key={k.id}>
                     <TableCell className="font-medium">{k.label}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {k.key_id}
+                      {k.key_id ?? k.key_prefix ?? k.id}
                     </TableCell>
                     <TableCell className="text-right">
                       {k.revoked_at ? (

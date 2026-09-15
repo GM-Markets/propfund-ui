@@ -47,9 +47,8 @@ export default function WebhooksDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:8000/v2/webhook-endpoints \\
-  -H "Authorization: Bearer <app_access_token>" \\
-  -H "X-Session-Token: <user_session_token>" \\
+            code={`curl -X POST http://localhost:5400/van/v2/webhook-endpoints \\
+  -H "Authorization: Bearer <privy_identity_token>" \\
   -H "Content-Type: application/json" \\
   -d '{
     "url": "https://yourapp.com/api/webhooks",

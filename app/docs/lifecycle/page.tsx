@@ -21,9 +21,8 @@ export default function LifecycleDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:8000/v2/lifecycle/sync/prop_123 \\
-  -H "Authorization: Bearer <app_access_token>" \\
-  -H "X-Session-Token: <user_session_token>"`}
+            code={`curl -X POST http://localhost:5400/van/v2/lifecycle/sync/prop_123 \\
+  -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock
             lang="json"

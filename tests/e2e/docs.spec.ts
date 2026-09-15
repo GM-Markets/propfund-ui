@@ -37,6 +37,6 @@ test.describe("docs", () => {
     await page.goto("/docs/api-reference");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // The reference lists real endpoints from the catalog.
-    await expect(page.getByText("/v2/oauth/token").first()).toBeVisible();
+    await expect(page.getByText("/v2/me").first()).toBeVisible();
   });
 });

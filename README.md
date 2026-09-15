@@ -4,25 +4,22 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-A production-grade **Next.js 15 (TypeScript)** reference app that shows how to
-build a complete trading product on top of
-**hyperscaled-api `/v2`** — the multi-tenant platform that
-exposes Vanta network onboarding, Stripe checkout, Sumsub KYC, Stripe Connect
-payouts, and trading behind a single OAuth2-authenticated REST API.
+A **Next.js 15 (TypeScript)** desk UI for Flo. Traders sign in with the same
+**Privy** identity as GM Markets. This app stores that identity token and
+sends it as `Authorization: Bearer` to the **Flo gateway** (`/van`). The
+gateway verifies the JWT and proxies to Vanta. There is no app OAuth
+`client_id` / `client_secret`.
 
-This is the canonical example for external developers. **Fork it, brand it,
-ship it.**
-
-> New here? The fastest path is: run `hyperscaled-api` locally → request app
-> credentials → drop them into `.env.local` → `pnpm dev`. The
-> [Quickstart](#quickstart) below walks through every step.
+> Fastest path: gateway + Vanta running → set `NEXT_PUBLIC_PRIVY_APP_ID` and
+> `NEXT_PUBLIC_GATEWAY_URL` → `pnpm dev`. The [Quickstart](#quickstart) below
+> walks through every step.
 
 ## Table of contents
 
 - [What you get](#what-you-get)
 - [How it works](#how-it-works)
 - [Prerequisites](#prerequisites)
-- [Get your API credentials](#get-your-api-credentials)
+- [Auth](#auth)
 - [Quickstart](#quickstart)
 - [Environment variables](#environment-variables)
 - [Project structure](#project-structure)
@@ -37,44 +34,31 @@ ship it.**
 
 ## What you get
 
-- **Full onboarding funnel** — signup → email OTP → KYC → checkout →
-  subaccount provisioning → trade.
-- **Stripe Payment Intents** (challenge / funded purchase) with idempotent
-  provisioning.
-- **Stripe Connect Express** linking + payout requests, with live payout
-  estimates.
-- **Sumsub KYC** integration via the WebSDK.
-- **Trading terminal** — submit, close, bulk-close, edit, TP/SL, cancel.
-- **Live positions/orders** via Server-Sent Events.
-- **Self-service API access** — a `/request-access` flow that lets new
-  developers request their own app credentials.
-- **In-app docs** at `/docs` — an interactive API reference with runnable
-  examples.
-- **Webhook consumer example** with signature verification.
+- **Privy sign-in** — same identity as GM Markets; complimentary $10K notional
+  test desk claimed on first `GET /van/v2/me`.
+- **Stripe Identity KYC** and **Privy checkout** (Arbitrum USDC) for paid desks.
+- **Trading terminal** — ticket, blotter, and desk poll through Vanta.
+- **In-app docs** at `/docs` — gateway-prefixed curls and runnable reads.
 - **Re-skinnable UI** built on Tailwind + Radix-style primitives.
 
 ## How it works
 
 ```text
 Browser
-   │
+   │  Privy identity token
    ▼
-Next.js (this app)
-   │  Server Actions = BFF layer holding the partner OAuth client_id/secret
+Next.js (this app) — httpOnly cookie
+   │  Authorization: Bearer <token>
    ▼
-hyperscaled-api /v2
-   │
+Flo gateway /van
+   │  verifies JWT, injects x-user-*
    ▼
-vanta-network (entity miner, validator), Stripe, Sumsub
+Vanta (desk, checkout, KYC)
 ```
 
-The partner OAuth **client secret never reaches the browser**. Server Actions
-exchange it for a short-lived bearer token, then attach the end-user's
-`X-Session-Token` so each call is scoped to the logged-in trader.
-
-- **OAuth + BFF layer:** `lib/hsc/`
-- **Server Actions (the only place secrets live):** `app/actions/`
-- **Route handlers (webhooks, key issuance):** `app/api/`
+- **Gateway client:** `lib/hsc/`
+- **Session cookie:** `lib/session.ts`
+- **Server Actions:** `app/actions/`
 
 ## Prerequisites
 
@@ -82,73 +66,31 @@ exchange it for a short-lived bearer token, then attach the end-user's
 |------|---------|-------|
 | [Node.js](https://nodejs.org) | `22.13+` | See [`.nvmrc`](./.nvmrc). `nvm use` picks it up. |
 | [pnpm](https://pnpm.io) | `11.16.0` | `corepack prepare pnpm@11.16.0 --activate`. npm / yarn / bun also work. |
-| **hyperscaled-api** | running | The platform API this app talks to — local (`http://localhost:8000`) or the hosted deployment at [staging.api.vantanetwork.io](https://api.staging.vantanetwork.io/docs). |
-| Stripe test keys | optional | Only needed to exercise the checkout UI. |
+| **Flo gateway + Vanta** | running | Gateway default `http://localhost:5400`. This app calls `/van` only. |
+| Privy app id | ✅ | Same app as GM Markets (`NEXT_PUBLIC_PRIVY_APP_ID`). |
 
-You do **not** need Postgres, Redis, Stripe, or Sumsub locally — those are owned
-by `hyperscaled-api`. This app only needs Node and a reachable API.
+This app only needs Node, Privy, and a reachable gateway.
 
-## Get your API credentials
+## Auth
 
-Every app authenticates to `hyperscaled-api` with an OAuth `client_id` /
-`client_secret` pair. There are two ways to obtain them:
-
-1. **Self-service (recommended for developers).** Run this starter, open
-   [`/request-access`](http://localhost:3000/request-access), and submit your
-   app details. An operator approves the request and you receive a **one-time
-   claim link** that reveals your `client_id` / `client_secret` exactly once.
-   Store them in your secret manager immediately.
-2. **Operator-issued.** Whoever runs the platform can mint credentials directly
-   from the `hyperscaled-api` admin console, or via its CLI:
-
-   ```bash
-   # run from the hyperscaled-api repo
-   python scripts/register_app.py \
-     --name "My Partner App" \
-     --slug my-partner \
-     --entity-hotkey 5Grwva... \
-     --network-api-key k_live_xxx
-   ```
-
-Either way you end up with an `HSC_CLIENT_ID` and `HSC_CLIENT_SECRET` to put in
-`.env.local`.
+Sign in with Privy. The BFF copies the identity token into an httpOnly cookie
+and every Vanta call is `Authorization: Bearer` to `${GATEWAY}/van`. Desk bots
+use a Vanta-minted `X-Api-Key` on `/van/v2/trading/*` only.
 
 ## Quickstart
 
 ```bash
 # 1) Install dependencies
-pnpm install            # or: npm install / yarn / bun install
+pnpm install
 
 # 2) Configure environment
 cp .env.example .env.local
-# fill in HSC_CLIENT_ID / HSC_CLIENT_SECRET (see "Get your API credentials")
-# and set a 32+ char SESSION_COOKIE_SECRET
+# set NEXT_PUBLIC_PRIVY_APP_ID (and NEXT_PUBLIC_GATEWAY_URL if not localhost:5400)
 
-# 3) Run the dev server
+# 3) Run the gateway + Vanta, then this app
 pnpm dev
 # open http://localhost:3000
 ```
-
-Generate a strong session secret with:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### Running the full stack locally
-
-This app needs a reachable `hyperscaled-api`. In a separate terminal:
-
-```bash
-# in ../hyperscaled-api
-docker compose up -d          # Postgres + Redis
-cp .env.example .env          # then fill in secrets
-alembic -c alembic.ini upgrade head
-uvicorn hyperscaled_api.main:app --reload
-```
-
-Point this app at it with `HSC_API_BASE_URL=http://localhost:8000` (the default
-in `.env.example`).
 
 ## Environment variables
 
@@ -157,17 +99,13 @@ prefixed `NEXT_PUBLIC_` is exposed to the browser — never put a secret there.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `HSC_API_BASE_URL` | ✅ | `http://localhost:8000` | Base URL of `hyperscaled-api`. |
-| `HSC_CLIENT_ID` | ✅ | — | Your app's OAuth client id. |
-| `HSC_CLIENT_SECRET` | ✅ | — | Your app's OAuth client secret. **Server-only.** |
-| `HSC_SCOPE` | — | `api` | OAuth scope requested at the token endpoint. |
-| `SESSION_COOKIE_SECRET` | ✅ | — | 32+ byte random string used to sign the end-user session cookie. |
-| `SESSION_COOKIE_NAME` | — | `hsc_starter_session` | Name of the session cookie. |
-| `NEXT_PUBLIC_SITE_URL` | — | `http://localhost:3000` | Public site origin used to resolve canonical social metadata URLs. |
-| `NEXT_PUBLIC_HSC_API_BASE_URL` | ✅ | `http://localhost:8000` | API base URL used by browser-side widgets. |
-| `NEXT_PUBLIC_APP_NAME` | — | `Vanta Starter` | Display name shown in the UI. |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | — | Stripe publishable key for the checkout UI. |
-| `HSC_WEBHOOK_SECRET` | — | — | Shared secret to verify inbound webhooks in `app/api/hsc-webhook`. |
+| `NEXT_PUBLIC_GATEWAY_URL` | ✅ | `http://localhost:5400` | Flo gateway origin. |
+| `VANTA_API_BASE_URL` | — | `{GATEWAY}/van` | BFF base URL (must be the gateway `/van` prefix). |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | ✅ | — | Same Privy app as GM Markets. |
+| `SESSION_COOKIE_NAME` | — | `vanta_privy_session` | HttpOnly cookie holding the Privy identity token. |
+| `NEXT_PUBLIC_SITE_URL` | — | `http://localhost:3000` | Public site origin. |
+| `NEXT_PUBLIC_APP_NAME` | — | `PropFund` | Display name shown in the UI. |
+| `VANTA_WEBHOOK_SECRET` | — | — | Shared secret to verify inbound webhooks. |
 
 ## Project structure
 
@@ -186,13 +124,13 @@ app/
     api-keys/           Issue/manage end-user API keys
     webhooks/           Register/manage outbound webhook endpoints
   docs/                 In-app interactive API reference
-  actions/              Server Actions — the BFF layer (holds OAuth secret)
-  api/                  Route handlers (hsc-webhook consumer, api-keys, webhooks)
+  actions/              Server Actions — BFF (Privy cookie → gateway Bearer)
+  api/                  Route handlers (webhooks, api-keys)
 lib/
-  hsc/                  Typed API client, OAuth token exchange, config
+  hsc/                  Typed gateway `/van` client + config
   docs/                 API catalog + docs navigation data
   errors.ts             API error → friendly message mapping
-  session.ts            Signed session cookie helpers
+  session.ts            Privy identity-token cookie helpers
   utils.ts              Misc helpers (cn, etc.)
 components/             UI primitives (ui/), motion, brand, forms, status
 tests/                  Playwright e2e (tests/e2e/); unit tests are colocated
@@ -237,8 +175,8 @@ This is a standard Next.js app and deploys anywhere Next.js runs (Vercel,
 Node server, container).
 
 1. Set every required variable from the [environment table](#environment-variables)
-   in your host's secret manager. **Never** ship `HSC_CLIENT_SECRET` or
-   `SESSION_COOKIE_SECRET` to the client.
+   in your host's secret manager. **Never** ship the Privy identity token or
+   webhook secrets to client-side bundles.
 2. Build and start:
 
    ```bash
@@ -246,9 +184,7 @@ Node server, container).
    pnpm start
    ```
 
-3. Point `HSC_API_BASE_URL` / `NEXT_PUBLIC_HSC_API_BASE_URL` at your deployed
-   `hyperscaled-api`, and update Stripe Connect return/refresh URLs on the API
-   side to your deployed origin.
+3. Point `NEXT_PUBLIC_GATEWAY_URL` at the deployed Flo gateway.
 
 ## Branding & theming
 
@@ -261,9 +197,8 @@ propagates across the whole app.
 
 | Symptom | Likely cause / fix |
 |---------|--------------------|
-| `fetch failed` / `ECONNREFUSED` on login | `hyperscaled-api` isn't running or `HSC_API_BASE_URL` is wrong. |
-| `401`/`invalid_client` at startup | `HSC_CLIENT_ID` / `HSC_CLIENT_SECRET` are wrong or for a different environment. |
-| Session won't persist / logged out instantly | `SESSION_COOKIE_SECRET` is missing or shorter than 32 bytes. |
+| `fetch failed` / `ECONNREFUSED` on login | Gateway isn't running or `NEXT_PUBLIC_GATEWAY_URL` / `VANTA_API_BASE_URL` is wrong. |
+| `401` after Privy | Gateway rejected the identity token — check Privy app id and gateway JWT verify. |
 | OTP email never arrives | SMTP isn't configured on the **API** side (`V2_SMTP_*`). |
 | Trades submit but positions stay empty | The API's validator read key is missing — see `hyperscaled-api` `.env`. |
 | Stripe checkout button missing | Set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. |

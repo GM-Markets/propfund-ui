@@ -46,11 +46,9 @@ export function Endpoint({
             variant={auth === "public" ? "secondary" : "outline"}
             className="ml-auto text-[11px]"
           >
-            {auth === "user"
-              ? "User session"
-              : auth === "app"
-                ? "App token"
-                : "Public"}
+            {auth === "user" || auth === "app"
+              ? "Privy Bearer"
+              : "Public"}
           </Badge>
         )}
       </div>

@@ -1,8 +1,3 @@
-/**
- * Server-action tests for the auth flow. The typed client and the cookie/session
- * helpers are mocked so we assert the action's orchestration + error mapping
- * rather than network behavior.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -12,181 +7,57 @@ const { setSessionCookie, clearSessionCookie } = vi.hoisted(() => ({
   setSessionCookie: vi.fn(),
   clearSessionCookie: vi.fn(),
 }));
-const cookieGet = vi.hoisted(() => vi.fn(() => ({ value: "sess-1" })));
+
+const { me } = vi.hoisted(() => ({ me: vi.fn() }));
 
 vi.mock("next/navigation", () => ({ redirect }));
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: cookieGet }) }));
 vi.mock("@/lib/session", () => ({ setSessionCookie, clearSessionCookie }));
+vi.mock("@/lib/hsc/client", () => ({
+  auth: { me },
+  HscApiError: class HscApiError extends Error {
+    constructor(
+      public status: number,
+      public code: string,
+      message: string,
+    ) {
+      super(message);
+    }
+  },
+}));
 
-import * as hsc from "@/lib/hsc/client";
-
-import {
-  confirmPasswordResetAction,
-  loginAction,
-  logoutAction,
-  requestPasswordResetAction,
-  resendOtpAction,
-  signupAction,
-  verifyEmailAction,
-} from "./auth";
-
-function fd(entries: Record<string, string>): FormData {
-  const f = new FormData();
-  for (const [k, v] of Object.entries(entries)) f.set(k, v);
-  return f;
-}
+import { establishSessionAction, logoutAction } from "./auth";
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.restoreAllMocks());
 
-describe("signupAction", () => {
-  it("returns the email on success", async () => {
-    vi.spyOn(hsc.auth, "signup").mockResolvedValue({
-      user_id: "u1",
-      email: "x@y.com",
-      email_verified: false,
-      otp_sent: true,
-    });
-    const r = await signupAction(fd({ email: "x@y.com", password: "ppppppppp" }));
-    expect(r).toEqual({ ok: true, data: { email: "x@y.com" } });
+describe("establishSessionAction", () => {
+  it("stores the Privy identity token after the gateway accepts it", async () => {
+    me.mockResolvedValueOnce({ user_id: "usr_1" });
+    const r = await establishSessionAction("privy-token");
+    expect(r).toEqual({ ok: true });
+    expect(setSessionCookie).toHaveBeenCalledWith("privy-token", null);
+    expect(me).toHaveBeenCalled();
   });
 
-  it("maps an HscApiError to its code", async () => {
-    // ``V2_EMAIL_EXISTS`` is what the API actually emits — the M5
-    // normalized-email uniqueness fix made this the canonical conflict code
-    // for plus-aliased / cased duplicates too.
-    vi.spyOn(hsc.auth, "signup").mockRejectedValue(
-      new hsc.HscApiError(409, "V2_EMAIL_EXISTS", "Email already in use"),
-    );
-    const r = await signupAction(fd({ email: "x@y.com", password: "p" }));
-    expect(r).toMatchObject({ ok: false, code: "V2_EMAIL_EXISTS" });
+  it("clears the cookie when the gateway rejects the token", async () => {
+    const { HscApiError } = await import("@/lib/hsc/client");
+    me.mockRejectedValueOnce(new HscApiError(401, "UNAUTHORIZED", "Unauthorized"));
+    const r = await establishSessionAction("privy-token");
+    expect(r).toMatchObject({ ok: false, message: "Unauthorized" });
+    expect(clearSessionCookie).toHaveBeenCalled();
   });
 
-  it("maps a non-API error to UNKNOWN", async () => {
-    vi.spyOn(hsc.auth, "signup").mockRejectedValue(new Error("boom"));
-    const r = await signupAction(fd({ email: "x@y.com", password: "p" }));
-    expect(r).toMatchObject({ ok: false, code: "UNKNOWN", message: "boom" });
-  });
-});
-
-describe("verifyEmailAction", () => {
-  it("sets a session cookie when the API returns a session token", async () => {
-    vi.spyOn(hsc.auth, "verifyEmail").mockResolvedValue({
-      user_id: "u1",
-      email: "x@y.com",
-      email_verified: true,
-      session_token: "tok",
-      session_expires_at: "2099-01-01T00:00:00Z",
-    });
-    const r = await verifyEmailAction(fd({ email: "x@y.com", code: "123456" }));
-    expect(r).toEqual({ ok: true, data: { session: true } });
-    expect(setSessionCookie).toHaveBeenCalledWith("tok", "2099-01-01T00:00:00Z");
-  });
-
-  it("reports no session when the API verifies without a token", async () => {
-    vi.spyOn(hsc.auth, "verifyEmail").mockResolvedValue({
-      user_id: "u1",
-      email: "x@y.com",
-      email_verified: true,
-    });
-    const r = await verifyEmailAction(fd({ email: "x@y.com", code: "123456" }));
-    expect(r).toEqual({ ok: true, data: { session: false } });
+  it("rejects an empty token", async () => {
+    const r = await establishSessionAction("  ");
+    expect(r).toMatchObject({ ok: false, code: "UNKNOWN" });
     expect(setSessionCookie).not.toHaveBeenCalled();
-  });
-});
-
-describe("loginAction", () => {
-  it("surfaces mfa_required without setting a cookie (no token yet)", async () => {
-    // After the API's MFA hardening the first request returns
-    // ``mfa_required`` with no session token — the cookie must NOT be set,
-    // otherwise the user would skip the second factor entirely.
-    vi.spyOn(hsc.auth, "login").mockResolvedValue({ mfa_required: true });
-    const r = await loginAction(fd({ email: "x@y.com", password: "p" }));
-    expect(r).toEqual({ ok: true, data: { mfa_required: true } });
-    expect(setSessionCookie).not.toHaveBeenCalled();
-  });
-
-  it("sets the cookie when the API issues a session token", async () => {
-    vi.spyOn(hsc.auth, "login").mockResolvedValue({
-      user_id: "u1",
-      email: "x@y.com",
-      session_token: "tok",
-      session_expires_at: "2099-01-01T00:00:00Z",
-      mfa_required: false,
-    });
-    const r = await loginAction(fd({ email: "x@y.com", password: "p" }));
-    expect(r).toEqual({ ok: true, data: { mfa_required: false } });
-    expect(setSessionCookie).toHaveBeenCalledWith("tok", "2099-01-01T00:00:00Z");
-  });
-
-  it("passes the TOTP code through when present", async () => {
-    const spy = vi.spyOn(hsc.auth, "login").mockResolvedValue({
-      user_id: "u1",
-      email: "x@y.com",
-      session_token: "tok",
-      session_expires_at: "2099-01-01T00:00:00Z",
-      mfa_required: false,
-    });
-    await loginAction(fd({ email: "x@y.com", password: "p", totp_code: "654321" }));
-    expect(spy).toHaveBeenCalledWith("x@y.com", "p", "654321");
-  });
-
-  it("maps invalid credentials to the API code", async () => {
-    vi.spyOn(hsc.auth, "login").mockRejectedValue(
-      new hsc.HscApiError(401, "V2_INVALID_CREDENTIALS", "nope"),
-    );
-    const r = await loginAction(fd({ email: "x@y.com", password: "bad" }));
-    expect(r).toMatchObject({ ok: false, code: "V2_INVALID_CREDENTIALS" });
-  });
-
-  it("propagates V2_THROTTLED so the UI can show a backoff hint", async () => {
-    vi.spyOn(hsc.auth, "login").mockRejectedValue(
-      new hsc.HscApiError(429, "V2_THROTTLED", "Too many login attempts. Try again in ~8s."),
-    );
-    const r = await loginAction(fd({ email: "x@y.com", password: "p" }));
-    expect(r).toMatchObject({ ok: false, code: "V2_THROTTLED" });
   });
 });
 
 describe("logoutAction", () => {
-  it("revokes the session, clears the cookie, and redirects to /login", async () => {
-    const revoke = vi.spyOn(hsc.auth, "logout").mockResolvedValue({ revoked: true });
-    await logoutAction();
-    expect(revoke).toHaveBeenCalledWith("sess-1");
-    expect(clearSessionCookie).toHaveBeenCalled();
-    expect(redirect).toHaveBeenCalledWith("/login");
-  });
-
-  it("still clears + redirects when revoke throws", async () => {
-    vi.spyOn(hsc.auth, "logout").mockRejectedValue(new Error("down"));
+  it("clears the session cookie and redirects to login", async () => {
     await logoutAction();
     expect(clearSessionCookie).toHaveBeenCalled();
-    expect(redirect).toHaveBeenCalledWith("/login");
-  });
-});
-
-describe("password reset + resend OTP", () => {
-  it("resendOtpAction returns ok on success", async () => {
-    vi.spyOn(hsc.auth, "resendOtp").mockResolvedValue({ sent: true });
-    await expect(resendOtpAction("x@y.com")).resolves.toEqual({ ok: true });
-  });
-
-  it("requestPasswordResetAction maps errors", async () => {
-    vi.spyOn(hsc.auth, "requestReset").mockRejectedValue(
-      new hsc.HscApiError(429, "V2_RATE_LIMITED", "slow down"),
-    );
-    await expect(requestPasswordResetAction("x@y.com")).resolves.toMatchObject({
-      ok: false,
-      code: "V2_RATE_LIMITED",
-    });
-  });
-
-  it("confirmPasswordResetAction forwards the token + new password", async () => {
-    const spy = vi.spyOn(hsc.auth, "confirmReset").mockResolvedValue({ reset: true });
-    const r = await confirmPasswordResetAction(
-      fd({ email: "x@y.com", token: "t", new_password: "newpw" }),
-    );
-    expect(r).toEqual({ ok: true });
-    expect(spy).toHaveBeenCalledWith("x@y.com", "t", "newpw");
+    expect(redirect).toHaveBeenCalledWith("/login?signedOut=1");
   });
 });

@@ -17,13 +17,15 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("runDocsRequestAction", () => {
   it("returns status 200 + body for a successful read", async () => {
-    vi.spyOn(hsc.oauth, "me").mockResolvedValue({
+    vi.spyOn(hsc.apps, "me").mockResolvedValue({
       app_id: "a1",
       slug: "acme",
+      name: "Acme",
       entity_hotkey: "5F",
-      scopes: ["api"],
+      allowed_scopes: ["api"],
+      active: true,
     });
-    const r = await runDocsRequestAction("oauth.me");
+    const r = await runDocsRequestAction("apps.me");
     expect(r).toMatchObject({ ok: true, data: { status: 200 } });
   });
 
@@ -40,7 +42,6 @@ describe("runDocsRequestAction", () => {
           subaccount_id: null,
           subaccount_uuid: null,
           synthetic_hotkey: null,
-          stripe_payment_intent_id: null,
         },
       ]);
     const positions = vi.spyOn(hsc.trading, "positions").mockResolvedValue([]);
@@ -64,8 +65,8 @@ describe("runDocsRequestAction", () => {
   });
 
   it("returns a failure envelope for a non-API error", async () => {
-    vi.spyOn(hsc.oauth, "me").mockRejectedValue(new Error("boom"));
-    const r = await runDocsRequestAction("oauth.me");
+    vi.spyOn(hsc.apps, "me").mockRejectedValue(new Error("boom"));
+    const r = await runDocsRequestAction("apps.me");
     expect(r).toMatchObject({ ok: false, code: "UNKNOWN", message: "boom" });
   });
 });

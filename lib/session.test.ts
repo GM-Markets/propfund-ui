@@ -30,7 +30,7 @@ import {
   setSessionCookie,
 } from "./session";
 
-const COOKIE = "hsc_test_session";
+const COOKIE = "vanta_privy_session";
 
 beforeEach(() => {
   store.clear();
