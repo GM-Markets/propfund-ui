@@ -43,5 +43,6 @@ export async function clearSessionCookie(): Promise<void> {
 
 export async function getSessionTokenFromCookie(): Promise<string | undefined> {
   const jar = await cookies();
-  return jar.get(hscConfig.sessionCookieName)?.value;
+  const value = jar.get(hscConfig.sessionCookieName)?.value;
+  return value ? value : undefined;
 }

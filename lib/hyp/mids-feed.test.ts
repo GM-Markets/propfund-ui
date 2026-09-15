@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const detach = vi.fn();
-const subscribeHlAllMidsMock = vi.fn(() => detach);
+const subscribeHlAllMidsMock = vi.fn<(onMids: (mids: Record<string, string>) => void) => () => void>(
+  () => detach,
+);
 
 vi.mock("@/lib/hl/all-mids", () => ({
   subscribeHlAllMids: (listener: (mids: Record<string, string>) => void) => subscribeHlAllMidsMock(listener),

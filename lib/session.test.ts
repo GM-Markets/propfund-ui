@@ -76,10 +76,16 @@ describe("getSessionTokenFromCookie", () => {
 });
 
 describe("clearSessionCookie", () => {
-  it("deletes the session cookie", async () => {
+  it("expires the session cookie", async () => {
     await setSessionCookie("tok", null);
     await clearSessionCookie();
-    expect(jar.delete).toHaveBeenCalledWith(COOKIE);
+    expect(jar.set).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        name: COOKIE,
+        value: "",
+        maxAge: 0,
+      }),
+    );
     await expect(getSessionTokenFromCookie()).resolves.toBeUndefined();
   });
 });
