@@ -2,6 +2,7 @@ import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Payouts & Connect" };
 
@@ -88,7 +89,7 @@ export default function PayoutsDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl http://localhost:5400/van/v2/payouts/estimate \\
+            code={`curl ${docsVanUrl("/v2/payouts/estimate")} \\
   -H "Authorization: Bearer <privy_identity_token>" \\
   -H "X-Prop-Account: prop_..."`}
           />

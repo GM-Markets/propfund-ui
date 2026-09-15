@@ -33,7 +33,7 @@ export function Endpoint({
 }: {
   method: string;
   path: string;
-  auth?: "user" | "app" | "public";
+  auth?: "user" | "app" | "public" | "desk";
   children?: React.ReactNode;
 }) {
   return (
@@ -46,9 +46,7 @@ export function Endpoint({
             variant={auth === "public" ? "secondary" : "outline"}
             className="ml-auto text-[11px]"
           >
-            {auth === "user" || auth === "app"
-              ? "Privy Bearer"
-              : "Public"}
+            {auth === "desk" ? "X-Api-Key" : auth === "user" || auth === "app" ? "Privy Bearer" : "Public"}
           </Badge>
         )}
       </div>

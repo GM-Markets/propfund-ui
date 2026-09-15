@@ -1,5 +1,6 @@
 import { CodeBlock } from "@/components/docs/code-block";
 import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
+import { docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Notifications" };
 
@@ -33,7 +34,7 @@ export default function NotificationsDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:5400/van/v2/notifications/send \\
+            code={`curl -X POST ${docsVanUrl("/v2/notifications/send")} \\
   -H "Authorization: Bearer <privy_identity_token>" \\
   -H "Content-Type: application/json" \\
   -d '{

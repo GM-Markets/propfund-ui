@@ -2,6 +2,7 @@ import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Checkout & accounts" };
 
@@ -53,7 +54,7 @@ export default function CheckoutDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:5400/van/v2/payments/checkout \\
+            code={`curl -X POST ${docsVanUrl("/v2/payments/checkout")} \\
   -H "Authorization: Bearer <privy_identity_token>" \\
   -H "Content-Type: application/json" \\
   -d '{

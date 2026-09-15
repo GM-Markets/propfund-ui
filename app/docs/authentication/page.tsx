@@ -4,10 +4,9 @@ import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Authentication" };
-
-const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(/\/$/, "");
 
 export default function AuthDocsPage() {
   return (
@@ -21,60 +20,78 @@ export default function AuthDocsPage() {
           <DocsLink href="/login" label="Try it" />
         </div>
         <p className="text-lg text-muted-foreground">
-          Same as GM Markets: the <strong>Flo gateway</strong> verifies the Privy
-          identity token. This app only stores that token and sends it as{" "}
-          <code>Authorization: Bearer</code> to <code>/van</code>.
+          Programmatic calls go to <code>{PUBLIC_GATEWAY_ORIGIN}</code>. Desk
+          bots send a minted <code>X-Api-Key</code>. The dashboard signs in with
+          Privy and uses a Bearer token only to create that key.
         </p>
       </header>
 
       <DocSection
-        title="Sign in"
-        description="Privy issues the identity token. The dashboard BFF copies it into an httpOnly cookie and every Vanta call goes through the gateway."
+        title="Call the gateway with an API key"
+        description="Mint a key in the dashboard, then call /van/v2/trading/* on gate.propfund.io. No Privy token on the bot."
       >
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-          <li>Trader signs in with Privy (same app as GM Markets).</li>
           <li>
-            This UI stores the identity token and calls{" "}
-            <code>{GATEWAY}/van/v2/me</code> with{" "}
-            <code>Authorization: Bearer &lt;token&gt;</code>.
+            Sign in at PropFund and create a key under{" "}
+            <Link href="/dashboard/api-keys">API keys</Link>. Save{" "}
+            <code>key_id.key_secret</code> — the secret is shown once.
           </li>
           <li>
-            The gateway checks the JWT, injects <code>x-user-id</code> /{" "}
-            <code>x-user-address</code> / <code>x-user-role</code>, and proxies to
-            Vanta.
+            Send <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code> to{" "}
+            <code>{docsVanUrl("/v2/trading/*")}</code>.
+          </li>
+          <li>
+            Include <code>X-Prop-Account</code> when the key is not already bound
+            to one desk.
           </li>
         </ol>
-        <Callout type="info" title="No app OAuth">
-          There is no client id, client secret, or <code>/v2/oauth/token</code>.
-          Desk bots use a Vanta-minted <code>X-Api-Key</code> on{" "}
-          <code>/van/v2/trading/*</code> only.
+        <CodeBlock
+          lang="bash"
+          filename="curl"
+          code={`curl ${docsVanUrl("/v2/trading/desk-poll")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..."`}
+        />
+        <Callout type="warning" title="Trading routes only">
+          <code>X-Api-Key</code> is accepted on <code>/van/v2/trading/*</code>{" "}
+          only. Auth, KYC, checkout, payouts, and key admin reject it with{" "}
+          <code>401</code>.
         </Callout>
       </DocSection>
 
-      <DocSection title="Who am I?" description="First authenticated call after login. Provisions the Vanta user and claims the $10K notional test desk.">
+      <DocSection
+        title="Dashboard sign-in"
+        description="Privy issues the identity token. The UI stores it and the gateway verifies it before proxying /van."
+      >
+        <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+          <li>Trader signs in with Privy.</li>
+          <li>
+            The UI calls <code>{docsVanUrl("/v2/me")}</code> with{" "}
+            <code>Authorization: Bearer &lt;token&gt;</code>.
+          </li>
+          <li>
+            The gateway checks the JWT, injects <code>x-user-*</code>, and
+            proxies to Vanta.
+          </li>
+        </ol>
+      </DocSection>
+
+      <DocSection title="Who am I?" description="First authenticated dashboard call after login. Provisions the user and claims the $10K notional test desk.">
         <Endpoint method="GET" path="/v2/me" auth="user">
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl ${GATEWAY}/van/v2/me \\
+            code={`curl ${docsVanUrl("/v2/me")} \\
   -H "Authorization: Bearer <privy_identity_token>"`}
-          />
-          <CodeBlock
-            lang="typescript"
-            filename="lib/hsc/client.ts"
-            code={`import { auth } from "@/lib/hsc/client";
-
-const me = await auth.me();`}
           />
           <ApiTester operation="auth.me" method="GET" path="/v2/me" />
         </Endpoint>
       </DocSection>
 
-      <Callout type="tip" title="Configure this app">
-        Set <code>NEXT_PUBLIC_PRIVY_APP_ID</code> and{" "}
-        <code>NEXT_PUBLIC_GATEWAY_URL</code> (default{" "}
-        <code>http://localhost:5400</code>). See the{" "}
-        <Link href="/docs/quickstart">Quickstart</Link>.
+      <Callout type="tip" title="Base URL">
+        Production API: <code>{PUBLIC_GATEWAY_ORIGIN}</code>. All desk routes are
+        under <code>/van</code>. See <Link href="/docs/api-keys">API keys</Link>{" "}
+        and <Link href="/docs/trading">Trading</Link>.
       </Callout>
     </>
   );

@@ -2,6 +2,7 @@ import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Identity / KYC" };
 
@@ -41,7 +42,7 @@ export default function KycDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:5400/van/v2/kyc/stripe/session \\
+            code={`curl -X POST ${docsVanUrl("/v2/kyc/stripe-identity/session")} \\
   -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock

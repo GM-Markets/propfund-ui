@@ -4,6 +4,7 @@ export type AuthKind =
   | "public"
   | "app"
   | "user"
+  | "desk"
   | "admin"
   | "partner"
   | "partner-trader"
@@ -14,6 +15,7 @@ export const AUTH_LABEL: Record<AuthKind, string> = {
   public: "Public",
   app: "Privy Bearer",
   user: "Privy Bearer",
+  desk: "X-Api-Key",
   admin: "Admin",
   partner: "Partner key",
   "partner-trader": "Partner + Trader-ID",
@@ -201,19 +203,14 @@ export const API_CATALOG: ApiArea[] = [
     description: "Submit orders, manage positions, and read the live desk.",
     docHref: "/docs/trading",
     endpoints: [
-      { method: "POST", path: "/v2/trading/orders", summary: "Submit an order.", auth: "user", note: "X-Prop-Account header.", request: `{ "trade_pair": "BTCUSD", "order_type": "LONG", "leverage": 1.0, "execution_type": "MARKET" }`, response: `{ "success": true, "order_uuid": "ord_...", "processing_time": 0.42 }` },
-      { method: "POST", path: "/v2/trading/orders/close", summary: "Market-close one position.", auth: "user", request: `{ "trade_pair": "BTCUSD" }` },
-      { method: "POST", path: "/v2/trading/orders/bulk-close", summary: "Close many positions at once.", auth: "user", request: `{ "position_uuids": ["pos_...", "pos_..."] }` },
-      { method: "POST", path: "/v2/trading/orders/tp-sl", summary: "Attach/replace take-profit & stop-loss.", auth: "user", request: `{ "trade_pair": "BTCUSD", "take_profit": 75000, "stop_loss": 60000 }` },
-      { method: "POST", path: "/v2/trading/orders/{order_uuid}/edit", summary: "Edit a resting order.", auth: "user" },
-      { method: "DELETE", path: "/v2/trading/orders/{order_uuid}", summary: "Cancel a resting order (?trade_pair=).", auth: "user" },
-      { method: "GET", path: "/v2/trading/orders/{order_uuid}", summary: "Order status lookup.", auth: "user" },
-      { method: "GET", path: "/v2/trading/positions", summary: "Open positions.", auth: "user", runOp: "trading.positions" },
-      { method: "GET", path: "/v2/trading/orders", summary: "Pending limit/stop orders.", auth: "user", runOp: "trading.orders" },
-      { method: "GET", path: "/v2/trading/history", summary: "Closed positions.", auth: "user", runOp: "trading.history" },
-      { method: "GET", path: "/v2/trading/balance", summary: "Account size & balance metrics.", auth: "user", response: `{ "account_size": 25000, "status": "active", "subaccount_info": {} }`, runOp: "trading.balance" },
-      { method: "GET", path: "/v2/trading/desk-poll", summary: "Bundle: positions + orders + history + balance.", auth: "user", response: `{ "positions": [], "orders": [], "history": [], "balance": { "account_size": 25000, "status": "active" } }`, runOp: "trading.deskPoll" },
-      { method: "GET", path: "/v2/trading/stream", summary: "Server-sent event snapshot stream (?interval_ms=).", auth: "user", note: "SSE: 'snapshot' events with positions/orders/account_size." },
+      { method: "GET", path: "/v2/trading/markets", summary: "Live perp and USDC spot catalog.", auth: "public", response: `{ "markets": [{ "coin": "BTC", "mid": 76900, "max_leverage": 40 }], "spots": [{ "coin": "PURR", "wire": "PURR/USDC", "mid": 0.11, "max_leverage": 1 }] }` },
+      { method: "POST", path: "/v2/trading/orders", summary: "Submit an order.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", request: `{ "trade_pair": "BTC", "market_type": "perp", "side": "buy", "value": 200, "leverage": 20 }`, response: `{ "success": true, "order_uuid": "ord_...", "processing_time": 0.42 }` },
+      { method: "POST", path: "/v2/trading/close", summary: "Market-close one position.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", request: `{ "trade_pair": "BTC", "market_type": "perp" }` },
+      { method: "GET", path: "/v2/trading/positions", summary: "Open positions.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", runOp: "trading.positions" },
+      { method: "GET", path: "/v2/trading/orders", summary: "Pending limit/stop orders.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", runOp: "trading.orders" },
+      { method: "GET", path: "/v2/trading/history", summary: "Closed positions.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", runOp: "trading.history" },
+      { method: "GET", path: "/v2/trading/balance", summary: "Account size & balance metrics.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", response: `{ "account_size": 25000, "status": "active" }`, runOp: "trading.balance" },
+      { method: "GET", path: "/v2/trading/desk-poll", summary: "Bundle: positions + orders + history + balance.", auth: "desk", note: "X-Api-Key and X-Prop-Account headers.", response: `{ "positions": [], "orders": [], "history": [], "balance": { "account_size": 25000, "status": "active" } }`, runOp: "trading.deskPoll" },
     ],
   },
   {

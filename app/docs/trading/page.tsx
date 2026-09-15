@@ -1,7 +1,10 @@
+import Link from "next/link";
+
 import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Trading" };
 
@@ -17,64 +20,51 @@ export default function TradingDocsPage() {
           <DocsLink href="/dashboard/trading" label="Open in app" />
         </div>
         <p className="text-lg text-muted-foreground">
-          Submit orders, manage positions, and read the live trading desk for a
-          funded prop account. Orders are routed to the validator network and
-          reflected back in positions/history.
+          Virtual perps and USDC spots on the PropFund desk. Bots call{" "}
+          <code>{PUBLIC_GATEWAY_ORIGIN}</code> with an API key. Fills are
+          marked against live Hyperliquid mids.
         </p>
       </header>
 
-      <Callout type="warning" title="Always send X-Prop-Account">
-        Trading endpoints act on a specific funded account. Pass its id in the{" "}
-        <code>X-Prop-Account</code> header. Get ids from{" "}
-        <a href="/docs/checkout">prop accounts</a>.
+      <Callout type="info" title="Authenticate at the gateway">
+        <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code> on{" "}
+        <code>{docsVanUrl("/v2/trading/*")}</code>. Mint the key in the{" "}
+        <Link href="/docs/api-keys">API keys</Link> flow. Also send{" "}
+        <code>X-Prop-Account</code> unless the key is bound to one desk.
       </Callout>
 
-      <Callout type="info" title="trade_pair uses the wire id">
-        Use the validator&apos;s wire id (e.g. <code>BTCUSD</code>), not a display
-        label like <code>BTC/USD</code>. Sending the wrong format returns{" "}
-        <code>400 Bad Request</code>.
+      <Callout type="info" title="trade_pair is the Hyperliquid coin">
+        Use the catalog coin (<code>BTC</code>, <code>ETH</code>,{" "}
+        <code>SOL</code>), not a display label like <code>BTC/USD</code>.
       </Callout>
 
       <DocSection title="Submit an order">
-        <Endpoint method="POST" path="/v2/trading/orders" auth="user">
+        <Endpoint method="POST" path="/v2/trading/orders" auth="desk">
           <ParamTable
             title="Request body"
             rows={[
-              { name: "trade_pair", type: "string", required: true, desc: 'Wire id, e.g. "BTCUSD"' },
-              { name: "order_type", type: '"LONG" | "SHORT" | "FLAT"', required: true, desc: "Direction" },
-              { name: "leverage", type: "number", required: false, desc: "Size by leverage…" },
-              { name: "value", type: "number", required: false, desc: "…or by notional value…" },
-              { name: "quantity", type: "number", required: false, desc: "…or by quantity (pick one)" },
-              { name: "execution_type", type: "string", required: false, desc: 'MARKET (default), LIMIT, STOP_LIMIT, BRACKET…' },
-              { name: "limit_price", type: "number", required: false, desc: "For LIMIT / STOP_LIMIT" },
-              { name: "stop_price", type: "number", required: false, desc: "For STOP_LIMIT" },
-              { name: "take_profit", type: "number", required: false, desc: "Optional TP price" },
-              { name: "stop_loss", type: "number", required: false, desc: "Optional SL price" },
+              { name: "trade_pair", type: "string", required: true, desc: 'Coin, e.g. "BTC"' },
+              { name: "market_type", type: '"perp" | "spot"', required: true, desc: "Book" },
+              { name: "side", type: '"buy" | "sell"', required: true, desc: "Perp long/short or spot buy/sell" },
+              { name: "value", type: "number", required: false, desc: "USDC notional (margin × leverage for perps)" },
+              { name: "quantity", type: "number", required: false, desc: "Coin size (use value or quantity)" },
+              { name: "leverage", type: "number", required: false, desc: "Perp leverage, 1…HL max for that coin" },
             ]}
           />
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:5400/van/v2/trading/orders \\
-  -H "Authorization: Bearer <privy_identity_token>" \\
+            code={`curl -X POST ${docsVanUrl("/v2/trading/orders")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
   -H "X-Prop-Account: prop_..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "trade_pair": "BTCUSD",
-    "order_type": "LONG",
-    "leverage": 1.0,
-    "execution_type": "MARKET"
+    "trade_pair": "BTC",
+    "market_type": "perp",
+    "side": "buy",
+    "value": 200,
+    "leverage": 20
   }'`}
-          />
-          <CodeBlock
-            lang="typescript"
-            filename="lib/hsc/client.ts"
-            code={`import { trading } from "@/lib/hsc/client";
-
-await trading.submit(
-  { trade_pair: "BTCUSD", order_type: "LONG", leverage: 1.0, execution_type: "MARKET" },
-  propAccountId,
-);`}
           />
           <CodeBlock
             lang="json"
@@ -84,21 +74,29 @@ await trading.submit(
         </Endpoint>
       </DocSection>
 
-      <DocSection title="Manage positions & orders">
-        <ParamTable
-          title="Endpoints"
-          rows={[
-            { name: "POST /v2/trading/orders/close", type: "body { trade_pair }", desc: "Flatten a position" },
-            { name: "POST /v2/trading/orders/bulk-close", type: "body { position_uuids }", desc: "Close many at once" },
-            { name: "DELETE /v2/trading/orders/{uuid}", type: "?trade_pair=…", desc: "Cancel a resting order" },
-            { name: "POST /v2/trading/orders/{uuid}/edit", type: "body { trade_pair, order_type, … }", desc: "Edit a resting order" },
-            { name: "POST /v2/trading/orders/tp-sl", type: "body { trade_pair, take_profit?, stop_loss? }", desc: "Attach TP/SL" },
-          ]}
-        />
+      <DocSection title="Close a position">
+        <Endpoint method="POST" path="/v2/trading/close" auth="desk">
+          <CodeBlock
+            lang="bash"
+            filename="curl"
+            code={`curl -X POST ${docsVanUrl("/v2/trading/close")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{ "trade_pair": "BTC", "market_type": "perp" }'`}
+          />
+        </Endpoint>
       </DocSection>
 
-      <DocSection title="Read the desk" description="Reads accept X-Prop-Account and return snapshots. desk-poll bundles everything in one round-trip — ideal for a UI refresh loop.">
-        <Endpoint method="GET" path="/v2/trading/desk-poll" auth="user">
+      <DocSection title="Read the desk" description="desk-poll bundles positions, orders, history, and balance in one round-trip.">
+        <Endpoint method="GET" path="/v2/trading/desk-poll" auth="desk">
+          <CodeBlock
+            lang="bash"
+            filename="curl"
+            code={`curl ${docsVanUrl("/v2/trading/desk-poll")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..."`}
+          />
           <CodeBlock
             lang="json"
             filename="200 OK"
@@ -119,7 +117,8 @@ await trading.submit(
           Individual reads: <code>GET /v2/trading/positions</code>,{" "}
           <code>GET /v2/trading/orders</code>,{" "}
           <code>GET /v2/trading/history</code>,{" "}
-          <code>GET /v2/trading/balance</code>.
+          <code>GET /v2/trading/balance</code>,{" "}
+          <code>GET /v2/trading/markets</code> (public, no key).
         </p>
       </DocSection>
     </>

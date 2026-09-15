@@ -1,7 +1,10 @@
+import Link from "next/link";
+
 import { CodeBlock } from "@/components/docs/code-block";
 import { ApiTester } from "@/components/docs/api-tester";
 import { Callout, DocSection, Endpoint, ParamTable } from "@/components/docs/blocks";
 import { DocsLink } from "@/components/docs/docs-link";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "API keys" };
 
@@ -17,10 +20,38 @@ export default function ApiKeysDocsPage() {
           <DocsLink href="/dashboard/api-keys" label="Open in app" />
         </div>
         <p className="text-lg text-muted-foreground">
-          Issue scoped programmatic credentials so a trader (or their bot) can
-          call the API directly — optionally bound to a single prop account.
+          Mint a desk key in the app, then call{" "}
+          <code>{PUBLIC_GATEWAY_ORIGIN}</code> with{" "}
+          <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code>. The secret is
+          shown once.
         </p>
       </header>
+
+      <DocSection
+        title="Use the key"
+        description="Bots never send a Privy token. Concatenate key_id and key_secret with a dot."
+      >
+        <CodeBlock
+          lang="bash"
+          filename="curl"
+          code={`curl -X POST ${docsVanUrl("/v2/trading/orders")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "trade_pair": "BTC",
+    "market_type": "perp",
+    "side": "buy",
+    "value": 200,
+    "leverage": 20
+  }'`}
+        />
+        <Callout type="info" title="Where to send it">
+          Host <code>{PUBLIC_GATEWAY_ORIGIN}</code>, path prefix{" "}
+          <code>/van</code>, header <code>X-Api-Key</code>. Trading routes only
+          — see <Link href="/docs/trading">Trading</Link>.
+        </Callout>
+      </DocSection>
 
       <DocSection title="Create a key">
         <Endpoint method="POST" path="/v2/api-keys" auth="user">
@@ -37,14 +68,16 @@ export default function ApiKeysDocsPage() {
             code={`{
   "id": "key_...",
   "label": "Trading bot",
-  "key_id": "hsk_live_...",
-  "key_secret": "sk_live_...   // shown ONCE — store it now",
+  "key_id": "key_...",
+  "key_secret": "…shown once",
+  "key": "key_....secret",
   "prop_account_id": "prop_..."
 }`}
           />
           <Callout type="warning" title="The secret is shown once">
-            Capture <code>key_secret</code> at creation time. It is hashed at rest
-            and can never be retrieved again — rotate by revoking and re-creating.
+            Store <code>key</code> (or <code>key_id.key_secret</code>) immediately.
+            It is hashed at rest and cannot be retrieved again — rotate by
+            revoking and creating a new key.
           </Callout>
         </Endpoint>
       </DocSection>
@@ -55,7 +88,7 @@ export default function ApiKeysDocsPage() {
             lang="json"
             filename="200 OK"
             code={`[
-  { "id": "key_...", "label": "Trading bot", "key_id": "hsk_live_...", "revoked_at": null }
+  { "id": "key_...", "label": "Trading bot", "key_id": "key_...", "revoked_at": null }
 ]`}
           />
           <ApiTester operation="apiKeys.list" method="GET" path="/v2/api-keys" />
@@ -67,7 +100,7 @@ export default function ApiKeysDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X DELETE http://localhost:5400/van/v2/api-keys/key_... \\
+            code={`curl -X DELETE ${docsVanUrl("/v2/api-keys/key_...")} \\
   -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock lang="json" filename="200 OK" code={`{ "revoked": true }`} />

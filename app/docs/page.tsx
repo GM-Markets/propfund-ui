@@ -9,24 +9,20 @@ import {
 
 import { CodeBlock } from "@/components/docs/code-block";
 import { Callout } from "@/components/docs/blocks";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Introduction" };
-
-const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(
-  /\/$/,
-  "",
-);
 
 const FLOWS = [
   {
     href: "/docs/quickstart",
     title: "Quickstart",
-    desc: "Get the API and this app running locally in ~10 minutes.",
+    desc: "Mint an API key and call gate.propfund.io in a few minutes.",
   },
   {
     href: "/docs/authentication",
     title: "Authentication",
-    desc: "Privy identity token through the Flo gateway — no app OAuth.",
+    desc: "X-Api-Key on gate.propfund.io for bots. Privy only to mint the key.",
     icon: KeyRound,
   },
   {
@@ -54,7 +50,7 @@ const FLOWS = [
   {
     href: "/docs/api-keys",
     title: "API keys",
-    desc: "Issue scoped programmatic credentials for your traders.",
+    desc: "Mint key_id.key_secret and call the gateway trading API.",
     icon: KeyRound,
   },
   {
@@ -99,38 +95,38 @@ export default function DocsIndexPage() {
               1
             </span>
             <h2 className="text-lg font-semibold tracking-tight">
-              Sign in with Privy
+              Get an API key
             </h2>
           </div>
           <div className="rounded-xl border border-border bg-card/40 p-5">
             <p className="text-sm text-muted-foreground">
-              Same identity as GM Markets. This app stores the Privy identity
-              token and sends it as <code>Authorization: Bearer</code> to{" "}
-              <code>{GATEWAY}/van</code>. The Flo gateway verifies the JWT and
-              proxies to Vanta — there is no app <code>client_id</code> /{" "}
-              <code>client_secret</code>.
+              Sign in to PropFund, mint a desk key, then call{" "}
+              <code>{PUBLIC_GATEWAY_ORIGIN}</code> with{" "}
+              <code>X-Api-Key: {DESK_API_KEY_PLACEHOLDER}</code>. The gateway
+              proxies <code>/van</code> to the virtual desk. Keys work on{" "}
+              <code>/van/v2/trading/*</code> only.
             </p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-muted-foreground">
               <li>
-                Set <code>NEXT_PUBLIC_PRIVY_APP_ID</code> and{" "}
-                <code>NEXT_PUBLIC_GATEWAY_URL</code>.
-              </li>
-              <li>
-                Run the Flo gateway and Vanta, then open{" "}
                 <Link href="/login" className="text-primary hover:underline">
                   Sign in
+                </Link>{" "}
+                and open{" "}
+                <Link href="/dashboard/api-keys" className="text-primary hover:underline">
+                  API keys
                 </Link>
                 .
               </li>
               <li>
-                First <code>GET /van/v2/me</code> attaches the user and claims
-                the complimentary $10K notional test desk.
+                Copy <code>key_id.key_secret</code> — the secret is shown once.
+              </li>
+              <li>
+                Send requests to <code>{docsVanUrl("/v2/trading/*")}</code>.
               </li>
             </ol>
             <p className="mt-4 text-xs text-muted-foreground">
-              Desk bots use a Vanta-minted <code>X-Api-Key</code> on{" "}
-              <code>/van/v2/trading/*</code> only. See the{" "}
-              <Link href="/docs/quickstart">Quickstart</Link>.
+              Dashboard session auth is Privy Bearer. Bots never send that
+              token. See the <Link href="/docs/quickstart">Quickstart</Link>.
             </p>
           </div>
         </div>
@@ -147,12 +143,13 @@ export default function DocsIndexPage() {
           <CodeBlock
             lang="bash"
             filename="Your first request"
-            code={`curl http://localhost:5400/van/v2/me \\
-  -H "Authorization: Bearer <privy_identity_token>"`}
+            code={`curl ${docsVanUrl("/v2/trading/desk-poll")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..."`}
           />
           <Callout type="tip" title="Auth is on the gateway">
-            Send the Privy identity token. The Flo gateway verifies it and proxies{" "}
-            <code>/van</code> to Vanta. See{" "}
+            Host <code>{PUBLIC_GATEWAY_ORIGIN}</code>, header{" "}
+            <code>X-Api-Key</code>. See{" "}
             <Link href="/docs/authentication">Authentication</Link>.
           </Callout>
         </div>

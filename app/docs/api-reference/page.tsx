@@ -14,19 +14,17 @@ import {
   type Endpoint,
 } from "@/lib/docs/api-catalog";
 import { highlight } from "@/lib/docs/highlight";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_VAN_BASE } from "@/lib/docs/public-api";
 
 export const metadata = { title: "API reference" };
 
-const GATEWAY = (process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400").replace(
-  /\/$/,
-  "",
-);
-const BASE = process.env.VANTA_API_BASE_URL ?? `${GATEWAY}/van`;
+const BASE = PUBLIC_VAN_BASE;
 const SWAGGER_URL = `${BASE}/docs`;
 
 const BEARER: Record<AuthKind, string | null> = {
   public: null,
   provider: null,
+  desk: null,
   app: "<privy_identity_token>",
   user: "<privy_identity_token>",
   admin: "<admin_token>",
@@ -37,15 +35,20 @@ const BEARER: Record<AuthKind, string | null> = {
 
 function buildCurl(ep: Endpoint): string {
   const lines: string[] = [`curl -X ${ep.method} ${BASE}${ep.path} \\`];
-  const bearer = BEARER[ep.auth];
-  if (bearer) lines.push(`  -H "Authorization: Bearer ${bearer}" \\`);
+  if (ep.auth === "desk") {
+    lines.push(`  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\`);
+  } else {
+    const bearer = BEARER[ep.auth];
+    if (bearer) lines.push(`  -H "Authorization: Bearer ${bearer}" \\`);
+  }
   if (ep.auth === "partner-trader") lines.push(`  -H "Trader-ID: <hl_wallet | subaccount_id>" \\`);
-  if (ep.note?.includes("X-Prop-Account")) lines.push(`  -H "X-Prop-Account: <prop_account_id>" \\`);
+  if (ep.note?.includes("X-Prop-Account") || ep.auth === "desk") {
+    lines.push(`  -H "X-Prop-Account: <prop_account_id>" \\`);
+  }
   if (ep.request) {
     lines.push(`  -H "Content-Type: application/json" \\`);
     lines.push(`  -d '${ep.request}'`);
   } else {
-    // drop the trailing backslash on the last line
     lines[lines.length - 1] = lines[lines.length - 1].replace(/ \\$/, "");
   }
   return lines.join("\n");
@@ -113,9 +116,9 @@ export default async function ApiReferencePage() {
 
       <Callout type="tip" title="Run reads without leaving the page">
         Endpoints marked with a “Run it now” button execute live against your
-        environment using your signed-in Privy session (the same Bearer the rest
-        of the app sends to the Flo gateway). Sign in to the dashboard first
-        for authenticated reads.
+        environment using your signed-in dashboard session. Bot examples use{" "}
+        <code>X-Api-Key</code> against <code>https://gate.propfund.io/van</code>.
+        Sign in first for in-page reads.
       </Callout>
 
       <ApiReferenceExplorer areas={areas} />

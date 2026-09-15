@@ -1,5 +1,6 @@
 import { CodeBlock } from "@/components/docs/code-block";
 import { Callout, DocSection, Endpoint } from "@/components/docs/blocks";
+import { docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Lifecycle" };
 
@@ -21,7 +22,7 @@ export default function LifecycleDocsPage() {
           <CodeBlock
             lang="bash"
             filename="curl"
-            code={`curl -X POST http://localhost:5400/van/v2/lifecycle/sync/prop_123 \\
+            code={`curl -X POST ${docsVanUrl("/v2/lifecycle/sync/prop_123")} \\
   -H "Authorization: Bearer <privy_identity_token>"`}
           />
           <CodeBlock

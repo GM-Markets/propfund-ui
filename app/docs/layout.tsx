@@ -8,6 +8,7 @@ import { DocsToc } from "@/components/docs/toc";
 import { PageFade } from "@/components/motion/page-fade";
 import { Button } from "@/components/ui/button";
 import { BRAND_NAME } from "@/lib/brand";
+import { PUBLIC_VAN_BASE } from "@/lib/docs/public-api";
 
 export const metadata: Metadata = {
   title: {
@@ -18,9 +19,7 @@ export const metadata: Metadata = {
     "Developer documentation for building on hyperscaled-api: auth, KYC, payments, payouts, trading, API keys and webhooks.",
 };
 
-const SWAGGER_URL = `${(
-  process.env.NEXT_PUBLIC_GATEWAY_URL ?? "http://localhost:5400"
-).replace(/\/$/, "")}/van/docs`;
+const SWAGGER_URL = `${PUBLIC_VAN_BASE}/docs`;
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (

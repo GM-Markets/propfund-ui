@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CodeBlock } from "@/components/docs/code-block";
 import { Callout, DocSection } from "@/components/docs/blocks";
+import { DESK_API_KEY_PLACEHOLDER, PUBLIC_GATEWAY_ORIGIN, PUBLIC_VAN_BASE, docsVanUrl } from "@/lib/docs/public-api";
 
 export const metadata = { title: "Quickstart" };
 
@@ -12,76 +13,71 @@ export default function QuickstartPage() {
         <p className="text-sm font-medium text-primary">Getting started</p>
         <h1 className="text-3xl font-semibold tracking-tight">Quickstart</h1>
         <p className="text-lg text-muted-foreground">
-          Run this app against the Flo gateway and Vanta. Auth is Privy — the
-          gateway verifies the identity token and proxies <code>/van</code>.
+          Mint a desk API key in PropFund, then call{" "}
+          <code>{PUBLIC_GATEWAY_ORIGIN}</code>. Bots do not use Privy.
         </p>
       </header>
 
       <Callout type="info" title="What you'll need">
-        Node 20+ with <code>pnpm</code>, a running Flo gateway (default{" "}
-        <code>http://localhost:5400</code>), Vanta behind it, and the same Privy
-        app id as GM Markets.
+        A PropFund login to create a key, then <code>curl</code> (or any HTTP
+        client) against <code>{PUBLIC_GATEWAY_ORIGIN}</code>.
       </Callout>
 
       <DocSection
-        title="1. Start the gateway and Vanta"
-        description="This UI never talks to Vanta directly. All /van calls go through the Flo gateway."
+        title="1. Create an API key"
+        description="Sign in, open API keys, and copy key_id.key_secret. The secret is shown once."
       >
-        <CodeBlock
-          lang="bash"
-          filename="flo"
-          code={`# gateway — verifies Privy JWT, injects x-user-*, proxies /van
-# vanta — desk, checkout, KYC (AWS Secrets Manager, not dotenv)`}
-        />
-        <Callout type="tip" title="No second login">
-          There is no <code>client_id</code>, <code>client_secret</code>, or{" "}
-          <code>/v2/oauth/token</code>. Desk bots use a Vanta-minted{" "}
-          <code>X-Api-Key</code> on <code>/van/v2/trading/*</code> only.
-        </Callout>
-      </DocSection>
-
-      <DocSection title="2. Configure & run this app">
-        <CodeBlock
-          lang="bash"
-          filename="propfund-ui/.env.local"
-          code={`NEXT_PUBLIC_GATEWAY_URL=http://localhost:5400
-VANTA_API_BASE_URL=http://localhost:5400/van
-NEXT_PUBLIC_PRIVY_APP_ID=
-SESSION_COOKIE_NAME=vanta_privy_session`}
-        />
-        <CodeBlock
-          lang="bash"
-          filename="propfund-ui"
-          code={`pnpm install
-pnpm dev          # http://localhost:3000`}
-        />
-      </DocSection>
-
-      <DocSection title="3. Sign in">
         <p className="text-sm text-muted-foreground">
-          Open <Link href="/login">/login</Link>, continue with Privy, then call{" "}
-          <code>GET /van/v2/me</code>. That attaches the user to the Flo tenant
-          and claims the complimentary $10K notional test desk.
+          Use the{" "}
+          <Link href="/dashboard/api-keys">API keys</Link> page or the trading
+          desk card. Optionally bind the key to one <code>prop_account_id</code>.
         </p>
+      </DocSection>
+
+      <DocSection title="2. Call the gateway">
         <CodeBlock
           lang="bash"
           filename="curl"
-          code={`curl http://localhost:5400/van/v2/me \\
-  -H "Authorization: Bearer <privy_identity_token>"`}
+          code={`curl ${docsVanUrl("/v2/trading/desk-poll")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..."`}
+        />
+        <Callout type="tip" title="Base URL">
+          <code>{PUBLIC_VAN_BASE}</code> — host <code>{PUBLIC_GATEWAY_ORIGIN}</code>,
+          prefix <code>/van</code>, header <code>X-Api-Key</code> on{" "}
+          <code>/v2/trading/*</code> only.
+        </Callout>
+      </DocSection>
+
+      <DocSection title="3. Place an order">
+        <CodeBlock
+          lang="bash"
+          filename="curl"
+          code={`curl -X POST ${docsVanUrl("/v2/trading/orders")} \\
+  -H "X-Api-Key: ${DESK_API_KEY_PLACEHOLDER}" \\
+  -H "X-Prop-Account: prop_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "trade_pair": "BTC",
+    "market_type": "perp",
+    "side": "buy",
+    "value": 200,
+    "leverage": 20
+  }'`}
         />
       </DocSection>
 
       <DocSection title="Next steps">
         <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
           <li>
-            <Link href="/docs/authentication">Authentication</Link> — how the
-            gateway Bearer path works.
+            <Link href="/docs/authentication">Authentication</Link> — API key vs
+            dashboard Privy.
           </li>
           <li>
-            <Link href="/docs/kyc">Identity / KYC</Link> — verify a trader.
+            <Link href="/docs/api-keys">API keys</Link> — mint, list, revoke.
           </li>
           <li>
-            <Link href="/docs/checkout">Checkout</Link> — sell a paid challenge.
+            <Link href="/docs/trading">Trading</Link> — orders, close, desk-poll.
           </li>
         </ul>
       </DocSection>
