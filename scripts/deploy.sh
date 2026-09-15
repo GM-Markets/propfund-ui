@@ -73,12 +73,16 @@ case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
 esac
 export DEPLOY_ENV
 
+SITE_URL_FROM_CLI=""
 for arg in "$@"; do
   case "$arg" in
     *=*)
       key="${arg%%=*}"
       val="${arg#*=}"
       export "$key=$val"
+      if [[ "$key" == "NEXT_PUBLIC_SITE_URL" ]]; then
+        SITE_URL_FROM_CLI="$val"
+      fi
       ;;
     *)
       echo "Ignoring unknown argument: $arg" >&2
@@ -95,11 +99,23 @@ default_port_for_env() {
   esac
 }
 
+default_site_url_for_env() {
+  case "$1" in
+    dev) echo "https://dev.propfund.io" ;;
+    pvt) echo "https://pvt.propfund.io" ;;
+    prod) echo "https://propfund.io" ;;
+    *) echo "https://dev.propfund.io" ;;
+  esac
+}
+
 DEFAULT_V3_APP_PORT="$(default_port_for_env "$DEPLOY_ENV")"
 export V3_APP_PORT="${V3_APP_PORT:-$DEFAULT_V3_APP_PORT}"
 export APP_PORT="${APP_PORT:-$V3_APP_PORT}"
 export PORT="${PORT:-$V3_APP_PORT}"
-export NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:${V3_APP_PORT}}"
+# .env localhost:3000 is for `next dev` only — deploy bakes the public hostname.
+if [[ -z "$SITE_URL_FROM_CLI" ]]; then
+  export NEXT_PUBLIC_SITE_URL="$(default_site_url_for_env "$DEPLOY_ENV")"
+fi
 
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-propfund-${DEPLOY_ENV}}"
 export DOCKER_BUILDKIT=1
@@ -135,18 +151,33 @@ stage_host_standalone() {
   fi
 }
 
+host_pnpm() {
+  if command -v pnpm >/dev/null 2>&1; then
+    pnpm "$@"
+    return
+  fi
+  if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+    corepack prepare pnpm@11.16.0 --activate
+    pnpm "$@"
+    return
+  fi
+  if command -v npx >/dev/null 2>&1; then
+    npx --yes pnpm@11.16.0 "$@"
+    return
+  fi
+  echo "Need pnpm, corepack, or npx to install deps." >&2
+  return 1
+}
+
 ensure_host_next() {
   if [[ -x node_modules/.bin/next ]] || [[ -f node_modules/next/dist/bin/next ]]; then
     return 0
   fi
 
   echo "Host next binary missing — installing deps…"
-  if command -v pnpm >/dev/null 2>&1; then
-    pnpm install --frozen-lockfile
-  elif [[ -f pnpm-lock.yaml ]]; then
-    corepack enable >/dev/null 2>&1 || true
-    corepack prepare pnpm@11.16.0 --activate
-    pnpm install --frozen-lockfile
+  if [[ -f pnpm-lock.yaml ]]; then
+    host_pnpm install --frozen-lockfile
   else
     npm ci --no-audit --no-fund
   fi
