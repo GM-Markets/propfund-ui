@@ -24,7 +24,7 @@ export function PrivyAppProvider({ children }: { children: React.ReactNode }) {
       config={{
         loginMethodsAndOrder: {
           primary: ["google", "email"],
-          overflow: ["wallet"],
+          overflow: ["detected_ethereum_wallets", "wallet_connect"],
         },
         appearance: {
           theme: "light",
