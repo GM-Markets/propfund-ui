@@ -151,22 +151,26 @@ stage_host_standalone() {
   fi
 }
 
+pnpm_spec_for_node() {
+  local major
+  major="$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo 18)"
+  # pnpm 11 requires Node >= 22.13. Node 18 hosts (typical EC2) use pnpm 9.
+  if [[ "$major" -ge 22 ]]; then
+    echo "pnpm@11.16.0"
+  else
+    echo "pnpm@9.15.9"
+  fi
+}
+
 host_pnpm() {
-  if command -v pnpm >/dev/null 2>&1; then
-    pnpm "$@"
-    return
-  fi
-  if command -v corepack >/dev/null 2>&1; then
-    corepack enable >/dev/null 2>&1 || true
-    corepack prepare pnpm@11.16.0 --activate
-    pnpm "$@"
-    return
-  fi
+  local spec
+  spec="$(pnpm_spec_for_node)"
+  echo "Using ${spec} (Node $(node -v 2>/dev/null || echo unknown))"
   if command -v npx >/dev/null 2>&1; then
-    npx --yes pnpm@11.16.0 "$@"
+    npx --yes "$spec" "$@"
     return
   fi
-  echo "Need pnpm, corepack, or npx to install deps." >&2
+  echo "Need npx to install deps (or set BUILD_MODE=docker)." >&2
   return 1
 }
 
@@ -218,6 +222,7 @@ echo "  DEPLOY_ENV=${DEPLOY_ENV}"
 echo "  container=propfund-${DEPLOY_ENV}"
 echo "  project=${COMPOSE_PROJECT_NAME}"
 echo "  PORT=${PORT}"
+echo "  NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}"
 echo "  BUILD_MODE=${BUILD_MODE}"
 
 if [[ "$BUILD_MODE" == "host" ]]; then
