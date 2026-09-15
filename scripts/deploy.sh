@@ -75,15 +75,19 @@ esac
 export DEPLOY_ENV
 
 SITE_URL_FROM_CLI=""
+GATEWAY_FROM_CLI=""
+VANTA_FROM_CLI=""
 for arg in "$@"; do
   case "$arg" in
     *=*)
       key="${arg%%=*}"
       val="${arg#*=}"
       export "$key=$val"
-      if [[ "$key" == "NEXT_PUBLIC_SITE_URL" ]]; then
-        SITE_URL_FROM_CLI="$val"
-      fi
+      case "$key" in
+        NEXT_PUBLIC_SITE_URL) SITE_URL_FROM_CLI="$val" ;;
+        NEXT_PUBLIC_GATEWAY_URL) GATEWAY_FROM_CLI="$val" ;;
+        VANTA_API_BASE_URL) VANTA_FROM_CLI="$val" ;;
+      esac
       ;;
     *)
       echo "Ignoring unknown argument: $arg" >&2
@@ -109,13 +113,30 @@ default_site_url_for_env() {
   esac
 }
 
+default_gateway_url_for_env() {
+  echo "https://gate.propfund.io"
+}
+
+is_loopback_url() {
+  case "${1:-}" in
+    *localhost*|*127.0.0.1*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 DEFAULT_V3_APP_PORT="$(default_port_for_env "$DEPLOY_ENV")"
 export V3_APP_PORT="${V3_APP_PORT:-$DEFAULT_V3_APP_PORT}"
 export APP_PORT="${APP_PORT:-$V3_APP_PORT}"
 export PORT="${PORT:-$V3_APP_PORT}"
-# .env localhost:3000 is for `next dev` only — deploy bakes the public hostname.
+# .env localhost is for `next dev` only — deploy bakes public hostnames.
 if [[ -z "$SITE_URL_FROM_CLI" ]]; then
   export NEXT_PUBLIC_SITE_URL="$(default_site_url_for_env "$DEPLOY_ENV")"
+fi
+if [[ -z "$GATEWAY_FROM_CLI" ]] && { [[ -z "${NEXT_PUBLIC_GATEWAY_URL:-}" ]] || is_loopback_url "${NEXT_PUBLIC_GATEWAY_URL}"; }; then
+  export NEXT_PUBLIC_GATEWAY_URL="$(default_gateway_url_for_env "$DEPLOY_ENV")"
+fi
+if [[ -z "$VANTA_FROM_CLI" ]] && { [[ -z "${VANTA_API_BASE_URL:-}" ]] || is_loopback_url "${VANTA_API_BASE_URL}"; }; then
+  export VANTA_API_BASE_URL="${NEXT_PUBLIC_GATEWAY_URL%/}/van"
 fi
 
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-propfund-${DEPLOY_ENV}}"
@@ -232,6 +253,8 @@ echo "  container=propfund-${DEPLOY_ENV}"
 echo "  project=${COMPOSE_PROJECT_NAME}"
 echo "  PORT=${PORT}"
 echo "  NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}"
+echo "  NEXT_PUBLIC_GATEWAY_URL=${NEXT_PUBLIC_GATEWAY_URL}"
+echo "  VANTA_API_BASE_URL=${VANTA_API_BASE_URL}"
 echo "  BUILD_MODE=${BUILD_MODE}"
 
 if [[ "$BUILD_MODE" == "host" ]]; then

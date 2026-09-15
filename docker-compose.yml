@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://127.0.0.1:5711}
-        NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:6701}
+        NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-https://gate.propfund.io}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-PropFund}
         NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-}
         NEXT_PUBLIC_PRIVY_CLIENT_ID: ${NEXT_PUBLIC_PRIVY_CLIENT_ID:-}
@@ -35,6 +35,8 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: ${V3_APP_PORT:-5711}
       DEPLOY_ENV: ${DEPLOY_ENV:-dev}
+      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-https://gate.propfund.io}
+      VANTA_API_BASE_URL: ${VANTA_API_BASE_URL:-https://gate.propfund.io/van}
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

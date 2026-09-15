@@ -43,12 +43,28 @@ async function hsc<T = unknown>(path: string, init: Init = {}): Promise<T> {
     }
   }
 
-  const resp = await fetch(`${hscConfig.baseUrl}${path}`, {
-    ...init,
-    headers,
-    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    cache: "no-store",
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(`${hscConfig.baseUrl}${path}`, {
+      ...init,
+      headers,
+      body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
+      cache: "no-store",
+      signal: init.signal ?? AbortSignal.timeout(8_000),
+    });
+  } catch (e) {
+    const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+    throw new HscApiError(
+      504,
+      timedOut ? "GATEWAY_TIMEOUT" : "GATEWAY_UNREACHABLE",
+      timedOut
+        ? `Gateway did not respond in time (${hscConfig.baseUrl})`
+        : e instanceof Error
+          ? e.message
+          : "Gateway unreachable",
+      true,
+    );
+  }
   if (resp.status === 204) return undefined as T;
   const text = await resp.text();
   const parsed = text ? safeJson(text) : null;
