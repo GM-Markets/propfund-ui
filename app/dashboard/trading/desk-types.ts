@@ -55,7 +55,6 @@ export const FALLBACK_PERPS: DeskMarket[] = [
   { coin: "BTC", wire: "BTC", mid: 0, max_leverage: 40 },
   { coin: "ETH", wire: "ETH", mid: 0, max_leverage: 25 },
   { coin: "SOL", wire: "SOL", mid: 0, max_leverage: 20 },
-  { coin: "xyz:GOLD", wire: "xyz:GOLD", mid: 0, max_leverage: 20 },
 ];
 
 export const FALLBACK_SPOTS: DeskMarket[] = [{ coin: "PURR", wire: "@107", mid: 0, max_leverage: 1 }];

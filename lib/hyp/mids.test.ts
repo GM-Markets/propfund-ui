@@ -36,9 +36,11 @@ describe("overlayMarketMids", () => {
 });
 
 describe("isPerpTapeCoin", () => {
-  it("keeps tickers and drops spots and prediction ids", () => {
+  it("keeps live tickers and drops spots, prediction ids, and builder dexes", () => {
     expect(isPerpTapeCoin("BTC")).toBe(true);
-    expect(isPerpTapeCoin("xyz:GOLD")).toBe(true);
+    expect(isPerpTapeCoin("xyz:GOLD")).toBe(false);
+    expect(isPerpTapeCoin("hyna:FIX")).toBe(false);
+    expect(isPerpTapeCoin("flx:FOO")).toBe(false);
     expect(isPerpTapeCoin("@107")).toBe(false);
     expect(isPerpTapeCoin("#25551")).toBe(false);
     expect(isPerpTapeCoin("12090")).toBe(false);
@@ -50,6 +52,7 @@ describe("mergeTapePerps", () => {
     const catalog = [
       { coin: "BTC", wire: "BTC", mid: 1, max_leverage: 40 },
       { coin: "ETH", wire: "ETH", mid: 2, max_leverage: 25 },
+      { coin: "hyna:FIX", wire: "hyna:FIX", mid: 1, max_leverage: 20 },
     ];
     const next = mergeTapePerps(catalog, {
       BTC: "76939.5",

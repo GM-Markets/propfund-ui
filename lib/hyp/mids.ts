@@ -64,21 +64,29 @@ export function overlayMarketMids<T extends { coin: string; wire?: string; mid: 
   return changed ? next : markets;
 }
 
-/** Real perp tickers only — not spots (`@107`) or prediction-market ids (`#25551`). */
-export function isPerpTapeCoin(coin: string): boolean {
-  if (!coin || coin.startsWith("@") || coin.startsWith("#")) return false;
+/**
+ * Canonical live perps only. HIP-3 builder books (`hyna:FIX`, `xyz:GOLD`, `flx:…`)
+ * are not on the public allMids tape and must stay out of the picker.
+ */
+export function isListedPerpCoin(coin: string): boolean {
+  if (!coin || coin.includes(":") || coin.startsWith("@") || coin.startsWith("#")) return false;
   if (!/[A-Za-z]/.test(coin)) return false;
   const upper = coin.toUpperCase();
   return upper !== "USDC" && upper !== "USDT";
 }
 
+/** @deprecated Use `isListedPerpCoin`. */
+export function isPerpTapeCoin(coin: string): boolean {
+  return isListedPerpCoin(coin);
+}
+
 /**
  * Overlay live `allMids` prices onto the Hyperliquid meta catalog.
- * Do not invent picker rows from the tape — allMids also carries `#id` prediction markets.
+ * Drop builder-dex and prediction-market ids — they have no live tape.
  */
 export function mergeTapePerps<T extends { coin: string; wire?: string; mid: number; max_leverage: number }>(
   catalog: T[],
   mids: HypMids | undefined,
 ): T[] {
-  return overlayMarketMids(catalog, mids);
+  return overlayMarketMids(catalog.filter((row) => isListedPerpCoin(row.coin)), mids);
 }

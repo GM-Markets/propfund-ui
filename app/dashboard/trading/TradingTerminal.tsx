@@ -7,7 +7,7 @@ import { closePositionAction, deskPollAction, listMarketsAction, submitOrderActi
 import { AgreementSignCard } from "@/components/agreement-sign-card";
 import { friendlyError } from "@/lib/errors";
 import type { PropAccountSummary } from "@/lib/hsc/client";
-import { fetchHlCanonicalPerps, fetchHlHip3Perps, fetchHlSpotCatalog } from "@/lib/hl/info";
+import { fetchHlCanonicalPerps, fetchHlSpotCatalog } from "@/lib/hl/info";
 import { getHypMidsSnapshot, subscribeHypMidsStore } from "@/lib/hyp/mids-feed";
 import { mergeTapePerps, midFromTape, overlayMarketMids } from "@/lib/hyp/mids";
 
@@ -82,14 +82,6 @@ export function TradingTerminal({
     else if (vanta.ok && vanta.data?.markets?.length) setMarkets(vanta.data.markets);
     if (hlSpots?.length) setSpots(hlSpots);
     else if (vanta.ok && vanta.data?.spots?.length) setSpots(vanta.data.spots);
-    const hip3 = await fetchHlHip3Perps().catch(() => null);
-    if (hip3?.length) {
-      setMarkets((prev) => {
-        const byCoin = new Map(prev.map((row) => [row.coin, row]));
-        for (const row of hip3) byCoin.set(row.coin, row);
-        return [...byCoin.values()].sort((a, b) => a.coin.localeCompare(b.coin));
-      });
-    }
   }
 
   useEffect(() => {
