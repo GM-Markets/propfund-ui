@@ -3,40 +3,46 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DOCS_NAV } from "@/lib/docs/nav";
-import { cn } from "@/lib/utils";
+import { HELP_NAV } from "@/lib/docs/nav";
 
-export function DocsSidebar() {
-  const pathname = usePathname();
+function SidebarLinks({ pathname }: { pathname: string }) {
   return (
-    <nav className="space-y-6">
-      {DOCS_NAV.map((group) => (
-        <div key={group.title}>
-          <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-            {group.title}
-          </p>
-          <ul className="space-y-0.5">
+    <>
+      <Link className={pathname === "/help" ? "active" : ""} href="/help" aria-current={pathname === "/help" ? "page" : undefined}>Help center</Link>
+      {HELP_NAV.map((group) => (
+        <div className="help-nav-group" key={group.title}>
+          <p>{group.title}</p>
+          <ul>
             {group.items.map((item) => {
               const active = pathname === item.href;
               return (
                 <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "block rounded-md px-3 py-1.5 text-sm transition-colors",
-                      active
-                        ? "bg-secondary font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
+                  <Link className={active ? "active" : ""} href={item.href} aria-current={active ? "page" : undefined}>{item.label}</Link>
                 </li>
               );
             })}
           </ul>
         </div>
       ))}
-    </nav>
+    </>
+  );
+}
+
+/** Help center article list: a sticky sidebar on desktop, a collapsible list on mobile. */
+export function DocsSidebar() {
+  const pathname = usePathname() ?? "/help";
+  const current = HELP_NAV.flatMap((group) => group.items).find((item) => item.href === pathname);
+  return (
+    <>
+      <nav className="help-sidebar" aria-label="Help articles">
+        <SidebarLinks pathname={pathname} />
+      </nav>
+      <details className="help-sidebar-mobile" key={pathname}>
+        <summary><span>Articles</span><strong>{current?.label ?? "Help center"}</strong></summary>
+        <nav aria-label="Help articles">
+          <SidebarLinks pathname={pathname} />
+        </nav>
+      </details>
+    </>
   );
 }

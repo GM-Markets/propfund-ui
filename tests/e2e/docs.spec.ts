@@ -1,42 +1,41 @@
 /**
- * Docs navigation tests. The docs render from a local catalog/nav (no backend),
- * so these run against a bare dev server. We deliberately do NOT click the
- * "Run it now" panels — those call the live API and are covered elsewhere.
+ * Help center tests. The developer docs were removed; /docs and every old
+ * /docs/* path redirect to /help.
  */
 import { expect, test } from "@playwright/test";
 
-import { DocsPage } from "./fixtures/pages";
+import { hasHorizontalPageScroll, HelpPage } from "./fixtures/pages";
 
-test.describe("docs", () => {
-  test("the index renders with the sidebar groups", async ({ page }) => {
-    const docs = new DocsPage(page);
-    await docs.goto();
+test.describe("help center", () => {
+  test("the index lists the trader articles", async ({ page }) => {
+    const help = new HelpPage(page);
+    await help.goto();
 
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(docs.sidebarLink("Quickstart")).toBeVisible();
-    await expect(docs.sidebarLink("Authentication")).toBeVisible();
-    await expect(docs.sidebarLink("Full API reference")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Help center");
+    for (const name of ["Getting started", "Paying for a challenge", "Payouts and identity verification", "FAQ"]) {
+      await expect(help.sidebarLink(name)).toBeVisible();
+    }
   });
 
-  test("navigates from the index to the quickstart", async ({ page }) => {
-    const docs = new DocsPage(page);
-    await docs.goto();
-    await docs.sidebarLink("Quickstart").click();
-    await expect(page).toHaveURL(/\/docs\/quickstart$/);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  test("navigates to an article", async ({ page }) => {
+    const help = new HelpPage(page);
+    await help.goto();
+    await help.sidebarLink("Paying for a challenge").click();
+    await expect(page).toHaveURL(/\/help\/paying-for-a-challenge$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Paying for a challenge");
+    await expect(page.getByText(/Send only USDC or USDT on Arbitrum, Ethereum, Base or BNB Chain/)).toBeVisible();
   });
 
-  test("navigates to the authentication page", async ({ page }) => {
-    const docs = new DocsPage(page);
-    await docs.goto();
-    await docs.sidebarLink("Authentication").click();
-    await expect(page).toHaveURL(/\/docs\/authentication$/);
-  });
+  for (const path of ["/docs", "/docs/api-reference", "/docs/authentication", "/docs/quickstart"]) {
+    test(`${path} redirects to /help`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/help$/);
+    });
+  }
 
-  test("renders the full API reference", async ({ page }) => {
-    await page.goto("/docs/api-reference");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    // The reference lists real endpoints from the catalog.
-    await expect(page.getByText("/v2/oauth/token").first()).toBeVisible();
+  test("articles have no horizontal page scroll at 375px", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/help/challenge-rules");
+    expect(await hasHorizontalPageScroll(page)).toBe(false);
   });
 });

@@ -1,18 +1,24 @@
 /**
- * PropFund brand tokens shared by the logo SVG, theme docs, and diagram accents.
- * HSL channel strings match CSS variables in app/globals.css.
+ * Propfund brand tokens shared by the logo, theme and diagram accents.
+ * HSL channel strings match the CSS variables in app/globals.css; the hex
+ * values are the same colours for SVG fills, which can't read CSS variables
+ * when a file is exported or used as a favicon.
  */
-export const BRAND_NAME = "PropFund";
+export const BRAND_NAME = "Propfund";
 
-/** Greek capital Phi — contemporary fund mark. */
-export const BRAND_MARK_LETTER = "Φ";
-
-export const BRAND_PRIMARY_HSL = "214 90% 56%";
-export const BRAND_PRIMARY_BRIGHT_HSL = "204 92% 62%";
-export const BRAND_PRIMARY_DEEP_HSL = "222 80% 48%";
-export const BRAND_CYAN_HSL = "192 85% 48%";
-
+/** The mark is two googly eyes on a rounded tile — no letter. */
 export const BRAND_MARK_GRAD_ID = "propfund-mark-grad";
 
-/** Default brand lockup vs platform (Hyperscaled) lockup. */
-export type BrandKind = "propfund" | "hyperscaled";
+/** Tile gradient: pink → lilac → sky. */
+export const BRAND_PINK = "#f5acd6";
+export const BRAND_LILAC = "#c9b6ff";
+export const BRAND_SKY = "#a8ddff";
+/** Flat tile colour for small sizes and print. */
+export const BRAND_LILAC_SOLID = "#d997d2";
+/** Pupils and text on light surfaces. */
+export const BRAND_INK = "#141413";
+export const BRAND_PAPER = "#f8f1f5";
+
+export const BRAND_PINK_HSL = "306 46% 72%";
+export const BRAND_LILAC_HSL = "256 100% 86%";
+export const BRAND_SKY_HSL = "203 100% 83%";

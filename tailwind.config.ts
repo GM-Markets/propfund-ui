@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
 /**
- * PropFund modern-fintech theme: cool navy-slate surfaces, sapphire primary,
+ * Propfund modern-fintech theme: cool navy-slate surfaces, sapphire primary,
  * cyan accents. All colors are HSL CSS variables (see app/globals.css) so
  * shadcn primitives and app code share one source of truth.
  */

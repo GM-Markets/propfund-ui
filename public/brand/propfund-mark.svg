@@ -1,20 +1,14 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Propfund">
   <defs>
-    <linearGradient id="propfund-mark-grad" x1="0" y1="32" x2="32" y2="0">
-      <stop offset="0%" stop-color="#2B6FFF"/>
-      <stop offset="100%" stop-color="#22C4D8"/>
+    <linearGradient id="pf-tile" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f5acd6"/>
+      <stop offset="52%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#a8ddff"/>
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="30" height="30" rx="8" fill="url(#propfund-mark-grad)"/>
-  <text
-    x="16"
-    y="16.5"
-    fill="white"
-    fill-opacity="0.96"
-    font-family="ui-sans-serif, system-ui, Georgia, serif"
-    font-size="18"
-    font-weight="600"
-    text-anchor="middle"
-    dominant-baseline="central"
-  >Φ</text>
+  <rect width="512" height="512" rx="120" fill="url(#pf-tile)"/>
+  <circle cx="166" cy="262" r="104" fill="#ffffff"/>
+  <circle cx="346" cy="262" r="104" fill="#ffffff"/>
+  <circle cx="140" cy="236" r="46" fill="#141413"/>
+  <circle cx="320" cy="236" r="46" fill="#141413"/>
 </svg>

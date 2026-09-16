@@ -30,7 +30,8 @@ If applicable, add screenshots or paste error output (redact secrets).
 - OS:
 - Node version (`node -v`):
 - Package manager + version:
-- `hyperscaled-api` version / origin (local or hosted):
+- Browser + version:
+- Sign-in mode (real / local test mode):
 
 ## Additional context
 

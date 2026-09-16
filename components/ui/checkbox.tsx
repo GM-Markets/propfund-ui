@@ -1,0 +1,26 @@
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+/**
+ * Native checkbox styled to the theme. Native input keeps keyboard, form and
+ * ARIA behaviour (role="checkbox") without an extra dependency.
+ */
+const Checkbox = React.forwardRef<HTMLInputElement, Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">>(
+  ({ className, ...props }, ref) => (
+    <input
+      ref={ref}
+      type="checkbox"
+      className={cn(
+        "size-4 shrink-0 cursor-pointer rounded border border-input bg-background/40 accent-[hsl(var(--primary))]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+Checkbox.displayName = "Checkbox";
+
+export { Checkbox };

@@ -1,62 +1,48 @@
-# Contributing to Vanta Starter
-
-Thanks for your interest in improving Vanta Starter! This project is the
-reference example for building on `hyperscaled-api`, so clarity and correctness
-matter as much as features.
-
-## Ways to contribute
-
-- **Report bugs** or confusing docs via [issues](../../issues).
-- **Suggest improvements** to the onboarding/trading flows or DX.
-- **Open pull requests** for fixes and features.
+# Contributing to Propfund
 
 ## Development setup
 
-See the [README](./README.md) for full setup. The short version:
+See the [README](./README.md). The short version:
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in HSC_* credentials + SESSION_COOKIE_SECRET
+cp .env.example .env.local   # leave the sign-in app ID empty and set NEXT_PUBLIC_TEST_CONTROLS=true for local test mode
 pnpm dev
 ```
 
-You'll need a running `hyperscaled-api` (local or hosted) for anything that
-hits the network.
+No backend is needed: app data runs on the local mock service in `lib/propfund/mock`.
 
 ## Before you open a PR
 
-Run the full local check suite — CI runs the same steps:
+Run the same checks CI runs:
 
 ```bash
-pnpm lint
 pnpm typecheck
 pnpm test
+pnpm build
 pnpm test:e2e   # optional locally; requires `pnpm exec playwright install` once
 ```
 
 Guidelines:
 
-- Keep PRs focused and small where possible.
-- Add or update tests for behavior you change. Unit tests are colocated
-  (`*.test.ts[x]`); e2e tests live in `tests/e2e/`.
-- Never commit secrets. `.env.local` and other `.env*` files are gitignored —
-  keep it that way.
-- Match the existing code style (TypeScript, Tailwind tokens, Server Actions as
-  the BFF layer). Run `pnpm lint` to autoformat what it can.
-- Update the README / in-app `/docs` when you change developer-facing behavior.
+- `docs/PRD.md` is the source of truth for product rules and copy.
+- Keep PRs focused. Add or update tests for behavior you change. Unit tests are
+  colocated (`*.test.ts[x]`); e2e specs live in `tests/e2e/`.
+- Rules logic stays pure in `lib/propfund/rules` with unit tests.
+- Screens read data through `lib/propfund/hooks.ts`, never with fetch in components.
+- Read environment variables only through `lib/propfund/config.ts`.
+- Build UI primitives in `components/ui` (Radix + `cva` + Tailwind); use `cn()` for class names.
+- User-facing copy never names vendors or venues.
+- Never commit secrets. `.env*` files other than `.env.example` are gitignored.
 
 ## Commit messages
 
-Use clear, imperative messages (e.g. `fix: handle expired session token`).
-[Conventional Commits](https://www.conventionalcommits.org/) are appreciated but
-not required.
+Clear, imperative messages (e.g. `fix: reset SOD at 00:00 UTC`).
 
 ## Code of Conduct
 
-By participating you agree to uphold our
-[Code of Conduct](./CODE_OF_CONDUCT.md).
+By participating you agree to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the
-project's [MIT License](./LICENSE).
+Contributions are licensed under the project's [MIT License](./LICENSE).

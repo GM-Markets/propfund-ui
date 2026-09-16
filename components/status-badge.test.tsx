@@ -5,8 +5,13 @@ import { StatusBadge } from "./status-badge";
 
 describe("StatusBadge", () => {
   it("title-cases the status and replaces underscores", () => {
-    const { getByText } = render(<StatusBadge status="needs_input" />);
-    expect(getByText("Needs Input")).toBeInTheDocument();
+    const { getByText } = render(<StatusBadge status="under_review" />);
+    expect(getByText("Under Review")).toBeInTheDocument();
+  });
+
+  it("uses PRD wording for verification statuses", () => {
+    expect(render(<StatusBadge status="needs_input" />).getByText("Needs more info")).toBeInTheDocument();
+    expect(render(<StatusBadge status="unverified" />).getByText("Not started")).toBeInTheDocument();
   });
 
   it("uses the success tone for verified-like states", () => {

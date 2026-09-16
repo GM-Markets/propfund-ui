@@ -1,29 +1,36 @@
-<svg width="148" height="32" viewBox="0 0 148 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="188" height="40" viewBox="0 0 188 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Propfund">
   <defs>
-    <linearGradient id="propfund-wm-grad" x1="0" y1="32" x2="32" y2="0">
-      <stop offset="0%" stop-color="#2B6FFF"/>
-      <stop offset="100%" stop-color="#22C4D8"/>
+    <linearGradient id="propfund-wm-grad" x1="0" y1="40" x2="40" y2="0">
+      <stop offset="0%" stop-color="#f5acd6"/>
+      <stop offset="52%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#a8ddff"/>
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="30" height="30" rx="8" fill="url(#propfund-wm-grad)"/>
+  <rect x="2" y="4" width="32" height="32" rx="8" fill="url(#propfund-wm-grad)"/>
+  <circle cx="12.4" cy="20.4" r="6.5" fill="#ffffff"/>
+  <circle cx="23.6" cy="20.4" r="6.5" fill="#ffffff"/>
+  <circle cx="10.8" cy="18.8" r="2.9" fill="#141413"/>
+  <circle cx="22" cy="18.8" r="2.9" fill="#141413"/>
   <text
-    x="16"
-    y="16.5"
-    fill="white"
-    fill-opacity="0.96"
-    font-family="ui-sans-serif, system-ui, Georgia, serif"
-    font-size="18"
+    x="46"
+    y="20"
+    fill="#f8f1f5"
+    font-family="Geist, Inter, ui-sans-serif, system-ui, Helvetica, Arial, sans-serif"
+    font-size="20"
     font-weight="600"
-    text-anchor="middle"
+    letter-spacing="-0.5"
     dominant-baseline="central"
-  >Φ</text>
+  >pr</text>
+  <circle cx="79" cy="21" r="7.4" fill="#ffffff"/>
+  <circle cx="77.2" cy="19.2" r="3.3" fill="#141413"/>
   <text
-    x="40"
-    y="22"
-    fill="white"
-    font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
-    font-size="16"
+    x="87.5"
+    y="20"
+    fill="#f8f1f5"
+    font-family="Geist, Inter, ui-sans-serif, system-ui, Helvetica, Arial, sans-serif"
+    font-size="20"
     font-weight="600"
-    letter-spacing="-0.03em"
-  >PropFund</text>
+    letter-spacing="-0.5"
+    dominant-baseline="central"
+  >pfund</text>
 </svg>

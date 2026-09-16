@@ -1,67 +1,71 @@
 /**
- * Auth page tests: rendering, native client-side validation, and cross-links.
- * No backend required — we never submit a valid request, so the server action
- * is not exercised (the happy-path login/signup lives in onboarding.spec.ts).
+ * Sign-in (PRD §2): signed-out users on any /dashboard route see the sign-in
+ * panel over the shell, never a separate page. Runs in local test mode
+ * (no sign-in app ID, NEXT_PUBLIC_TEST_CONTROLS=true), which CI sets.
  */
 import { expect, test } from "@playwright/test";
 
-import { LoginPage, SignupPage } from "./fixtures/pages";
+import { DashboardPage } from "./fixtures/pages";
 
-test.describe("login page", () => {
-  test("renders the form and links", async ({ page }) => {
-    const login = new LoginPage(page);
-    await login.goto();
+const TEST_MODE = process.env.NEXT_PUBLIC_TEST_CONTROLS === "true";
 
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-    await expect(login.email()).toBeVisible();
-    await expect(login.password()).toBeVisible();
-    await expect(page.getByRole("link", { name: /Create an account/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Forgot your password/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Request access/i })).toBeVisible();
+test.describe("sign-in gate", () => {
+  test("old /login and /signup links land on the dashboard gate", async ({ page }) => {
+    const dash = new DashboardPage(page);
+    await page.goto("/login");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(dash.signInPanel()).toBeVisible();
+    await page.goto("/signup");
+    await expect(page).toHaveURL(/\/dashboard$/);
   });
 
-  test("blocks submit with empty required fields (stays on /login)", async ({ page }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    await login.submit().click();
-
-    // Native required validation should keep focus on the page; no navigation.
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(login.email()).toBeFocused();
+  test("every dashboard route shows the sign-in panel in place when signed out", async ({ page }) => {
+    const dash = new DashboardPage(page);
+    for (const path of ["/dashboard", "/dashboard/terminal", "/dashboard/payouts"]) {
+      await dash.goto(path);
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(dash.signInPanel()).toBeVisible();
+    }
   });
 
-  test("the email field enforces email formatting", async ({ page }) => {
-    const login = new LoginPage(page);
-    await login.goto();
-    const valid = await login.email().evaluate(
-      (el: HTMLInputElement) => el.type === "email",
-    );
-    expect(valid).toBe(true);
+  test("never names the sign-in vendor outside test mode copy", async ({ page }) => {
+    const dash = new DashboardPage(page);
+    await dash.goto();
+    const text = await dash.signInPanel().innerText();
+    expect(text).toMatch(/Sign in to continue/);
+    if (!TEST_MODE) expect(text).not.toMatch(/privy/i);
   });
 });
 
-test.describe("signup page", () => {
-  test("renders the form and a link back to login", async ({ page }) => {
-    const signup = new SignupPage(page);
-    await signup.goto();
+test.describe("local test sign-in", () => {
+  test.skip(!TEST_MODE, "Set NEXT_PUBLIC_TEST_CONTROLS=true with no sign-in app ID.");
 
-    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
-    await expect(signup.email()).toBeVisible();
-    await expect(signup.password()).toBeVisible();
-    await expect(page.getByRole("link", { name: /Sign in/i })).toBeVisible();
-  });
+  test("labels test mode, signs in, shows the shell and signs out", async ({ page }) => {
+    const dash = new DashboardPage(page);
+    await dash.goto();
+    await expect(dash.signInPanel().getByText("Test mode · Privy app ID not set")).toBeVisible();
+    await dash.continueAsTestUser().click();
 
-  test("password requires a minimum length", async ({ page }) => {
-    const signup = new SignupPage(page);
-    await signup.goto();
-    const min = await signup.password().getAttribute("minlength");
-    expect(Number(min)).toBeGreaterThanOrEqual(8);
-  });
-});
+    await expect(dash.accountMenu()).toBeVisible();
+    // All app nav lives in the top header bar (no sidebar, no bottom tab bar).
+    await expect(dash.nav()).toBeVisible();
+    await expect(dash.brandLink()).toBeVisible();
+    for (const name of ["Overview", "Challenges", "Terminal", "Payouts", "Wallet", "History"]) {
+      await expect(dash.navLink(name)).toBeVisible();
+    }
+    await expect(dash.navLink("Overview")).toHaveAttribute("aria-current", "page");
+    // The public transparency page is reachable from the app, and never active here.
+    await expect(dash.secondaryNavLink("Transparency")).toHaveAttribute("href", "/transparency");
+    await expect(dash.secondaryNavLink("Transparency")).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByText("No active account")).toBeVisible();
 
-test.describe("reset-password page", () => {
-  test("renders", async ({ page }) => {
-    await page.goto("/reset-password");
-    await expect(page.locator("form")).toBeVisible();
+    // The session survives a reload.
+    await page.reload();
+    await expect(dash.accountMenu()).toBeVisible();
+
+    await dash.accountMenu().click();
+    await expect(page.getByText("Your Propfund wallet")).toBeVisible();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
+    await expect(dash.signInPanel()).toBeVisible();
   });
 });

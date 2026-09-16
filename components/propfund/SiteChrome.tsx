@@ -1,77 +1,96 @@
-"use client";
-
 import Link from "next/link";
-import { createContext, useContext, useState } from "react";
-import { EvaluationDialog } from "./EvaluationDialog";
 import { MaterialIcon } from "./MaterialIcon";
-import { pricingPlans } from "./site-data";
+import { SiteTile, SiteWordmark } from "@/components/propfund/SiteMark";
+import { challengeHref, challengePackages, featuredPackageLabel, formatUsd, rulesSummary } from "./site-data";
 
-type StartActionProps = { onStart?: () => void };
-type EvaluationContextValue = { openForm: (account?: string) => void };
+const primaryNav = [
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/forex", label: "Forex" },
+  { href: "/crypto", label: "Crypto" },
+  { href: "/equities", label: "Equities" },
+  { href: "/commodities", label: "Commodities" },
+  { href: "/rules", label: "Rules" },
+  { href: "/transparency", label: "Transparency" },
+  { href: "/help", label: "Help" },
+];
 
-const EvaluationContext = createContext<EvaluationContextValue>({ openForm: () => undefined });
-
-function useEvaluation() {
-  return useContext(EvaluationContext);
+/** "Start challenge" CTA. Goes to the dashboard challenges page, which shows sign-in when needed. */
+export function StartChallengeLink({
+  className = "",
+  label = "Start challenge",
+  packageId,
+  children,
+}: {
+  className?: string;
+  label?: string;
+  packageId?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Link className={className} href={challengeHref(packageId)}>
+      {children ?? label}
+    </Link>
+  );
 }
 
-export function StartEvaluationButton({ className = "", label = "Start evaluation", account }: { className?: string; label?: string; account?: string }) {
-  const { openForm } = useEvaluation();
-  return <button className={className} onClick={() => openForm(account)} type="button">{label}</button>;
-}
-
-export function SiteHeader({ onStart }: StartActionProps) {
+export function SiteHeader() {
   return (
     <>
       <div className="announcement">
-        <span>One evaluation. No countdown.</span>
-        <a href="/pricing">View pricing <MaterialIcon className="inline-icon" name="arrow_forward" /></a>
+        <span>One challenge. No countdown.</span>
+        <Link href="/pricing">View pricing <MaterialIcon className="inline-icon" name="arrow_forward" /></Link>
       </div>
       <div className="header-shell">
         <header className="site-header">
-          <Link className="wordmark" href="/" aria-label="Propfund home"><span className="wordmark-mark" aria-hidden="true">P</span><span>Propfund</span></Link>
-          <nav className="desktop-nav" aria-label="Primary navigation"><a href="/how-it-works">How it works</a><a href="/forex">Forex</a><a href="/crypto">Crypto</a><a href="/equities">Equities</a><a href="/commodities">Commodities</a><a href="/rules">Rules</a></nav>
-          <div className="header-actions"><button className="header-primary" onClick={onStart} type="button">Start evaluation</button></div>
-          <details className="mobile-menu"><summary>Menu</summary><nav><a href="/how-it-works">How it works</a><a href="/forex">Forex</a><a href="/crypto">Crypto</a><a href="/equities">Equities</a><a href="/commodities">Commodities</a><a href="/rules">Rules</a><button onClick={onStart} type="button">Start evaluation</button></nav></details>
+          <Link className="wordmark" href="/" aria-label="Propfund home"><SiteTile /><SiteWordmark /></Link>
+          <nav className="desktop-nav" aria-label="Primary navigation">
+            {primaryNav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          </nav>
+          <div className="header-actions"><StartChallengeLink className="header-primary" /></div>
+          <details className="mobile-menu">
+            <summary>Menu</summary>
+            <nav aria-label="Mobile navigation">
+              {primaryNav.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+              <StartChallengeLink className="mobile-menu-cta" />
+            </nav>
+          </details>
         </header>
       </div>
     </>
   );
 }
 
-export function SiteFooter({ onStart }: StartActionProps) {
+export function SiteFooter() {
   return (
     <footer>
       <div className="footer-top inner-footer-top">
-        <div className="footer-brand"><span className="wordmark-mark">P</span><h2>For traders who already have a process.</h2><button className="pill pill-light" onClick={onStart} type="button">Start evaluation</button></div>
+        <div className="footer-brand"><SiteTile size={34} /><h2>For traders who already have a process.</h2><StartChallengeLink className="pill pill-light" /></div>
         <div className="footer-links">
-          <div><strong>Program</strong><a href="/how-it-works">How it works</a><a href="/pricing">Pricing</a><a href="/rules">Rules</a></div>
-          <div><strong>Markets</strong><a href="/forex">Forex</a><a href="/crypto">Crypto</a><a href="/equities">Equities</a><a href="/commodities">Commodities</a></div>
-          <div><strong>Legal</strong><a href="/privacy-policy">Privacy</a><a href="/terms-of-service">Terms</a><a href="/refund-policy">Refunds</a></div>
+          <div><strong>Program</strong><Link href="/how-it-works">How it works</Link><Link href="/pricing">Pricing</Link><Link href="/rules">Rules</Link><Link href="/transparency">Transparency</Link><Link href="/help">Help</Link></div>
+          <div><strong>Markets</strong><Link href="/forex">Forex</Link><Link href="/crypto">Crypto</Link><Link href="/equities">Equities</Link><Link href="/commodities">Commodities</Link></div>
+          <div><strong>Legal</strong><Link href="/privacy-policy">Privacy</Link><Link href="/terms-of-service">Terms</Link><Link href="/refund-policy">Refunds</Link></div>
         </div>
       </div>
-      <div className="footer-bottom"><small>© 2026 Propfund. Simulated trading only. Propfund does not provide financial services or investment advice.</small><div><a href="/privacy-policy">Privacy</a><a href="/terms-of-service">Terms</a></div></div>
+      <div className="footer-bottom"><small>© 2026 Propfund. Simulated trading only. Propfund does not provide financial services or investment advice.</small><div><Link href="/transparency">Transparency</Link><Link href="/help">Help</Link><Link href="/privacy-policy">Privacy</Link><Link href="/terms-of-service">Terms</Link></div></div>
     </footer>
   );
 }
 
-export function PricingGrid({ compact = false }: { compact?: boolean }) {
-  const { openForm } = useEvaluation();
-
+export function PricingGrid({ compact = false, className = "" }: { compact?: boolean; className?: string }) {
   return (
-    <div className={`route-pricing-grid ${compact ? "compact" : ""}`}>
-      {pricingPlans.map((plan) => (
-        <article className={plan.size === "$25K" ? "featured" : ""} key={plan.size}>
-          <div className="route-plan-head"><h3>{plan.size}</h3></div>
-          <p>Starting simulated balance</p>
-          <div className="route-price"><strong>{plan.fee}</strong><small>evaluation fee</small></div>
+    <div className={`route-pricing-grid ${compact ? "compact" : ""} ${className}`.trim()}>
+      {challengePackages.map((plan) => (
+        <article className={plan.label === featuredPackageLabel ? "featured" : ""} key={plan.label}>
+          <div className="route-plan-head"><h3>{plan.label}</h3></div>
+          <p>{plan.name} · {formatUsd(plan.accountSize)} account</p>
+          <div className="route-price"><strong>{formatUsd(plan.fee)}</strong><small>challenge fee</small><small>{formatUsd(plan.rebuyFee)} rebuy after a breach</small></div>
           <dl>
-            <div><dt><MaterialIcon name="flag" />Target</dt><dd>{plan.target}</dd></div>
-            <div><dt><MaterialIcon name="shield" />Drawdown</dt><dd>{plan.drawdown}</dd></div>
+            <div><dt><MaterialIcon name="flag" />Target</dt><dd>{formatUsd(plan.target)} · {rulesSummary.target}</dd></div>
+            <div><dt><MaterialIcon name="shield" />Daily loss</dt><dd>{formatUsd(plan.dailyLoss)} · {rulesSummary.dailyLoss}</dd></div>
+            <div><dt><MaterialIcon name="health_and_safety" />Max loss</dt><dd>{formatUsd(plan.maxLoss)} · {rulesSummary.maxLoss}</dd></div>
             <div><dt><MaterialIcon name="schedule" />Time</dt><dd>Unlimited</dd></div>
-            <div><dt><MaterialIcon name="trending_up" />Scaling</dt><dd>{plan.scale}</dd></div>
           </dl>
-          <button onClick={() => openForm(plan.size)} type="button">Start {plan.size} evaluation <MaterialIcon name="arrow_forward" /></button>
+          <StartChallengeLink className="route-plan-cta" packageId={plan.id}>Start {plan.label} challenge <MaterialIcon name="arrow_forward" /></StartChallengeLink>
         </article>
       ))}
     </div>
@@ -79,25 +98,12 @@ export function PricingGrid({ compact = false }: { compact?: boolean }) {
 }
 
 export function PageFrame({ children }: { children: React.ReactNode }) {
-  const [formOpen, setFormOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState("$25K");
-
-  function openForm(account = "$25K") {
-    setSelectedAccount(account);
-    setFormOpen(true);
-  }
-
   return (
-    <EvaluationContext.Provider value={{ openForm }}>
-      <SiteHeader onStart={() => openForm()} />
-      <main className="route-page">{children}</main>
-      <SiteFooter onStart={() => openForm()} />
-      <EvaluationDialog
-        key={`${formOpen}-${selectedAccount}`}
-        open={formOpen}
-        initialAccount={selectedAccount}
-        onClose={() => setFormOpen(false)}
-      />
-    </EvaluationContext.Provider>
+    <>
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <SiteHeader />
+      <main className="route-page" id="main-content">{children}</main>
+      <SiteFooter />
+    </>
   );
 }

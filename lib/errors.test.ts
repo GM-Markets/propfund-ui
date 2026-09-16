@@ -1,39 +1,33 @@
 import { describe, expect, it } from "vitest";
 
-import { friendlyError } from "./errors";
+import { ServiceError } from "@/lib/propfund/mock/errors";
+
+import { errorMessage, friendlyError } from "./errors";
 
 describe("friendlyError", () => {
   it("maps a known code to its friendly copy", () => {
-    expect(friendlyError("V2_INVALID_CREDENTIALS")).toBe(
-      "That email or password doesn't match our records.",
-    );
-    expect(friendlyError("V2_EMAIL_TAKEN")).toBe(
-      "An account with this email already exists. Try signing in.",
-    );
-  });
-
-  it("prefers the known code over a provided fallback", () => {
-    expect(friendlyError("V2_OTP_EXPIRED", "raw server text")).toBe(
-      "That code has expired. Request a new one.",
-    );
+    expect(friendlyError("UNAUTHENTICATED")).toBe("Sign in to continue.");
   });
 
   it("uses the fallback for an unknown code", () => {
-    expect(friendlyError("V2_SOMETHING_NEW", "Server said no")).toBe("Server said no");
+    expect(friendlyError("SOMETHING_NEW", "Server said no")).toBe("Server said no");
   });
 
-  it("ignores a JSON-blob fallback so raw envelopes never reach the UI", () => {
-    expect(friendlyError("V2_SOMETHING_NEW", '{"detail":{"code":"x"}}')).toBe(
-      "Something went wrong. Please try again.",
+  it("ignores a JSON-blob or blank fallback", () => {
+    expect(friendlyError("X", '{"detail":{"code":"x"}}')).toBe("Something went wrong. Please try again.");
+    expect(friendlyError(undefined, "   ")).toBe("Something went wrong. Please try again.");
+    expect(friendlyError(undefined)).toBe("Something went wrong. Please try again.");
+  });
+});
+
+describe("errorMessage", () => {
+  it("uses a service error's own message", () => {
+    expect(errorMessage(new ServiceError("ACTIVE_ACCOUNT_EXISTS", "You already have an active account."))).toBe(
+      "You already have an active account.",
     );
   });
 
-  it("ignores a blank/whitespace fallback", () => {
-    expect(friendlyError(undefined, "   ")).toBe("Something went wrong. Please try again.");
-  });
-
-  it("falls back to the generic message when nothing is provided", () => {
-    expect(friendlyError(undefined)).toBe("Something went wrong. Please try again.");
-    expect(friendlyError("")).toBe("Something went wrong. Please try again.");
+  it("falls back for non-errors", () => {
+    expect(errorMessage("boom")).toBe("Something went wrong. Please try again.");
   });
 });

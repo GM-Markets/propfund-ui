@@ -1,4 +1,4 @@
-# PropFund / vanta-starter — production Next.js image (standalone output).
+# Propfund: production Next.js image (standalone output).
 # Build:  docker compose build
 # Run:    docker compose up -d
 
@@ -8,10 +8,10 @@ ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-alpine AS deps
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.16.0 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
-# pnpm-workspace.yaml carries allowBuilds (sharp/esbuild/msw); required for
-# pnpm 11+ or install fails with ERR_PNPM_IGNORED_BUILDS.
+# pnpm-workspace.yaml carries allowBuilds; required for pnpm 11+ or install
+# fails with ERR_PNPM_IGNORED_BUILDS.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
@@ -19,20 +19,23 @@ RUN pnpm install --frozen-lockfile
 FROM node:${NODE_VERSION}-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.16.0 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* are inlined at build time by Next.js.
-ARG NEXT_PUBLIC_HSC_API_BASE_URL=http://localhost:8000
-ARG NEXT_PUBLIC_APP_NAME=PropFund
-ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+# NEXT_PUBLIC_* are inlined at build time by Next.js (PRD §13).
+# NEXT_PUBLIC_TEST_CONTROLS is intentionally not a build arg: never set in production.
+ARG NEXT_PUBLIC_PRIVY_APP_ID=
+ARG NEXT_PUBLIC_PRIVY_CLIENT_ID=
+ARG NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM=
+ARG NEXT_PUBLIC_TREASURY_ADDRESSES=
 
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_HSC_API_BASE_URL=$NEXT_PUBLIC_HSC_API_BASE_URL \
-    NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME \
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    NEXT_PUBLIC_PRIVY_APP_ID=$NEXT_PUBLIC_PRIVY_APP_ID \
+    NEXT_PUBLIC_PRIVY_CLIENT_ID=$NEXT_PUBLIC_PRIVY_CLIENT_ID \
+    NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM=$NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM \
+    NEXT_PUBLIC_TREASURY_ADDRESSES=$NEXT_PUBLIC_TREASURY_ADDRESSES
 
 RUN pnpm build
 

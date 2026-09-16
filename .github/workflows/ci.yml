@@ -14,7 +14,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -22,9 +22,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
 
       - name: Type-check
         run: pnpm typecheck
@@ -34,13 +31,6 @@ jobs:
 
       - name: Build
         run: pnpm build
-        env:
-          # Build-time placeholders so `next build` doesn't fail on missing env.
-          HSC_API_BASE_URL: http://localhost:8000
-          HSC_CLIENT_ID: ci_placeholder
-          HSC_CLIENT_SECRET: ci_placeholder
-          SESSION_COOKIE_SECRET: ci_placeholder_session_secret_min_32_bytes
-          NEXT_PUBLIC_HSC_API_BASE_URL: http://localhost:8000
 
   e2e:
     runs-on: ubuntu-latest
@@ -49,7 +39,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -64,8 +54,5 @@ jobs:
       - name: Run e2e tests
         run: pnpm test:e2e
         env:
-          HSC_API_BASE_URL: http://localhost:8000
-          HSC_CLIENT_ID: ci_placeholder
-          HSC_CLIENT_SECRET: ci_placeholder
-          SESSION_COOKIE_SECRET: ci_placeholder_session_secret_min_32_bytes
-          NEXT_PUBLIC_HSC_API_BASE_URL: http://localhost:8000
+          # Local test sign-in: no sign-in app ID, test controls on.
+          NEXT_PUBLIC_TEST_CONTROLS: "true"

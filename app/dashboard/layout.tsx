@@ -1,22 +1,24 @@
-import { redirect } from "next/navigation";
+"use client";
 
 import { AppShell } from "@/components/app-shell";
-import * as hsc from "@/lib/hsc/client";
+import { useAuth } from "@/lib/propfund/auth";
+import { useServiceStatus } from "@/lib/propfund/hooks";
 
-// Auth-gated routes must render per-request so each visit reads the live
-// session cookie. Without this, Next prerenders /dashboard at build time (no
-// cookie → baked redirect to /login), which permanently bounces signed-in
-// users back to login in production.
-export const dynamic = "force-dynamic";
+/**
+ * Client-gated dashboard (PRD §2, §10). No server redirect:
+ * - sign-in state unknown → full shell skeleton,
+ * - signed out → sign-in panel over the blurred shell,
+ * - signed in → the app shell (content waits for the user's data).
+ *
+ * The test controls drawer is mounted app-wide in `app/providers.tsx`.
+ */
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { ready, authenticated } = useAuth();
+  const service = useServiceStatus();
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  let email = "";
-  try {
-    const me = await hsc.auth.me();
-    email = me.email;
-  } catch {
-    redirect("/login");
-  }
+  if (!ready) return <AppShell state="loading" />;
+  if (!authenticated) return <AppShell state="signed_out" />;
+  if (service !== "ready") return <AppShell state="loading" />;
 
-  return <AppShell email={email}>{children}</AppShell>;
+  return <AppShell>{children}</AppShell>;
 }

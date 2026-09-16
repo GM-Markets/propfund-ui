@@ -1,4 +1,4 @@
-# PropFund app — production compose stack.
+# Propfund app: production compose stack.
 # Env is loaded from `.env` (see `.env.example`).
 #
 # Deploy: ./deploy.sh
@@ -12,9 +12,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_HSC_API_BASE_URL: ${NEXT_PUBLIC_HSC_API_BASE_URL:-http://localhost:8000}
-        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-PropFund}
-        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-}
+        NEXT_PUBLIC_PRIVY_CLIENT_ID: ${NEXT_PUBLIC_PRIVY_CLIENT_ID:-}
+        NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM: ${NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM:-}
+        NEXT_PUBLIC_TREASURY_ADDRESSES: ${NEXT_PUBLIC_TREASURY_ADDRESSES:-}
     image: propfund-app:latest
     env_file:
       - .env

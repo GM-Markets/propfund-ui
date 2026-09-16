@@ -3,49 +3,58 @@
 @tailwind utilities;
 
 /*
- * Design tokens — PropFund modern fintech theme.
- * Cool navy-slate canvas, sapphire primary, cyan accents. Values are HSL
- * channels consumed via hsl(var(--token)) so Tailwind and shadcn share one palette.
+ * Design tokens — Propfund, drawn from the logo.
+ * Warm ink canvas (#141413), paper text (#f8f1f5), lilac primary (#c9b6ff)
+ * with the mark's pink (#d997d2) and sky (#a8ddff) as secondary accents.
+ * Values are HSL channels consumed via hsl(var(--token)) so Tailwind and
+ * shadcn share one palette. The public site mirrors these in
+ * app/propfund-marketing.css.
  */
 :root {
-  --background: 222 28% 5%;
-  --foreground: 210 40% 98%;
+  --background: 60 3% 7%;
+  --foreground: 320 40% 96%;
 
-  --card: 222 24% 8%;
-  --card-foreground: 210 40% 98%;
+  --card: 60 3% 10%;
+  --card-foreground: 320 40% 96%;
 
-  --popover: 222 26% 7%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 60 3% 9%;
+  --popover-foreground: 320 40% 96%;
 
-  --primary: 214 90% 56%;
-  --primary-foreground: 222 47% 6%;
+  /* Lilac from the mark's gradient; ink text sits on it. */
+  --primary: 256 100% 86%;
+  --primary-foreground: 60 3% 7%;
 
-  --secondary: 222 18% 14%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 60 3% 15%;
+  --secondary-foreground: 320 40% 96%;
 
-  --muted: 222 16% 13%;
-  --muted-foreground: 215 16% 62%;
+  --muted: 60 3% 13%;
+  --muted-foreground: 40 6% 64%;
 
-  --accent: 222 18% 16%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 60 4% 17%;
+  --accent-foreground: 320 40% 96%;
 
-  --destructive: 0 72% 56%;
+  /* Brand pink and sky, for charts, highlights and the ambient glow. */
+  --brand-pink: 306 46% 72%;
+  --brand-pink-deep: 291 40% 62%;
+  --brand-sky: 203 100% 83%;
+
+  --destructive: 356 72% 58%;
   --destructive-foreground: 0 0% 98%;
 
-  --success: 152 70% 45%;
-  --success-foreground: 160 84% 6%;
+  --success: 152 62% 48%;
+  --success-foreground: 152 84% 6%;
 
-  --warning: 38 92% 56%;
+  --warning: 38 92% 60%;
   --warning-foreground: 38 92% 8%;
 
-  --border: 210 40% 92% / 0.08;
-  --input: 210 40% 92% / 0.12;
-  --ring: 214 90% 56%;
+  --border: 320 40% 96% / 0.09;
+  --input: 320 40% 96% / 0.14;
+  --ring: 256 100% 86%;
 
-  --sidebar: 222 30% 6%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-accent: 222 18% 12%;
-  --sidebar-border: 210 40% 92% / 0.07;
+  --sidebar: 60 3% 6%;
+  --sidebar-foreground: 320 40% 96%;
+  --sidebar-accent: 60 3% 13%;
+  --sidebar-border: 320 40% 96% / 0.08;
 
   --radius: 0.7rem;
 }
@@ -66,7 +75,7 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
   }
-  /* Ambient PropFund glow — sapphire + cyan. */
+  /* Ambient Propfund glow — the mark's pink and sky. */
   body::before {
     content: "";
     position: fixed;
@@ -74,8 +83,8 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(60rem 40rem at 12% -10%, hsl(var(--primary) / 0.1), transparent 60%),
-      radial-gradient(50rem 35rem at 100% 0%, hsl(192 85% 48% / 0.07), transparent 55%);
+      radial-gradient(60rem 40rem at 12% -10%, hsl(var(--brand-pink) / 0.09), transparent 60%),
+      radial-gradient(50rem 35rem at 100% 0%, hsl(var(--brand-sky) / 0.06), transparent 55%);
   }
 }
 

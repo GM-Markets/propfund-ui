@@ -1,34 +1,35 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { HeroDotField } from "@/components/propfund/HeroDotField";
-import { PageFrame, StartEvaluationButton } from "@/components/propfund/SiteChrome";
+import { PageFrame, StartChallengeLink } from "@/components/propfund/SiteChrome";
+import { paymentSummary, rulesSummary } from "@/components/propfund/site-data";
 
 export const metadata: Metadata = {
   title: "How it works | Propfund",
-  description: "Four clear steps from evaluation to weekly reward requests.",
+  description: "Four clear steps from challenge to funded account payouts.",
 };
 
 const steps = [
   {
-    title: "Choose your market.",
-    body: "Pick what you want to trade and your starting balance. The target and loss limits are shown before checkout.",
-    points: ["8% Forex target", "10% target elsewhere", "No deadline"],
+    title: "Sign in and pick a package.",
+    body: `Sign in with ${paymentSummary.signIn}; every trader gets a Propfund wallet. Pick an account size from $5,000 to $100,000 and pay the fee by card or with ${paymentSummary.stablecoins}. The target and loss limits are the same at every size and shown before you pay.`,
+    points: [`${rulesSummary.target} target in every market`, `${rulesSummary.dailyLoss} daily, ${rulesSummary.maxLoss} max loss`, "Card or stablecoin"],
     illustration: "/illustrations/workflow.png",
   },
   {
     title: "Trade to the target.",
-    body: "Trade the setups you already know. Pass once by hitting the target without crossing either loss limit.",
-    points: ["Manual trading", "Your own bots and EAs", "News trading"],
+    body: `Trade the setups you already know, by hand. Graduate by reaching +${rulesSummary.target} with no open positions, without crossing either loss limit.`,
+    points: ["Manual trading only", "News trading allowed", "No minimum trading days"],
   },
   {
-    title: "Move to a scaled account.",
-    body: "Once you pass, the target disappears. Keep the account inside its daily and trailing limits while you trade.",
-    points: ["No second phase", "No ongoing target", "Seven-day cycles"],
+    title: "Move to a funded account.",
+    body: `Once you pass, the target disappears. Challenge profit is not paid out; your funded account opens at your package size with the same ${rulesSummary.dailyLoss} daily and ${rulesSummary.maxLoss} max loss limits.`,
+    points: ["No second phase", "No ongoing target", "Same loss limits"],
   },
   {
-    title: "Request rewards weekly.",
-    body: "After seven trading days, request eligible rewards every week and keep building toward a $2.5M simulated account.",
-    points: ["Weekly requests", "100% eligible split", "Quarterly scaling reviews"],
+    title: "Request payouts.",
+    body: `Request your full realized profit once it reaches ${rulesSummary.minPayout}. You receive ${rulesSummary.traderSplit}, paid in ${rulesSummary.payout} 7 calendar days after the request. Your first request includes a one-time identity check.`,
+    points: [`${rulesSummary.traderSplit} trader split`, `${rulesSummary.minPayout} minimum`, `Paid in ${rulesSummary.payout}`],
     illustration: "/illustrations/steps.png",
   },
 ];
@@ -40,9 +41,9 @@ export default function HowItWorksPage() {
         <HeroDotField />
         <div className="route-container">
           <h1>Pass once. Know what comes next.</h1>
-          <p>One target, one set of loss limits, and a clear route to weekly reward requests.</p>
+          <p>One target, one set of loss limits, and a clear route to payouts.</p>
           <div className="route-actions">
-            <StartEvaluationButton className="route-primary" />
+            <StartChallengeLink className="route-primary" />
             <a className="route-secondary" href="/rules">Read the rules</a>
           </div>
         </div>
@@ -61,8 +62,8 @@ export default function HowItWorksPage() {
       <section className="route-callout">
         <div className="route-container">
           <h2>No second phase. No countdown.</h2>
-          <p>The evaluation checks whether you can reach a target without losing control of risk. Take the trades you actually want to take.</p>
-          <StartEvaluationButton className="route-primary" />
+          <p>The challenge checks whether you can reach a target without losing control of risk. Take the trades you actually want to take.</p>
+          <StartChallengeLink className="route-primary" />
         </div>
       </section>
     </PageFrame>

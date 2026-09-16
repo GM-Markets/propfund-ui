@@ -17,9 +17,9 @@
 
 ## Checklist
 
-- [ ] `pnpm lint` passes
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm test` passes
+- [ ] `pnpm build` passes
 - [ ] Added/updated tests where relevant
-- [ ] Updated docs (README / in-app `/docs`) where relevant
+- [ ] Matches `docs/PRD.md`; updated README / `lib/propfund/README.md` where relevant
 - [ ] No secrets committed

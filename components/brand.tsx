@@ -1,107 +1,92 @@
+import { useId } from "react";
+
 import { cn } from "@/lib/utils";
-import {
-  BRAND_CYAN_HSL,
-  BRAND_MARK_GRAD_ID,
-  BRAND_MARK_LETTER,
-  BRAND_NAME,
-  BRAND_PRIMARY_BRIGHT_HSL,
-  BRAND_PRIMARY_DEEP_HSL,
-  type BrandKind,
-} from "@/lib/brand";
+import { BRAND_INK, BRAND_LILAC, BRAND_MARK_GRAD_ID, BRAND_NAME, BRAND_PINK, BRAND_SKY } from "@/lib/brand";
 
 /**
- * PropFund logo lockup. The mark is a rounded sapphire→cyan tile with the
- * Greek capital Phi (Φ); the wordmark uses currentColor so it inherits text
- * color from the shell.
+ * Propfund logo: a rounded tile carrying two googly eyes, beside the wordmark
+ * whose "o" is a third eye. The eyes glance left, which is the whole brand.
  *
- * - `showWordmark={false}` renders the mark only (collapsed sidebar).
- * - `brand="hyperscaled"` renders the Hyperscaled lockup (docs/API surfaces).
+ * - `showWordmark={false}` renders the tile alone (favicon, avatar, tight bars).
+ * - The wordmark inherits `currentColor`, so it works on any surface.
  */
 export function Brand({
   className,
   showWordmark = true,
-  brand = "propfund",
 }: {
   className?: string;
   showWordmark?: boolean;
-  brand?: BrandKind;
 }) {
-  if (brand === "hyperscaled") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src="/brand/hyperscaled-wordmark.svg"
-        alt="Hyperscaled"
-        className={cn("h-6 w-auto", className)}
-      />
-    );
-  }
-
-  const gradId = showWordmark ? `${BRAND_MARK_GRAD_ID}-full` : `${BRAND_MARK_GRAD_ID}-mark`;
-
-  const gradient = (
-    <defs>
-      <linearGradient id={gradId} x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stopColor={`hsl(${BRAND_PRIMARY_DEEP_HSL})`} />
-        <stop offset="55%" stopColor={`hsl(${BRAND_PRIMARY_BRIGHT_HSL})`} />
-        <stop offset="100%" stopColor={`hsl(${BRAND_CYAN_HSL})`} />
-      </linearGradient>
-    </defs>
-  );
-
-  const mark = (
-    <g>
-      <rect x="1" y="1" width="30" height="30" rx="8" fill={`url(#${gradId})`} />
-      <text
-        x="16"
-        y="16.5"
-        fill="white"
-        fillOpacity="0.96"
-        fontFamily="var(--font-geist-sans), ui-sans-serif, system-ui, Georgia, serif"
-        fontSize="18"
-        fontWeight="600"
-        textAnchor="middle"
-        dominantBaseline="central"
-      >
-        {BRAND_MARK_LETTER}
-      </text>
-    </g>
-  );
-
   if (!showWordmark) {
-    return (
-      <svg
-        viewBox="0 0 32 32"
-        className={cn("h-7 w-auto", className)}
-        role="img"
-        aria-label={BRAND_NAME}
-      >
-        {gradient}
-        {mark}
-      </svg>
-    );
+    return <BrandMark className={cn("size-7", className)} role="img" aria-label={BRAND_NAME} />;
   }
 
   return (
-    <svg
-      viewBox="0 0 148 32"
-      className={cn("h-6 w-auto", className)}
+    // Tile and wordmark are both sized in em, so one `text-…` class scales the
+    // whole lockup and the two can never wrap apart.
+    <span
+      className={cn("inline-flex shrink-0 items-center gap-[0.45em] whitespace-nowrap text-base", className)}
       role="img"
       aria-label={BRAND_NAME}
     >
-      {gradient}
-      {mark}
-      <text
-        x="40"
-        y="22"
-        fill="currentColor"
-        fontFamily="var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
-        fontSize="16"
-        fontWeight="600"
-        letterSpacing="-0.03em"
-      >
-        {BRAND_NAME}
-      </text>
+      <BrandMark className="size-[1.75em] shrink-0" aria-hidden />
+      <Wordmark className="text-[1em]" />
+    </span>
+  );
+}
+
+/** The tile alone. */
+export function BrandMark({ className, ...rest }: React.ComponentProps<"svg">) {
+  // Unique per instance: a shared gradient id breaks the fill when the first
+  // SVG using it is hidden (e.g. the mobile mark on desktop).
+  const gradId = `${BRAND_MARK_GRAD_ID}-${useId().replace(/:/g, "")}`;
+  return (
+    <svg viewBox="0 0 512 512" className={className} {...rest}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stopColor={BRAND_PINK} />
+          <stop offset="52%" stopColor={BRAND_LILAC} />
+          <stop offset="100%" stopColor={BRAND_SKY} />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="120" fill={`url(#${gradId})`} />
+      <circle cx="166" cy="262" r="104" fill="#ffffff" />
+      <circle cx="346" cy="262" r="104" fill="#ffffff" />
+      <circle cx="140" cy="236" r="46" fill={BRAND_INK} />
+      <circle cx="320" cy="236" r="46" fill={BRAND_INK} />
     </svg>
+  );
+}
+
+/**
+ * "propfund" with the o drawn as an eye. Sized in em, so it scales with the
+ * surrounding text; `text-…` classes set the size.
+ */
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-baseline whitespace-nowrap text-base font-semibold tracking-tight text-current",
+        className,
+      )}
+    >
+      pr
+      <WordmarkEye />
+      pfund
+    </span>
+  );
+}
+
+function WordmarkEye() {
+  return (
+    <span
+      aria-hidden="true"
+      className="relative mx-[0.04em] inline-block size-[0.78em] shrink-0 translate-y-[0.02em] rounded-full bg-white ring-1 ring-inset ring-black/10"
+    >
+      <span
+        className="absolute left-[0.13em] top-[0.15em] size-[0.34em] rounded-full"
+        style={{ backgroundColor: BRAND_INK }}
+      />
+    </span>
   );
 }

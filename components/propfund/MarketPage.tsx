@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { HeroDotField } from "./HeroDotField";
 import { MaterialIcon } from "./MaterialIcon";
-import { PageFrame, PricingGrid, StartEvaluationButton } from "./SiteChrome";
-import type { MarketContent } from "./site-data";
+import { PageFrame, PricingGrid, StartChallengeLink } from "./SiteChrome";
+import { paymentSummary, rulesSummary, type MarketContent } from "./site-data";
 
 const currencyFlags: Record<string, string> = {
   AUD: "au",
@@ -131,7 +131,7 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
       </div>
     );
   }
-  if (copy.includes("target") || copy.includes("10%") || copy.includes("8%")) {
+  if (copy.includes("target") || copy.includes(rulesSummary.target)) {
     return (
       <div className="route-feature-visual feature-target" aria-hidden="true">
         <svg viewBox="0 0 320 104" role="presentation">
@@ -157,7 +157,7 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
     );
   }
 
-  if (copy.includes("week") || copy.includes("open") || copy.includes("overnight") || copy.includes("reward") || copy.includes("seven")) {
+  if (copy.includes("week") || copy.includes("open") || copy.includes("overnight") || copy.includes("payout") || copy.includes("seven")) {
     return (
       <div className="route-feature-visual feature-rhythm" aria-hidden="true">
         <div className="feature-day-track">{[1, 2, 3, 4, 5, 6, 7].map((day) => <i key={day} />)}</div>
@@ -165,7 +165,7 @@ function MarketFeatureVisual({ title, body, market }: { title: string; body: str
     );
   }
 
-  if (copy.includes("automation") || copy.includes("manual") || copy.includes("bots") || copy.includes("your way") || copy.includes("process") || copy.includes("control")) {
+  if (copy.includes("manual") || copy.includes("by hand") || copy.includes("terminal") || copy.includes("process") || copy.includes("control")) {
     return (
       <div className="route-feature-visual feature-controls" aria-hidden="true">
         <span><i /></span><span><i /></span><span><i /></span>
@@ -186,14 +186,14 @@ export function MarketPage({ market }: { market: MarketContent }) {
       <section className="route-hero">
         <HeroDotField />
         <div className="route-container route-hero-grid">
-          <div><h1>{market.headline}</h1><p>{market.intro}</p><div className="route-actions"><StartEvaluationButton className="route-primary" /><a className="route-secondary" href="/rules">See all rules</a></div></div>
+          <div><h1>{market.headline}</h1><p>{market.intro}</p><div className="route-actions"><StartChallengeLink className="route-primary" /><a className="route-secondary" href="/rules">See all rules</a></div></div>
           <div className="market-route-illustration"><Image src={marketIllustrations[market.slug]} alt={`${market.name} market illustration`} width={2500} height={2500} sizes="(max-width: 760px) 90vw, 520px" unoptimized priority /></div>
         </div>
       </section>
-      <section className="route-metrics"><div className="route-container"><div><MaterialIcon className="route-metric-icon" name={metricIcons[0]} /><strong>{market.count}</strong><span>{supportedLabel}</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[1]} /><strong>{market.target}</strong><span>Performance target</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[2]} /><strong>5%</strong><span>Evaluation drawdown</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[3]} /><strong>{market.hours}</strong><span>Trading availability</span></div></div></section>
-      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>What matters in {market.name.toLowerCase()}.</h2><p>The target, the hours, and the freedom to trade your own way.</p></div><div className="route-feature-grid">{market.groups.map((group) => <article key={group.title}><MarketFeatureVisual title={group.title} body={group.body} market={market} /><h3>{group.title}</h3><p>{group.body}</p></article>)}</div></div></section>
+      <section className="route-metrics"><div className="route-container"><div><MaterialIcon className="route-metric-icon" name={metricIcons[0]} /><strong>{market.count}</strong><span>{supportedLabel}</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[1]} /><strong>{rulesSummary.target}</strong><span>Profit target</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[2]} /><strong>{rulesSummary.dailyLoss} / {rulesSummary.maxLoss}</strong><span>Daily / max loss limit</span></div><div><MaterialIcon className="route-metric-icon" name={metricIcons[3]} /><strong>{market.hours}</strong><span>Trading availability</span></div></div></section>
+      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>What matters in {market.name.toLowerCase()}.</h2><p>The target, the hours, and the limits that apply to every account.</p></div><div className="route-feature-grid">{market.groups.map((group) => <article key={group.title}><MarketFeatureVisual title={group.title} body={group.body} market={market} /><h3>{group.title}</h3><p>{group.body}</p></article>)}</div></div></section>
       <section className="route-section route-section-muted"><div className="route-container"><div className="route-section-head"><h2>Markets available.</h2><p>Choose the instruments you already know.</p></div><div className={`instrument-cloud instrument-cloud-${market.slug}`}>{market.instruments.map(item => <span className="instrument-item" key={item}><InstrumentMark item={item} market={market} /><span className="instrument-label">{item}</span></span>)}</div></div></section>
-      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>Start at the size that suits you.</h2><p>The rules stay the same at every account size.</p></div><PricingGrid compact /></div></section>
+      <section className="route-section"><div className="route-container"><div className="route-section-head"><h2>Start at the size that suits you.</h2><p>The rules stay the same at every account size.</p></div><PricingGrid compact /><p className="pricing-note">Sign in with {paymentSummary.signIn}. Pay by card or with {paymentSummary.stablecoins}. Payouts are paid in {rulesSummary.payout}.</p></div></section>
     </PageFrame>
   );
 }

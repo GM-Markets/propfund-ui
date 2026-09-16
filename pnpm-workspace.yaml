@@ -1,7 +1,21 @@
 # pnpm 11+ reads pnpm-specific settings from here (no longer from package.json#pnpm).
 # strictDepBuilds defaults to true, so dependencies with build scripts must be
-# explicitly allowed below or install fails with ERR_PNPM_IGNORED_BUILDS.
+# explicitly allowed (true) or skipped (false), or install fails with
+# ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   esbuild: true
-  msw: true
   sharp: true
+  msw: true
+  # Sign-in SDK transitive deps. All have pure-JS fallbacks; their install
+  # scripts only compile optional native addons or print notices.
+  '@reown/appkit': false
+  bufferutil: false
+  keccak: false
+  utf-8-validate: false
+
+# Packages newer than pnpm's minimum release age, pinned deliberately for the
+# sign-in SDK. Remove an entry once the version is older than the release-age window.
+minimumReleaseAgeExclude:
+  - '@privy-io/js-sdk-core@0.76.0'
+  - '@privy-io/react-auth@3.43.0'
+  - '@privy-io/routes@0.4.0'

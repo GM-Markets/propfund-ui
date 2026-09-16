@@ -1,22 +1,19 @@
-import { DocsLink } from "@/components/docs/docs-link";
+import type { Metadata } from "next";
+
+import { PayoutsView } from "@/components/dashboard/payouts-view";
 import { PageHeader } from "@/components/page-header";
-import * as hsc from "@/lib/hsc/client";
 
-import { PayoutsClient } from "./PayoutsClient";
+export const metadata: Metadata = { title: "Payouts" };
 
-export default async function PayoutsPage() {
-  const [accounts, payouts] = await Promise.all([
-    hsc.connect.list().catch(() => []),
-    hsc.payouts.list().catch(() => []),
-  ]);
+/** Payouts (PRD §8, §10.4): eligibility, identity step, request sheet, under review, history. */
+export default function PayoutsPage() {
   return (
     <div>
       <PageHeader
         title="Payouts"
-        description="Connect a bank account to receive your earned trading profit via Stripe."
-        actions={<DocsLink href="/docs/payouts" />}
+        description="80% of realized profit, paid in USDC on Arbitrum 7 days after you request"
       />
-      <PayoutsClient connectAccounts={accounts} payouts={payouts} />
+      <PayoutsView />
     </div>
   );
 }

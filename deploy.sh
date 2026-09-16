@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the PropFund image, tear down any running stack, then start it.
+# Build the Propfund image, tear down any running stack, then start it.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

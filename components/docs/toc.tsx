@@ -3,8 +3,6 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@/lib/utils";
-
 type Item = { id: string; text: string };
 
 function slugify(text: string): string {
@@ -17,8 +15,8 @@ function slugify(text: string): string {
 }
 
 /**
- * "On this page" rail. Scans the rendered <article> for h2 headings, assigns
- * ids where missing, and tracks the active section with an IntersectionObserver.
+ * "On this page" rail. Scans the help article for h2 headings, assigns ids
+ * where missing, and tracks the active section with an IntersectionObserver.
  */
 export function DocsToc() {
   const pathname = usePathname();
@@ -26,8 +24,11 @@ export function DocsToc() {
   const [active, setActive] = React.useState<string>("");
 
   React.useEffect(() => {
-    const article = document.querySelector("article");
-    if (!article) return;
+    const article = document.querySelector("[data-help-article]");
+    if (!article) {
+      setItems([]);
+      return;
+    }
 
     const headings = Array.from(article.querySelectorAll("h2")) as HTMLElement[];
     const seen = new Set<string>();
@@ -57,22 +58,12 @@ export function DocsToc() {
   if (items.length < 2) return null;
 
   return (
-    <nav className="space-y-3" aria-label="On this page">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-        On this page
-      </p>
-      <ul className="space-y-1 border-l border-border">
+    <nav className="help-toc" aria-label="On this page">
+      <p>On this page</p>
+      <ul>
         {items.map((item) => (
           <li key={item.id}>
-            <a
-              href={`#${item.id}`}
-              className={cn(
-                "-ml-px block border-l-2 py-1 pl-3 text-sm transition-colors",
-                active === item.id
-                  ? "border-primary font-medium text-foreground"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-            >
+            <a className={active === item.id ? "active" : ""} href={`#${item.id}`}>
               {item.text}
             </a>
           </li>
