@@ -25,3 +25,4 @@ test-results
 .vinext
 .wrangler
 tsconfig.tsbuildinfo
+.vercel
