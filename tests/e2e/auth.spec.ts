@@ -43,7 +43,7 @@ test.describe("local test sign-in", () => {
   test("labels test mode, signs in, shows the shell and signs out", async ({ page }) => {
     const dash = new DashboardPage(page);
     await dash.goto();
-    await expect(dash.signInPanel().getByText("Test mode · Privy app ID not set")).toBeVisible();
+    await expect(dash.signInPanel().getByText(/Demo sign-in/)).toBeVisible();
     await dash.continueAsTestUser().click();
 
     await expect(dash.accountMenu()).toBeVisible();

@@ -6,8 +6,8 @@
  * `useAuth()` is the only API screens use. Three modes (lib/propfund/config.ts):
  * - `privy`: real sign-in. The provider SDK loads client-side only
  *   (lib/propfund/privy-bridge.tsx) and reports its state here.
- * - `test`: no app ID + `NEXT_PUBLIC_TEST_CONTROLS=true`. "Continue as test user".
- * - `unconfigured`: no app ID, no test flag. The sign-in dialog explains it.
+ * - `mock`: no app ID. "Continue with Google" signs in a demo user whose data
+ *   stays in this browser. No Google account is contacted.
  *
  * The signed-in user is also pushed into the mock service session, so all app
  * data is keyed by the sign-in user id.
@@ -51,8 +51,8 @@ export type AuthContextValue = {
 export type AuthInternals = {
   dialogOpen: boolean;
   setDialogOpen: (open: boolean) => void;
-  /** Privy mode: start a method. Test mode: sign in as the test user. */
-  signInWith: (method: SignInMethod | "test") => void;
+  /** Privy mode: start a method. Mock mode: any method signs in the demo user. */
+  signInWith: (method: SignInMethod) => void;
   providerLoaded: boolean;
 };
 
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const mode = AUTH_MODE;
 
   const [state, setState] = React.useState<BridgeState>({
-    ready: mode === "unconfigured",
+    ready: false,
     authenticated: false,
     user: null,
   });
@@ -92,9 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const bridge = React.useRef<BridgeHandle | null>(null);
   const pendingRedirect = React.useRef<string | null>(null);
 
-  // Test mode: restore a previous "Continue as test user" session.
+  // Mock mode: restore a previous demo sign-in.
   React.useEffect(() => {
-    if (mode !== "test") return;
+    if (mode !== "mock") return;
     const signedIn = readJson<boolean>(storageKeys.testSession) === true;
     setState({
       ready: true,
@@ -141,9 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signInWith = React.useCallback(
-    (method: SignInMethod | "test") => {
-      if (method === "test") {
-        if (mode !== "test") return;
+    (method: SignInMethod) => {
+      if (mode === "mock") {
         writeJson(storageKeys.testSession, true);
         setState({
           ready: true,
@@ -161,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = React.useCallback(async () => {
-    if (mode === "test") {
+    if (mode === "mock") {
       removeKey(storageKeys.testSession);
       setState({ ready: true, authenticated: false, user: null });
     } else if (mode === "privy" && bridge.current) {

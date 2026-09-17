@@ -28,18 +28,15 @@ export const DEMO_BUILD: boolean = process.env.NEXT_PUBLIC_DEMO_BUILD === "true"
 /** The test controls drawer: flag on, and either dev or an explicit demo build (PRD §12). */
 export const TEST_CONTROLS_ENABLED: boolean = TEST_CONTROLS_FLAG && (!IS_PRODUCTION_BUILD || DEMO_BUILD);
 
-export type AuthMode = "privy" | "test" | "unconfigured";
+export type AuthMode = "privy" | "mock";
 
 /**
- * - `privy`: an app ID is set, real sign-in.
- * - `test`: no app ID and test controls flag on, local "Continue as test user".
- * - `unconfigured`: no app ID and no test flag, sign-in is unavailable.
+ * - `privy`: an app ID is set, real sign-in (email, Google, wallet).
+ * - `mock`: no app ID. "Continue with Google" signs in a demo user whose data
+ *   lives in this browser only. No Google account is contacted. Used locally
+ *   and on preview/demo deployments until the sign-in app ID is configured.
  */
-export const AUTH_MODE: AuthMode = PRIVY_APP_ID
-  ? "privy"
-  : TEST_CONTROLS_ENABLED
-    ? "test"
-    : "unconfigured";
+export const AUTH_MODE: AuthMode = PRIVY_APP_ID ? "privy" : "mock";
 
 /** Published payout wallet for the transparency page, or null (show "Published at launch"). */
 export const PAYOUT_WALLET_ARBITRUM: string | null =

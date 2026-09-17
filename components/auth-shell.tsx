@@ -2,15 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { FlaskConical, Mail, Wallet } from "lucide-react";
+import { Mail, Wallet } from "lucide-react";
 
 import { Brand } from "@/components/brand";
 import { Aurora, Reveal } from "@/components/motion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuthInternals } from "@/lib/propfund/auth";
-import { IS_PRODUCTION_BUILD } from "@/lib/propfund/config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -80,9 +78,8 @@ function GoogleGlyph(props: React.SVGProps<SVGSVGElement>) {
 }
 
 /**
- * Sign-in content (PRD §2). Real sign-in shows the three methods; local test
- * mode shows "Continue as test user"; an unconfigured build explains that
- * sign-in isn't available.
+ * Sign-in content (PRD §2). Real sign-in shows the three methods; without a
+ * sign-in app ID, "Continue with Google" signs in a demo user.
  */
 export function SignInPanel({
   title = "Sign in",
@@ -121,30 +118,16 @@ export function SignInPanel({
           </>
         )}
 
-        {mode === "test" && (
+        {mode === "mock" && (
           <>
-            <Badge variant="warning" className="mx-auto">
-              <FlaskConical className="size-3" />
-              Test mode · Privy app ID not set
-            </Badge>
-            <Button size="lg" className="mt-2 w-full" onClick={() => signInWith("test")}>
-              Continue as test user
+            <Button variant="secondary" size="lg" className="w-full justify-start" onClick={() => signInWith("google")}>
+              <GoogleGlyph />
+              Continue with Google
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Data is simulated and saved in this browser only.
+              Demo sign-in. No Google account is used, and your data stays in this browser.
             </p>
           </>
-        )}
-
-        {mode === "unconfigured" && (
-          <div className="rounded-lg border border-border bg-muted/40 p-4 text-center">
-            <p className="text-sm font-medium">Sign-in isn&apos;t configured</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {IS_PRODUCTION_BUILD
-                ? "Sign-in is temporarily unavailable. Please try again later."
-                : "Set NEXT_PUBLIC_PRIVY_APP_ID, or NEXT_PUBLIC_TEST_CONTROLS=true for local test sign-in."}
-            </p>
-          </div>
         )}
       </div>
 

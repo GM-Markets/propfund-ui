@@ -11,7 +11,7 @@ Propfund is a one-step prop trading challenge. A trader signs in, pays for one o
 - **No scaling plan.**
 - **No algorithmic trading.** No API keys, no public trading API, no webhooks for traders.
 - **Identity verification (KYC) only at the first payout request.** Never at sign-in, deposit, checkout or while trading.
-- **Build mode (v1):** a complete front end running on a local mock service (§12). Sign-in is real (Privy). Every other flow is simulated in the browser and marked as test mode where money would move.
+- **Build mode (v1):** a complete front end running on a local mock service (§12). Sign-in is real (Privy) once the app ID is set; until then it is a demo Google sign-in (§2). Every other flow is simulated in the browser and marked as test mode where money would move.
 
 ## 1a. Brand
 
@@ -33,6 +33,7 @@ Propfund is a one-step prop trading challenge. A trader signs in, pays for one o
 ## 2. Sign-in
 
 - Privy is the only sign-in method. Email/password accounts, password reset and email-OTP pages from the inherited starter are removed.
+- **Demo sign-in:** while `NEXT_PUBLIC_PRIVY_APP_ID` is unset (local, preview and demo deployments), the sign-in dialog shows only "Continue with Google". It signs in a demo user without contacting Google, keeps that user's data in the browser, and says so under the button.
 - Methods: **email code, Google, external wallet** (MetaMask, Coinbase Wallet, WalletConnect, Rabby and similar injected wallets).
 - Every user gets a Privy **embedded wallet** (EVM), created on first sign-in if they don't already have one.
 - The user's Privy ID is the account key for all Propfund data.
@@ -250,7 +251,7 @@ The layout follows propr.xyz/transparency. The content is Propfund's own.
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_PRIVY_APP_ID` | Privy app ID (required for sign-in) |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Privy app ID. Unset means demo Google sign-in (§2) |
 | `NEXT_PUBLIC_PRIVY_CLIENT_ID` | Privy client ID (optional) |
 | `NEXT_PUBLIC_TEST_CONTROLS` | `true` shows the test controls drawer (never set in production) |
 | `NEXT_PUBLIC_PAYOUT_WALLET_ARBITRUM` | Published payout wallet (transparency page) |

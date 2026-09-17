@@ -36,7 +36,7 @@ export class DashboardPage {
 
   /** Local test sign-in (no sign-in app ID + NEXT_PUBLIC_TEST_CONTROLS=true). */
   continueAsTestUser(): Locator {
-    return this.page.getByRole("button", { name: "Continue as test user" });
+    return this.page.getByRole("button", { name: "Continue with Google" });
   }
 
   /** The app nav inside the top header bar (inline on lg+, scrolling row below lg). */
