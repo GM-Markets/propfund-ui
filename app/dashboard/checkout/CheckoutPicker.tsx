@@ -179,7 +179,7 @@ export function CheckoutPicker({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tiers.map((t) => (
-          <Card key={t.id} className={cn("flex flex-col", t.popular && "border-primary/40 shadow-glow")}>
+          <Card key={t.id} className={cn("flex flex-col", t.popular && "border-primary/50")}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{t.label}</CardTitle>

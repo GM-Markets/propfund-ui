@@ -47,7 +47,7 @@ export function PerpPicker({
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-left text-sm"
+        className="flex w-full items-center gap-2 rounded-lg border border-input bg-background/40 px-3 py-2 text-left text-sm shadow-none focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
         <span className="min-w-0 flex-1 truncate font-medium">{displayCoin(value)}</span>
         {selected && selected.mid > 0 ? (
@@ -81,7 +81,7 @@ export function PerpPicker({
                     aria-selected={m.coin === value}
                     className={cn(
                       "flex w-full items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent",
-                      m.coin === value && "bg-accent",
+                      m.coin === value && "bg-primary/10 text-primary",
                     )}
                     onClick={() => {
                       onChange(m.coin);

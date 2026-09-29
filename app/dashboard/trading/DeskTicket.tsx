@@ -1,12 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 import { PerpPicker } from "./PerpPicker";
+import { SizePctSlider } from "./SizePctSlider";
 import {
   absMoney,
   displayCoin,
@@ -27,6 +28,7 @@ export function DeskTicket({
   marketType,
   markets,
   pending,
+  availableUsd,
   onPairChange,
   onSideChange,
   onAmountChange,
@@ -43,6 +45,7 @@ export function DeskTicket({
   marketType: MarketType;
   markets: DeskMarket[];
   pending: boolean;
+  availableUsd: number;
   onPairChange: (pair: string) => void;
   onSideChange: (side: OrderSide) => void;
   onAmountChange: (qty: string) => void;
@@ -63,12 +66,49 @@ export function DeskTicket({
   const buyLabel = marketType === "spot" ? "Buy" : "Long";
   const sellLabel = marketType === "spot" ? "Sell" : "Short";
   const sizeLabel = marketType === "spot" ? (sizeUnit === "usd" ? "Amount" : "Size") : sizeUnit === "usd" ? "Margin" : "Size";
+  const spendMax = Math.max(0, availableUsd);
+  const sliderEnabled = spendMax > 0 && Number.isFinite(spendMax);
+  const amountPct =
+    sliderEnabled && sizeUnit === "usd" && spendMax > 0
+      ? Math.max(0, Math.min(100, Math.round((Math.max(0, amountNum) / spendMax) * 100)))
+      : sliderEnabled && sizeUnit === "coin" && mid > 0
+        ? Math.max(0, Math.min(100, Math.round((Math.max(0, amountNum) / coinSpendMax(spendMax, mid, marketType, lev)) * 100)))
+        : 0;
+
+  function applyPct(pct: number) {
+    const clamped = Math.max(0, Math.min(100, pct));
+    if (sizeUnit === "usd") {
+      onAmountChange(((spendMax * clamped) / 100).toFixed(2));
+      return;
+    }
+    const maxCoin = coinSpendMax(spendMax, mid, marketType, lev);
+    onAmountChange(((maxCoin * clamped) / 100).toFixed(6));
+  }
 
   return (
-    <Card className="h-fit lg:sticky lg:top-20">
+    <Card className="h-fit border-border/80 shadow-none lg:sticky lg:top-20">
       <CardHeader className="space-y-3 pb-3">
         <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-base">Order ticket</CardTitle>
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-border p-1" role="tablist" aria-label="Order type">
+            <button
+              type="button"
+              role="tab"
+              aria-selected
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+            >
+              Market
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              disabled
+              title="Limit orders are not on the virtual desk yet"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground"
+            >
+              Limit
+            </button>
+          </div>
           {mid > 0 ? (
             <div className="text-right">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mark</p>
@@ -121,11 +161,17 @@ export function DeskTicket({
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {marketType === "spot"
-              ? "Market · buy adds inventory, sell only reduces coins you already hold"
-              : "Market · fills immediately against the live mark"}
-          </p>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">Available to trade</span>
+            <button
+              type="button"
+              className="font-mono text-sm font-semibold tabular-nums text-foreground hover:text-primary disabled:text-muted-foreground disabled:hover:text-muted-foreground"
+              disabled={!sliderEnabled}
+              onClick={() => applyPct(100)}
+            >
+              {sliderEnabled ? absMoney(spendMax) : "—"}
+            </button>
+          </div>
 
           <div className="space-y-1.5">
             <Label>{marketType === "perp" ? "Perp" : "Coin"}</Label>
@@ -166,6 +212,12 @@ export function DeskTicket({
               min="0"
               value={amount}
               onChange={(e) => onAmountChange(e.target.value)}
+            />
+            <SizePctSlider
+              value={amountPct}
+              disabled={!sliderEnabled}
+              onChange={applyPct}
+              ariaLabel="Percent of available cash"
             />
             <p className="text-xs text-muted-foreground">
               {marketType === "spot"
@@ -220,4 +272,10 @@ export function DeskTicket({
       </CardContent>
     </Card>
   );
+}
+
+function coinSpendMax(spendMax: number, mid: number, marketType: MarketType, lev: number): number {
+  if (mid <= 0) return 0;
+  if (marketType === "spot") return spendMax / mid;
+  return (spendMax * Math.max(1, lev)) / mid;
 }

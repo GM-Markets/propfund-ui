@@ -2,9 +2,8 @@ import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
 /**
- * PropFund modern-fintech theme: cool navy-slate surfaces, sapphire primary,
- * cyan accents. All colors are HSL CSS variables (see app/globals.css) so
- * shadcn primitives and app code share one source of truth.
+ * Bloom / GM Markets dark theme: forest charcoal, mint primary.
+ * Colors are HSL CSS variables (see app/globals.css).
  */
 export default {
   darkMode: ["class"],
@@ -78,9 +77,6 @@ export default {
       fontFamily: {
         sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
-      },
-      boxShadow: {
-        glow: "0 0 0 1px hsl(var(--primary) / 0.2), 0 8px 40px -12px hsl(var(--primary) / 0.35)",
       },
       keyframes: {
         "accordion-down": {

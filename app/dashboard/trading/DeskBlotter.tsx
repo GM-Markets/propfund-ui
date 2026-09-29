@@ -39,7 +39,7 @@ export function DeskBlotter({
   onClose: (coin: string, marketType?: string) => void;
 }) {
   return (
-    <Tabs defaultValue="positions" className="min-w-0 rounded-xl border border-border bg-card/60 p-3 sm:p-4">
+    <Tabs defaultValue="positions" className="min-w-0 rounded-xl border border-border/80 bg-card p-3 shadow-none sm:p-4">
       <TabsList className="w-full sm:w-auto">
         <TabsTrigger value="positions" className="flex-1 sm:flex-none">
           Positions{positions.length ? ` ${positions.length}` : ""}
@@ -121,7 +121,9 @@ export function DeskBlotter({
                     <TableHead className="text-right">Entry</TableHead>
                     <TableHead className="text-right">Mark</TableHead>
                     <TableHead className="text-right">uPnL</TableHead>
-                    <TableHead />
+                    <TableHead className="w-px text-right">
+                      <span className="sr-only">Close</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -156,10 +158,11 @@ export function DeskBlotter({
                         <TableCell className={cn("text-right font-mono tabular-nums", pnlClass(pnl))}>
                           {money(pnl)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="w-px text-right">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
+                            className="h-8 shrink-0 px-2.5"
                             disabled={pending}
                             onClick={() => onClose(coin, p.market_type)}
                           >

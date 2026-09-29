@@ -69,7 +69,7 @@ function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded-full p-0.5 outline-none ring-ring transition focus-visible:ring-2">
+        <button className="flex items-center gap-2 rounded-full p-0.5 outline-none transition focus-visible:ring-2 focus-visible:ring-ring">
           <Avatar className="size-8">
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
@@ -149,7 +149,7 @@ export function AppShell({ identity, children }: { identity?: PublicIdentity; ch
         <div className="mt-4 flex-1">
           <NavLinks />
         </div>
-        <div className="rounded-lg border border-border bg-card/60 p-3 text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
           Simulated desk · 100% eligible rewards
         </div>
       </aside>

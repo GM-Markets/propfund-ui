@@ -220,6 +220,7 @@ export function TradingTerminal({
           marketType={marketType}
           markets={book}
           pending={pending}
+          availableUsd={Number(liveBalance?.cash ?? 0)}
           onPairChange={changePair}
           onSideChange={setSide}
           onAmountChange={setAmount}

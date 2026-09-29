@@ -3,51 +3,52 @@
 @tailwind utilities;
 
 /*
- * Design tokens — PropFund modern fintech theme.
- * Cool navy-slate canvas, sapphire primary, cyan accents. Values are HSL
- * channels consumed via hsl(var(--token)) so Tailwind and shadcn share one palette.
+ * Design tokens — Bloom / GM Markets dark system.
+ * Forest charcoal canvas, mint primary (#8ed99c), pos/neg greens and coral.
+ * HSL channels are consumed via hsl(var(--token)) so Tailwind and shadcn share one palette.
+ * Spec: docs/bloom-redesign.md
  */
 :root {
-  --background: 222 28% 5%;
-  --foreground: 210 40% 98%;
+  --background: 120 10% 5.7%;
+  --foreground: 80 28% 95%;
 
-  --card: 222 24% 8%;
-  --card-foreground: 210 40% 98%;
+  --card: 120 12% 8%;
+  --card-foreground: 80 28% 95%;
 
-  --popover: 222 26% 7%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 120 14% 7%;
+  --popover-foreground: 80 28% 95%;
 
-  --primary: 214 90% 56%;
-  --primary-foreground: 222 47% 6%;
+  --primary: 131 49% 70%;
+  --primary-foreground: 120 12% 8%;
 
-  --secondary: 222 18% 14%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 120 14% 11%;
+  --secondary-foreground: 80 28% 95%;
 
-  --muted: 222 16% 13%;
-  --muted-foreground: 215 16% 62%;
+  --muted: 120 14% 11%;
+  --muted-foreground: 90 10% 76%;
 
-  --accent: 222 18% 16%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 120 16% 13%;
+  --accent-foreground: 80 28% 95%;
 
-  --destructive: 0 72% 56%;
+  --destructive: 2 100% 68%;
   --destructive-foreground: 0 0% 98%;
 
-  --success: 152 70% 45%;
-  --success-foreground: 160 84% 6%;
+  --success: 145 64% 50%;
+  --success-foreground: 145 40% 8%;
 
   --warning: 38 92% 56%;
   --warning-foreground: 38 92% 8%;
 
-  --border: 210 40% 92% / 0.08;
-  --input: 210 40% 92% / 0.12;
-  --ring: 214 90% 56%;
+  --border: 90 8% 90% / 0.10;
+  --input: 90 8% 90% / 0.14;
+  --ring: 131 49% 70%;
 
-  --sidebar: 222 30% 6%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-accent: 222 18% 12%;
-  --sidebar-border: 210 40% 92% / 0.07;
+  --sidebar: 120 12% 6%;
+  --sidebar-foreground: 80 28% 95%;
+  --sidebar-accent: 120 14% 11%;
+  --sidebar-border: 90 8% 90% / 0.08;
 
-  --radius: 0.7rem;
+  --radius: 0.625rem;
 }
 
 /* The app is dark-only; .dark mirrors :root so shadcn `dark:` paths resolve. */
@@ -61,12 +62,33 @@
   }
   html {
     color-scheme: dark;
+    scrollbar-color: hsl(var(--primary) / 0.35) transparent;
+    scrollbar-width: thin;
+  }
+  html::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  html::-webkit-scrollbar-thumb,
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.28);
+    border-radius: 999px;
+  }
+  html::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-track {
+    background: transparent;
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "tnum" 1;
+    font-variant-numeric: tabular-nums;
   }
-  /* Ambient PropFund glow — sapphire + cyan. */
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
+    color: hsl(var(--foreground));
+  }
+  /* Ambient wash — Bloom mint on forest charcoal. */
   body::before {
     content: "";
     position: fixed;
@@ -74,8 +96,8 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(60rem 40rem at 12% -10%, hsl(var(--primary) / 0.1), transparent 60%),
-      radial-gradient(50rem 35rem at 100% 0%, hsl(192 85% 48% / 0.07), transparent 55%);
+      radial-gradient(60rem 40rem at 12% -10%, hsl(var(--primary) / 0.08), transparent 60%),
+      radial-gradient(50rem 35rem at 100% 0%, hsl(145 40% 20% / 0.12), transparent 55%);
   }
 }
 

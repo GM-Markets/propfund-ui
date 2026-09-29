@@ -55,7 +55,7 @@ export function TradingApiKeyCard({ accountId }: { accountId: string }) {
 
   return (
     <>
-      <div className="flex flex-col gap-2 rounded-xl border border-border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-none sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-medium">
             <KeyRound className="size-4 text-muted-foreground" />
