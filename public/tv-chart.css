@@ -1,0 +1,16 @@
+/* Loaded inside the Charting Library iframe (custom_css_url).
+   Keep header / interval / type menus visible when the pane is tight or zoomed. */
+
+.chart-controls-bar,
+[class*="header-widget"],
+[class*="layout__area--top"],
+[class*="layout__area--left"] {
+  overflow: visible !important;
+}
+
+[class*="menuBox-"],
+[class*="menuWrap-"],
+[class*="popupMenu-"] {
+  overflow: visible !important;
+  max-height: none !important;
+}

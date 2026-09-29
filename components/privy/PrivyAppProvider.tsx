@@ -13,10 +13,15 @@ export function PrivyAppProvider({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // The GM Markets web client is origin-locked. Passing it on localhost
+  // leaves usePrivy().ready false, so Continue stays disabled. In next
+  // dev, use the app default client (localhost is usually allowed there).
+  const clientId = process.env.NODE_ENV === "development" ? undefined : CLIENT_ID;
+
   return (
     <PrivyProvider
       appId={APP_ID}
-      clientId={CLIENT_ID}
+      clientId={clientId}
       config={{
         loginMethodsAndOrder: {
           primary: ["google", "email"],

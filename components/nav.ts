@@ -10,6 +10,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { PROGRAMMATIC_TRADING } from "@/lib/features";
+
 export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -19,6 +21,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/trading", label: "Trading", icon: CandlestickChart },
   { href: "/dashboard/copy-trade", label: "Copy trade", icon: Repeat2 },
   { href: "/dashboard/payouts", label: "Payouts", icon: Banknote },
-  { href: "/dashboard/api-keys", label: "API Keys", icon: KeyRound },
+  ...(PROGRAMMATIC_TRADING
+    ? [{ href: "/dashboard/api-keys", label: "API Keys", icon: KeyRound } satisfies NavItem]
+    : []),
   { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
 ];

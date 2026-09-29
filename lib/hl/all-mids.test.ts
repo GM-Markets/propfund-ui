@@ -67,7 +67,16 @@ describe("subscribeHlAllMids", () => {
     );
   });
 
-  it("subscribes allMids and fans HL frames to the listener", async () => {
+  it("subscribes allMids and builder-dex tapes, then fans HL frames", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify([null, { name: "xyz" }]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
     const { subscribeHlAllMids } = await import("./all-mids");
     const onMids = vi.fn();
     const stop = subscribeHlAllMids(onMids);
@@ -75,6 +84,9 @@ describe("subscribeHlAllMids", () => {
     const fake = FakeSocket.instances[0];
     expect(fake.url).toBe("wss://api.hyperliquid.xyz/ws");
     expect(fake.sent).toEqual([{ method: "subscribe", subscription: { type: "allMids" } }]);
+    await vi.waitFor(() => {
+      expect(fake.sent).toContainEqual({ method: "subscribe", subscription: { type: "allMids", dex: "xyz" } });
+    });
     fake.emit("message", JSON.stringify({ channel: "allMids", data: { mids: { BTC: "76956.5", SOL: "100.67" } } }));
     expect(onMids).toHaveBeenCalledWith({ BTC: "76956.5", SOL: "100.67" });
     stop();

@@ -7,10 +7,10 @@ export const BRAND_NAME = "Propfund";
 /** Greek capital Phi — contemporary fund mark. */
 export const BRAND_MARK_LETTER = "Φ";
 
-export const BRAND_PRIMARY_HSL = "131 49% 70%";
-export const BRAND_PRIMARY_BRIGHT_HSL = "129 65% 84%";
-export const BRAND_PRIMARY_DEEP_HSL = "145 40% 20%";
-export const BRAND_CYAN_HSL = "131 49% 70%";
+export const BRAND_PRIMARY_HSL = "306 47% 72%";
+export const BRAND_PRIMARY_BRIGHT_HSL = "326 79% 82%";
+export const BRAND_PRIMARY_DEEP_HSL = "291 40% 62%";
+export const BRAND_CYAN_HSL = "201 100% 83%";
 
 export const BRAND_MARK_GRAD_ID = "propfund-mark-grad";
 

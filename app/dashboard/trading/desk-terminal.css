@@ -1,0 +1,156 @@
+/* Bloom-like desk: chart | ticket, blotter below. Tokens from globals.css. */
+
+.desk-terminal {
+  display: flex;
+  height: calc(100dvh - 4rem);
+  min-height: calc(100dvh - 4rem);
+  flex-direction: column;
+  overflow: auto;
+  background: hsl(var(--background));
+}
+
+.desk-terminal-strip {
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 0.75rem 1rem;
+}
+
+.desk-terminal-workspace {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, min(340px, 32vw));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.desk-terminal-market {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  height: 100%;
+  overflow: visible;
+  border-right: 1px solid hsl(var(--border));
+}
+
+.desk-header-strip {
+  display: flex;
+  min-height: 3.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 0.5rem 0.75rem;
+}
+
+.desk-header-strip .desk-header-picker {
+  min-width: 14rem;
+  max-width: 28rem;
+  flex: 1 1 16rem;
+}
+
+.desk-header-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.desk-header-stat dt {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.desk-header-stat dd {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.desk-chart {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: visible;
+  background: hsl(var(--background));
+}
+
+.desk-chart-tv {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.desk-chart-tv iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.desk-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+}
+
+.desk-ticket-rail {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+  background: hsl(var(--card));
+  padding: 0.75rem 0.85rem 1rem;
+}
+
+.desk-ticket-rail .desk-ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.desk-blotter-band {
+  min-height: 14rem;
+  padding: 0.75rem 1rem 1rem;
+}
+
+/* True phone width only. Browser zoom must keep chart | ticket side by side
+   and shrink the panes instead of hiding them. */
+@media (max-width: 639px) {
+  .desk-terminal {
+    height: auto;
+    min-height: 0;
+  }
+
+  .desk-terminal-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 22rem;
+  }
+
+  .desk-terminal-market {
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .desk-chart,
+  .desk-chart-tv {
+    min-height: 18rem;
+  }
+
+  .desk-ticket-rail {
+    max-height: none;
+  }
+}

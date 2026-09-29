@@ -38,8 +38,17 @@ export function midFromTape(
 ): number {
   if (mids) {
     const coin = market.coin ?? "";
-    const bare = coin.includes(":") ? coin.slice(coin.indexOf(":") + 1) : coin;
-    for (const key of [market.wire, coin, bare, `${coin}/USDC`, `${coin}-USDC`, `${bare}/USDC`]) {
+    const wire = market.wire ?? "";
+    // HIP-3 / HIP-4 / spot wires are exact allMids keys. Bare UBTC is not @140.
+    const exact =
+      coin.includes(":") ||
+      wire.includes(":") ||
+      coin.startsWith("#") ||
+      wire.startsWith("#") ||
+      wire.startsWith("@") ||
+      wire.includes("/");
+    const keys = exact ? [wire, coin] : [wire, coin, `${coin}/USDC`, `${coin}-USDC`];
+    for (const key of keys) {
       if (!key) continue;
       const n = Number(mids[key] ?? mids[key.toUpperCase()]);
       if (Number.isFinite(n) && n > 0) return n;
@@ -65,13 +74,15 @@ export function overlayMarketMids<T extends { coin: string; wire?: string; mid: 
 }
 
 /**
- * Canonical live perps only. HIP-3 builder books (`hyna:FIX`, `xyz:GOLD`, `flx:…`)
- * are not on the public allMids tape and must stay out of the picker.
+ * Desk perps: canonical tickers plus HIP-3 (`xyz:AAPL`). Drop spots, prediction
+ * ids, and quote coins. HIP-3 marks come from metaAndAssetCtxs when allMids
+ * has no dex key.
  */
 export function isListedPerpCoin(coin: string): boolean {
-  if (!coin || coin.includes(":") || coin.startsWith("@") || coin.startsWith("#")) return false;
-  if (!/[A-Za-z]/.test(coin)) return false;
-  const upper = coin.toUpperCase();
+  if (!coin || coin.startsWith("@") || coin.startsWith("#")) return false;
+  const base = coin.includes(":") ? coin.slice(coin.indexOf(":") + 1) : coin;
+  if (!base || !/[A-Za-z]/.test(base)) return false;
+  const upper = base.toUpperCase();
   return upper !== "USDC" && upper !== "USDT";
 }
 
@@ -81,8 +92,8 @@ export function isPerpTapeCoin(coin: string): boolean {
 }
 
 /**
- * Overlay live `allMids` prices onto the Hyperliquid meta catalog.
- * Drop builder-dex and prediction-market ids — they have no live tape.
+ * Overlay live `allMids` prices onto the perp catalog (canonical + HIP-3).
+ * HIP-4 hash ids live on the Outcomes book.
  */
 export function mergeTapePerps<T extends { coin: string; wire?: string; mid: number; max_leverage: number }>(
   catalog: T[],

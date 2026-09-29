@@ -5,7 +5,7 @@ import { ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { displayCoin, formatPx, type DeskMarket } from "./desk-types";
+import { dexOf, formatPx, marketLabel, marketPairLabel, type DeskMarket } from "./desk-types";
 
 export function PerpPicker({
   markets,
@@ -22,13 +22,30 @@ export function PerpPicker({
   const [q, setQ] = useState("");
   const root = useRef<HTMLDivElement>(null);
   const selected = markets.find((m) => m.coin === value);
+  const colliding = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of markets) {
+      const label = marketLabel(row);
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    return new Set([...counts.entries()].filter(([, n]) => n > 1).map(([label]) => label));
+  }, [markets]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return markets;
     return markets.filter((m) => {
-      const label = displayCoin(m.coin).toLowerCase();
-      return label.includes(needle) || m.coin.toLowerCase().includes(needle);
+      const label = marketLabel(m).toLowerCase();
+      const pairName = (m.pair ?? "").toLowerCase();
+      const name = (m.name ?? "").toLowerCase();
+      const dex = (m.dex || dexOf(m.coin)).toLowerCase();
+      return (
+        label.includes(needle) ||
+        pairName.includes(needle) ||
+        name.includes(needle) ||
+        m.coin.toLowerCase().includes(needle) ||
+        dex.includes(needle)
+      );
     });
   }, [markets, q]);
 
@@ -40,6 +57,9 @@ export function PerpPicker({
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  const selectedLabel = selected ? marketLabel(selected) : value;
+  const selectedDex = selected?.dex || dexOf(value);
+
   return (
     <div ref={root} className="relative">
       <button
@@ -49,7 +69,14 @@ export function PerpPicker({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 rounded-lg border border-input bg-background/40 px-3 py-2 text-left text-sm shadow-none focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       >
-        <span className="min-w-0 flex-1 truncate font-medium">{displayCoin(value)}</span>
+        <span className="min-w-0 flex-1 truncate font-medium">
+          {selectedLabel}
+          {selectedDex && colliding.has(selectedLabel) ? (
+            <span className="ml-1.5 font-normal text-muted-foreground">{selectedDex}</span>
+          ) : selected && selected.coin !== selectedLabel ? (
+            <span className="ml-1.5 font-normal text-muted-foreground">{selected.coin}</span>
+          ) : null}
+        </span>
         {selected && selected.mid > 0 ? (
           <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
             {formatPx(selected.mid)}
@@ -58,7 +85,7 @@ export function PerpPicker({
         <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+        <div className="absolute z-30 mt-1 w-full min-w-[18rem] overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
           <div className="flex items-center gap-2 border-b border-border px-2 py-1.5">
             <Search className="size-3.5 shrink-0 text-muted-foreground" />
             <input
@@ -73,29 +100,45 @@ export function PerpPicker({
             {filtered.length === 0 ? (
               <li className="px-3 py-4 text-center text-xs text-muted-foreground">No matching {noun}</li>
             ) : (
-              filtered.map((m) => (
-                <li key={m.coin}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={m.coin === value}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent",
-                      m.coin === value && "bg-primary/10 text-primary",
-                    )}
-                    onClick={() => {
-                      onChange(m.coin);
-                      setOpen(false);
-                      setQ("");
-                    }}
-                  >
-                    <span className="min-w-0 truncate font-medium">{displayCoin(m.coin)}</span>
-                    <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {m.mid > 0 ? formatPx(m.mid) : "—"}
-                    </span>
-                  </button>
-                </li>
-              ))
+              filtered.map((m) => {
+                const label = marketLabel(m);
+                const dex = m.dex || dexOf(m.coin);
+                return (
+                  <li key={m.coin}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={m.coin === value}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-accent",
+                        m.coin === value && "bg-primary/10 text-primary",
+                      )}
+                      onClick={() => {
+                        onChange(m.coin);
+                        setOpen(false);
+                        setQ("");
+                      }}
+                    >
+                      <span className="min-w-0 truncate text-left">
+                        <span className="font-medium">{label}</span>
+                        {dex && colliding.has(label) ? (
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">{dex}</span>
+                        ) : null}
+                        {marketPairLabel(m) && marketPairLabel(m) !== `${label}/USDC` ? (
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                            {m.coin !== label ? m.coin : marketPairLabel(m)}
+                          </span>
+                        ) : m.coin !== label && !dex ? (
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">{m.coin}</span>
+                        ) : null}
+                      </span>
+                      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                        {m.mid > 0 ? formatPx(m.mid) : "—"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>

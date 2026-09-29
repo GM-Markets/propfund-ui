@@ -7,7 +7,7 @@ test.describe("login page", () => {
   test("renders sign-in", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: /Start your evaluation/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Continue/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Continue|Connecting|Opening your desk/i })).toBeVisible();
   });
 });
 

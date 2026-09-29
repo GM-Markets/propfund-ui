@@ -47,7 +47,7 @@ function LoginCard({ account, signedOut = false }: { account?: string | null; si
           height={36}
         />
         <h2>Start your evaluation.</h2>
-        <p>New and returning traders use the same login. Continue to open your desk.</p>
+        <p>New and returning traders use the same login. If you are already signed in, we open your desk automatically.</p>
       </div>
       {account ? <p className="login-account">Starting with a {account} evaluation.</p> : null}
       {privyReady ? (
@@ -76,8 +76,17 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
   const { ready, authenticated, login, logout } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [openedDesk, setOpenedDesk] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const inFlight = useRef(false);
+
+  useEffect(() => {
+    if (ready) {
+      setTimedOut(false);
+      return;
+    }
+    const id = window.setTimeout(() => setTimedOut(true), 8000);
+    return () => window.clearTimeout(id);
+  }, [ready]);
 
   useEffect(() => {
     if (!signedOut) return;
@@ -122,11 +131,12 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
   }
 
   useEffect(() => {
-    if (!openedDesk || !ready || !authenticated) return;
+    if (signedOut || !ready || !authenticated) return;
     void openDesk();
-    // Only after the trader clicks Continue — leftover Privy sessions must not auto-login.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openedDesk, ready, authenticated]);
+  }, [signedOut, ready, authenticated]);
+
+  const stuck = !ready && timedOut;
 
   return (
     <div className="login-actions">
@@ -134,18 +144,24 @@ function PrivyLogin({ account, signedOut }: { account: string | null; signedOut:
         <p className="form-error" role="alert">
           {error}
         </p>
+      ) : stuck ? (
+        <p className="form-error" role="alert">
+          Privy did not finish loading. Restart <code>next dev</code> after changing
+          NEXT_PUBLIC_PRIVY_* , and allow <code>http://localhost:3000</code> on this
+          Privy app / web client. NEXT_PUBLIC_SITE_URL should be the origin you are
+          browsing (localhost for local).
+        </p>
       ) : null}
       <button
         className="form-submit"
         type="button"
         onClick={() => {
-          setOpenedDesk(true);
           if (!authenticated) login();
           else void openDesk();
         }}
         disabled={!ready || pending}
       >
-        {pending ? "Opening your desk…" : "Continue"}
+        {pending ? "Opening your desk…" : ready ? "Continue" : "Connecting…"}
       </button>
       <small className="login-note">Simulated trading only. No financial advice.</small>
     </div>

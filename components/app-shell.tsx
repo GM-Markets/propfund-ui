@@ -137,10 +137,24 @@ function PrivyUserMenu() {
 
 export function AppShell({ identity, children }: { identity?: PublicIdentity; children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const pathname = usePathname();
+  const desk = pathname.startsWith("/dashboard/trading");
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="sticky top-0 hidden h-screen flex-col border-r border-sidebar-border bg-sidebar p-4 lg:flex">
+    <div
+      className={cn(
+        "min-h-screen",
+        desk
+          ? "sm:grid sm:h-dvh sm:grid-cols-[minmax(160px,220px)_minmax(0,1fr)]"
+          : "lg:grid lg:grid-cols-[260px_1fr]",
+      )}
+    >
+      <aside
+        className={cn(
+          "sticky top-0 hidden flex-col border-r border-sidebar-border bg-sidebar p-4",
+          desk ? "h-dvh sm:flex" : "h-screen lg:flex",
+        )}
+      >
         <div className="px-2 py-3">
           <Link href="/dashboard">
             <Brand />
@@ -155,7 +169,7 @@ export function AppShell({ identity, children }: { identity?: PublicIdentity; ch
       </aside>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className={cn("fixed inset-0 z-50", desk ? "sm:hidden" : "lg:hidden")}>
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
@@ -174,24 +188,31 @@ export function AppShell({ identity, children }: { identity?: PublicIdentity; ch
         </div>
       )}
 
-      <div className="flex min-w-0 flex-col">
-        <header className="glass sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6">
+      <div className={cn("flex min-w-0 flex-col", desk && "min-h-0")}>
+        <header className="glass sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className={desk ? "sm:hidden" : "lg:hidden"}
             onClick={() => setMobileOpen(true)}
           >
             <Menu />
           </Button>
-          <Link href="/dashboard" className="lg:hidden">
+          <Link href="/dashboard" className={desk ? "sm:hidden" : "lg:hidden"}>
             <Brand showWordmark={false} />
           </Link>
           <div className="ml-auto flex items-center gap-3">
             <UserMenuSlot identity={identity} />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+        <main
+          className={cn(
+            "w-full flex-1",
+            desk
+              ? "min-h-0 min-w-0 overflow-auto px-0 py-0"
+              : "mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8",
+          )}
+        >
           {children}
         </main>
       </div>

@@ -1,4 +1,4 @@
-export type MarketType = "perp" | "spot";
+export type MarketType = "perp" | "spot" | "outcome";
 export type OrderSide = "buy" | "sell";
 export type SizeUnit = "usd" | "coin";
 
@@ -6,8 +6,14 @@ export type DeskMarket = {
   coin: string;
   mid: number;
   max_leverage: number;
-  /** Hyperliquid allMids key (`BTC`, `@107`). */
+  /** Hyperliquid allMids key (`BTC`, `xyz:AAPL`, `#12090`). */
   wire?: string;
+  /** UI label — HIP-3 `AAPL`, Unit spots `BTC`, HIP-4 question. */
+  label?: string;
+  dex?: string;
+  kind?: "perp" | "hip3" | "hip4" | "spot";
+  pair?: string;
+  name?: string;
 };
 
 export type DeskPosition = {
@@ -104,7 +110,30 @@ export function pnlClass(value: number): string {
 }
 
 export function displayCoin(coin: string): string {
-  return coin.includes(":") ? coin.split(":").pop() ?? coin : coin;
+  if (coin.includes(":")) return coin.split(":").pop() ?? coin;
+  return coin;
+}
+
+export function dexOf(coin: string): string {
+  if (!coin.includes(":")) return "";
+  return coin.slice(0, coin.indexOf(":"));
+}
+
+export function marketLabel(market: Pick<DeskMarket, "coin" | "label">): string {
+  return market.label?.trim() || displayCoin(market.coin);
+}
+
+export function marketPairLabel(market: Pick<DeskMarket, "coin" | "pair">): string {
+  return market.pair?.trim() || "";
+}
+
+export function formatDeskCoin(
+  coin: string,
+  markets?: Array<Pick<DeskMarket, "coin" | "wire" | "label">>,
+): string {
+  const row = markets?.find((m) => m.coin === coin || m.wire === coin);
+  if (row?.label) return row.label;
+  return displayCoin(coin);
 }
 
 /** Desk positions store `long`/`short`; fills store `buy`/`sell`. */

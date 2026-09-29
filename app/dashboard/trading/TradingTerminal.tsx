@@ -7,19 +7,24 @@ import { closePositionAction, deskPollAction, listMarketsAction, submitOrderActi
 import { AgreementSignCard } from "@/components/agreement-sign-card";
 import { friendlyError } from "@/lib/errors";
 import type { PropAccountSummary } from "@/lib/hsc/client";
-import { fetchHlCanonicalPerps, fetchHlSpotCatalog } from "@/lib/hl/info";
+import { fetchHlHip4Outcomes, fetchHlPerpCatalog, fetchHlSpotCatalog } from "@/lib/hl/info";
 import { getHypMidsSnapshot, subscribeHypMidsStore } from "@/lib/hyp/mids-feed";
 import { mergeTapePerps, midFromTape, overlayMarketMids } from "@/lib/hyp/mids";
+import { ensureTradingViewScript } from "@/lib/tv/ensureScript";
+
+import "./desk-terminal.css";
 
 import { DeskAccountStrip } from "./DeskAccountStrip";
 import { DeskBlotter } from "./DeskBlotter";
+import { DeskChart } from "./DeskChart";
+import { DeskHeaderStrip } from "./DeskHeaderStrip";
 import { DeskTicket } from "./DeskTicket";
-import { TradingApiKeyCard } from "./TradingApiKeyCard";
 import {
   FALLBACK_PERPS,
   FALLBACK_SPOTS,
   asFill,
   asPosition,
+  displayCoin,
   liveDeskBalance,
   markLivePosition,
   type DeskMarket,
@@ -48,6 +53,7 @@ export function TradingTerminal({
   const [snap, setSnap] = useState<DeskSnapshot | null>(null);
   const [markets, setMarkets] = useState<DeskMarket[]>(FALLBACK_PERPS);
   const [spots, setSpots] = useState<DeskMarket[]>(FALLBACK_SPOTS);
+  const [outcomes, setOutcomes] = useState<DeskMarket[]>([]);
   const [pending, startTransition] = useTransition();
   const [marketType, setMarketType] = useState<MarketType>("perp");
   const [pair, setPair] = useState("BTC");
@@ -73,15 +79,17 @@ export function TradingTerminal({
   }
 
   async function refreshMarkets() {
-    const [canonical, hlSpots, vanta] = await Promise.all([
-      fetchHlCanonicalPerps().catch(() => null),
+    const [canonical, hlSpots, hip4, vanta] = await Promise.all([
+      fetchHlPerpCatalog().catch(() => null),
       fetchHlSpotCatalog().catch(() => null),
+      fetchHlHip4Outcomes().catch(() => null),
       listMarketsAction(),
     ]);
     if (canonical?.length) setMarkets(canonical);
     else if (vanta.ok && vanta.data?.markets?.length) setMarkets(vanta.data.markets);
     if (hlSpots?.length) setSpots(hlSpots);
     else if (vanta.ok && vanta.data?.spots?.length) setSpots(vanta.data.spots);
+    if (hip4?.length) setOutcomes(hip4);
   }
 
   useEffect(() => {
@@ -93,27 +101,33 @@ export function TradingTerminal({
 
   useEffect(() => {
     void refreshMarkets();
+    void ensureTradingViewScript().catch(() => undefined);
     const t = setInterval(() => void refreshMarkets(), CATALOG_MS);
     return () => clearInterval(t);
   }, []);
 
   const liveMarkets = useMemo(() => mergeTapePerps(markets, mids), [markets, mids]);
   const liveSpots = useMemo(() => overlayMarketMids(spots, mids), [spots, mids]);
-  const book = marketType === "perp" ? liveMarkets : liveSpots;
+  const liveOutcomes = useMemo(() => overlayMarketMids(outcomes, mids), [outcomes, mids]);
+  const book = marketType === "perp" ? liveMarkets : marketType === "spot" ? liveSpots : liveOutcomes;
+  const allBooks = useMemo(
+    () => [...liveMarkets, ...liveSpots, ...liveOutcomes],
+    [liveMarkets, liveSpots, liveOutcomes],
+  );
   const livePositions = useMemo(() => {
     if (!snap) return [];
     return snap.positions.map((pos) => {
-      const bookForPos = pos.market_type === "spot" ? liveSpots : liveMarkets;
-      const row = bookForPos.find((m) => m.coin === pos.coin || m.wire === pos.coin);
+      const row = allBooks.find((m) => m.coin === pos.coin || m.wire === pos.coin);
       const mark = midFromTape(mids, row ?? { coin: pos.coin ?? "", wire: pos.coin, mid: pos.mark_price });
       return markLivePosition(pos, mark);
     });
-  }, [snap, liveMarkets, liveSpots, mids]);
+  }, [snap, allBooks, mids]);
   const liveBalance = useMemo(() => liveDeskBalance(snap?.balance, livePositions), [snap, livePositions]);
 
   useEffect(() => {
     if (book.length > 0 && !book.some((m) => m.coin === pair)) {
-      setPair(book[0].coin);
+      const aliased = book.find((m) => displayCoin(m.coin) === pair);
+      setPair(aliased?.coin ?? book[0].coin);
     }
     const maxLev = book.find((m) => m.coin === pair)?.max_leverage;
     if (maxLev && Number(leverage) > maxLev) setLeverage(String(maxLev));
@@ -127,9 +141,14 @@ export function TradingTerminal({
 
   function changeMarketType(next: MarketType) {
     setMarketType(next);
-    const nextBook = next === "spot" ? spots : markets;
+    const nextBook = next === "spot" ? spots : next === "outcome" ? outcomes : markets;
     if (!nextBook.some((m) => m.coin === pair)) {
-      setPair(nextBook[0]?.coin ?? (next === "spot" ? "PURR" : "BTC"));
+      const aliased = nextBook.find((m) => displayCoin(m.coin) === pair);
+      setPair(
+        aliased?.coin ??
+          nextBook[0]?.coin ??
+          (next === "spot" ? "PURR" : next === "outcome" ? nextBook[0]?.coin ?? pair : "BTC"),
+      );
     }
   }
 
@@ -161,7 +180,7 @@ export function TradingTerminal({
       const r = await submitOrderAction(
         {
           trade_pair: pair,
-          market_type: marketType,
+          market_type: marketType === "perp" ? "perp" : "spot",
           side,
           ...(sizeUnit === "usd" ? { value: notional } : { quantity: n }),
           leverage: marketType === "perp" ? lev : undefined,
@@ -189,7 +208,7 @@ export function TradingTerminal({
   function close(coin: string, type?: string) {
     startTransition(async () => {
       const r = await closePositionAction(
-        { trade_pair: coin, market_type: type === "spot" ? "spot" : "perp" },
+        { trade_pair: coin, market_type: type === "perp" ? "perp" : "spot" },
         accountId,
       );
       if (r.ok) toast.success(`Closed ${coin}`);
@@ -198,19 +217,40 @@ export function TradingTerminal({
     });
   }
 
+  const selected = book.find((m) => m.coin === pair);
+
   return (
-    <div className="space-y-4">
+    <div className="desk-terminal">
       {!signed && (
-        <AgreementSignCard version={agreementVersion} onSigned={() => setSigned(true)} />
+        <div className="desk-terminal-strip">
+          <AgreementSignCard version={agreementVersion} onSigned={() => setSigned(true)} />
+        </div>
       )}
-      <DeskAccountStrip
-        accounts={accounts}
-        accountId={accountId}
-        onAccountChange={setAccountId}
-        balance={liveBalance}
-      />
-      <TradingApiKeyCard accountId={accountId} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <div className="desk-terminal-strip">
+        <DeskAccountStrip
+          accounts={accounts}
+          accountId={accountId}
+          onAccountChange={setAccountId}
+          balance={liveBalance}
+        />
+      </div>
+      <div className="desk-terminal-workspace">
+        <div className="desk-terminal-market">
+          <DeskHeaderStrip
+            pair={pair}
+            marketType={marketType}
+            markets={book}
+            onPairChange={changePair}
+            onMarketTypeChange={changeMarketType}
+          />
+          <DeskChart
+            coin={pair}
+            wire={selected?.wire ?? pair}
+            mid={selected?.mid ?? 0}
+            label={selected?.label}
+            pair={selected?.pair}
+          />
+        </div>
         <DeskTicket
           pair={pair}
           side={side}
@@ -226,13 +266,15 @@ export function TradingTerminal({
           onAmountChange={setAmount}
           onSizeUnitChange={changeSizeUnit}
           onLeverageChange={setLeverage}
-          onMarketTypeChange={changeMarketType}
           onSubmit={submit}
         />
+      </div>
+      <div className="desk-blotter-band">
         <DeskBlotter
           positions={livePositions}
           fills={snap?.history ?? []}
           pending={pending}
+          markets={allBooks}
           onClose={close}
         />
       </div>

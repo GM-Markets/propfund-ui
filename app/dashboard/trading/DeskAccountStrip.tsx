@@ -26,7 +26,7 @@ export function DeskAccountStrip({
   const pnl = Number(balance?.unrealized_pnl ?? 0);
 
   return (
-    <section className="rounded-xl border border-border/80 bg-card p-4 shadow-none">
+    <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">

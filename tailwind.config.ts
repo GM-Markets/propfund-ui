@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
 /**
- * Bloom / GM Markets dark theme: forest charcoal, mint primary.
+ * PropFund dark theme: navy-slate canvas, homepage pink primary.
  * Colors are HSL CSS variables (see app/globals.css).
  */
 export default {

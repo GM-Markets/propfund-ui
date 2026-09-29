@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
 
 import {
   absMoney,
-  displayCoin,
   formatCoinSize,
+  formatDeskCoin,
   formatPx,
   isLongSide,
   isSpotMarket,
@@ -31,15 +31,17 @@ export function DeskBlotter({
   positions,
   fills,
   pending,
+  markets,
   onClose,
 }: {
   positions: DeskPosition[];
   fills: DeskFill[];
   pending: boolean;
+  markets?: Array<{ coin: string; wire?: string; label?: string }>;
   onClose: (coin: string, marketType?: string) => void;
 }) {
   return (
-    <Tabs defaultValue="positions" className="min-w-0 rounded-xl border border-border/80 bg-card p-3 shadow-none sm:p-4">
+    <Tabs defaultValue="positions" className="min-w-0">
       <TabsList className="w-full sm:w-auto">
         <TabsTrigger value="positions" className="flex-1 sm:flex-none">
           Positions{positions.length ? ` ${positions.length}` : ""}
@@ -66,7 +68,7 @@ export function DeskBlotter({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-mono text-sm font-semibold">
-                          {displayCoin(coin)}
+                          {formatDeskCoin(coin, markets)}
                           {!isSpotMarket(p.market_type) && p.leverage ? (
                             <span className="ml-2 text-xs font-normal text-muted-foreground">{p.leverage}x</span>
                           ) : null}
@@ -133,7 +135,7 @@ export function DeskBlotter({
                     return (
                       <TableRow key={String(p.id ?? coin)}>
                         <TableCell className="font-mono font-medium">
-                          {displayCoin(coin)}
+                          {formatDeskCoin(coin, markets)}
                           {!isSpotMarket(p.market_type) && p.leverage ? (
                             <span className="ml-2 text-xs text-muted-foreground">{p.leverage}x</span>
                           ) : null}
@@ -193,7 +195,7 @@ export function DeskBlotter({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-mono font-semibold">{displayCoin(String(h.coin ?? ""))}</p>
+                        <p className="font-mono font-semibold">{formatDeskCoin(String(h.coin ?? ""), markets)}</p>
                         <p className="text-xs text-muted-foreground">{sideLabel(h.side, h.market_type)}</p>
                       </div>
                       <p className={cn("font-mono text-sm tabular-nums", pnlClass(pnl))}>{money(pnl)}</p>
@@ -228,7 +230,7 @@ export function DeskBlotter({
                         <TableCell className="whitespace-nowrap text-muted-foreground">
                           {h.created_at ? new Date(h.created_at).toLocaleString() : "—"}
                         </TableCell>
-                        <TableCell className="font-mono">{displayCoin(String(h.coin ?? ""))}</TableCell>
+                        <TableCell className="font-mono">{formatDeskCoin(String(h.coin ?? ""), markets)}</TableCell>
                         <TableCell>{sideLabel(h.side, h.market_type)}</TableCell>
                         <TableCell className="text-right font-mono tabular-nums">{formatCoinSize(h.qty)}</TableCell>
                         <TableCell className="text-right font-mono tabular-nums">{formatPx(h.price)}</TableCell>

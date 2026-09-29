@@ -36,11 +36,10 @@ describe("overlayMarketMids", () => {
 });
 
 describe("isPerpTapeCoin", () => {
-  it("keeps live tickers and drops spots, prediction ids, and builder dexes", () => {
+  it("keeps live tickers and HIP-3, drops spots and prediction ids", () => {
     expect(isPerpTapeCoin("BTC")).toBe(true);
-    expect(isPerpTapeCoin("xyz:GOLD")).toBe(false);
-    expect(isPerpTapeCoin("hyna:FIX")).toBe(false);
-    expect(isPerpTapeCoin("flx:FOO")).toBe(false);
+    expect(isPerpTapeCoin("xyz:AAPL")).toBe(true);
+    expect(isPerpTapeCoin("xyz:GOLD")).toBe(true);
     expect(isPerpTapeCoin("@107")).toBe(false);
     expect(isPerpTapeCoin("#25551")).toBe(false);
     expect(isPerpTapeCoin("12090")).toBe(false);
@@ -48,20 +47,46 @@ describe("isPerpTapeCoin", () => {
 });
 
 describe("mergeTapePerps", () => {
-  it("overlays tape mids and ignores prediction-market ids", () => {
+  it("overlays tape mids, keeps HIP-3 catalog marks, and ignores prediction ids", () => {
     const catalog = [
       { coin: "BTC", wire: "BTC", mid: 1, max_leverage: 40 },
       { coin: "ETH", wire: "ETH", mid: 2, max_leverage: 25 },
-      { coin: "hyna:FIX", wire: "hyna:FIX", mid: 1, max_leverage: 20 },
+      { coin: "xyz:AAPL", wire: "xyz:AAPL", mid: 337.31, max_leverage: 20 },
+      { coin: "#25551", wire: "#25551", mid: 0.5, max_leverage: 50 },
     ];
     const next = mergeTapePerps(catalog, {
       BTC: "76939.5",
       DOGE: "0.14",
+      AAPL: "0.057843",
       "@107": "0.2",
       "#25551": "0.5",
     });
-    expect(next.map((row) => row.coin)).toEqual(["BTC", "ETH"]);
+    expect(next.map((row) => row.coin)).toEqual(["BTC", "ETH", "xyz:AAPL"]);
     expect(next.find((row) => row.coin === "BTC")).toMatchObject({ mid: 76939.5, max_leverage: 40 });
     expect(next.find((row) => row.coin === "ETH")?.max_leverage).toBe(25);
+    expect(next.find((row) => row.coin === "xyz:AAPL")?.mid).toBe(337.31);
+  });
+});
+
+describe("midFromTape", () => {
+  it("does not bind HIP-3 Apple to the junk spot AAPL mid", () => {
+    expect(
+      midFromTape(
+        { AAPL: "0.057843", "xyz:AAPL": "337.31" },
+        { coin: "xyz:AAPL", wire: "xyz:AAPL", mid: 1 },
+      ),
+    ).toBe(337.31);
+    expect(midFromTape({ AAPL: "0.057843" }, { coin: "xyz:AAPL", wire: "xyz:AAPL", mid: 337.31 })).toBe(
+      337.31,
+    );
+  });
+
+  it("prices a Unit spot from its wire coin, not a colliding bare ticker", () => {
+    expect(
+      midFromTape(
+        { UBTC: "0.000873", "@151": "102450" },
+        { coin: "UBTC", wire: "@151", mid: 1 },
+      ),
+    ).toBe(102450);
   });
 });

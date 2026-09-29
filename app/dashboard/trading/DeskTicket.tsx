@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -12,7 +11,7 @@ import {
   absMoney,
   displayCoin,
   formatCoinSize,
-  formatPx,
+  marketLabel,
   type DeskMarket,
   type MarketType,
   type OrderSide,
@@ -34,7 +33,6 @@ export function DeskTicket({
   onAmountChange,
   onSizeUnitChange,
   onLeverageChange,
-  onMarketTypeChange,
   onSubmit,
 }: {
   pair: string;
@@ -51,7 +49,6 @@ export function DeskTicket({
   onAmountChange: (qty: string) => void;
   onSizeUnitChange: (unit: SizeUnit) => void;
   onLeverageChange: (lev: string) => void;
-  onMarketTypeChange: (type: MarketType) => void;
   onSubmit: () => void;
 }) {
   const selected = markets.find((m) => m.coin === pair);
@@ -60,12 +57,15 @@ export function DeskTicket({
   const lev = Math.min(Number(leverage) || 1, maxLev);
   const amountNum = Number(amount);
   const margin =
-    sizeUnit === "usd" ? amountNum : marketType === "spot" || lev <= 0 ? amountNum * mid : (amountNum * mid) / lev;
-  const notional = marketType === "spot" ? margin : margin * lev;
+    sizeUnit === "usd" ? amountNum : marketType === "perp" && lev > 0 ? (amountNum * mid) / lev : amountNum * mid;
+  const notional = marketType === "perp" ? margin * lev : margin;
   const coinSize = mid > 0 ? notional / mid : 0;
-  const buyLabel = marketType === "spot" ? "Buy" : "Long";
-  const sellLabel = marketType === "spot" ? "Sell" : "Short";
-  const sizeLabel = marketType === "spot" ? (sizeUnit === "usd" ? "Amount" : "Size") : sizeUnit === "usd" ? "Margin" : "Size";
+  const buyLabel = marketType === "perp" ? "Long" : "Buy";
+  const sellLabel = marketType === "perp" ? "Short" : "Sell";
+  const pairLabel = selected ? marketLabel(selected) : displayCoin(pair);
+  const sizeLabel =
+    marketType === "perp" ? (sizeUnit === "usd" ? "Margin" : "Size") : sizeUnit === "usd" ? "Amount" : "Size";
+  const cashBook = marketType !== "perp";
   const spendMax = Math.max(0, availableUsd);
   const sliderEnabled = spendMax > 0 && Number.isFinite(spendMax);
   const amountPct =
@@ -86,15 +86,20 @@ export function DeskTicket({
   }
 
   return (
-    <Card className="h-fit border-border/80 shadow-none lg:sticky lg:top-20">
-      <CardHeader className="space-y-3 pb-3">
-        <div className="flex items-start justify-between gap-3">
+    <aside className="desk-ticket-rail" aria-label="Order ticket">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+          className="desk-ticket-form"
+        >
           <div className="grid grid-cols-2 gap-1 rounded-lg border border-border p-1" role="tablist" aria-label="Order type">
             <button
               type="button"
               role="tab"
               aria-selected
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+              className="rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-foreground"
             >
               Market
             </button>
@@ -109,39 +114,6 @@ export function DeskTicket({
               Limit
             </button>
           </div>
-          {mid > 0 ? (
-            <div className="text-right">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Mark</p>
-              <p className="font-mono text-lg font-semibold tabular-nums leading-none">{formatPx(mid)}</p>
-            </div>
-          ) : null}
-        </div>
-        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border p-1" role="tablist" aria-label="Market type">
-          {(["perp", "spot"] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              role="tab"
-              aria-selected={marketType === type}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium capitalize",
-                marketType === type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
-              )}
-              onClick={() => onMarketTypeChange(type)}
-            >
-              {type === "perp" ? "Perp" : "Spot"}
-            </button>
-          ))}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-          className="space-y-4"
-        >
           <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
@@ -174,7 +146,7 @@ export function DeskTicket({
           </div>
 
           <div className="space-y-1.5">
-            <Label>{marketType === "perp" ? "Perp" : "Coin"}</Label>
+            <Label>{marketType === "perp" ? "Perp" : marketType === "outcome" ? "Outcome" : "Coin"}</Label>
             <PerpPicker
               markets={markets}
               value={pair}
@@ -195,11 +167,11 @@ export function DeskTicket({
                     aria-selected={sizeUnit === unit}
                     className={cn(
                       "rounded px-2 py-0.5 text-[11px] font-medium",
-                      sizeUnit === unit ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                      sizeUnit === unit ? "bg-secondary text-foreground" : "text-muted-foreground",
                     )}
                     onClick={() => onSizeUnitChange(unit)}
                   >
-                    {unit === "usd" ? "USDC" : displayCoin(pair)}
+                    {unit === "usd" ? "USDC" : pairLabel}
                   </button>
                 ))}
               </div>
@@ -220,10 +192,10 @@ export function DeskTicket({
               ariaLabel="Percent of available cash"
             />
             <p className="text-xs text-muted-foreground">
-              {marketType === "spot"
-                ? `${absMoney(notional)} · ${formatCoinSize(coinSize)} ${displayCoin(pair)}`
+              {cashBook
+                ? `${absMoney(notional)} · ${formatCoinSize(coinSize)} ${pairLabel}`
                 : sizeUnit === "usd"
-                  ? `${absMoney(notional)} position · ${formatCoinSize(coinSize)} ${displayCoin(pair)}`
+                  ? `${absMoney(notional)} position · ${formatCoinSize(coinSize)} ${pairLabel}`
                   : `${absMoney(notional)} position · margin ${absMoney(margin)}`}
             </p>
           </div>
@@ -265,17 +237,16 @@ export function DeskTicket({
                 : "bg-destructive text-destructive-foreground hover:bg-destructive/90",
             )}
           >
-            {side === "buy" ? buyLabel : sellLabel} {displayCoin(pair)}
+            {side === "buy" ? buyLabel : sellLabel} {pairLabel}
             {sizeUnit === "usd" && Number.isFinite(notional) && notional > 0 ? ` · ${absMoney(notional)}` : ""}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+    </aside>
   );
 }
 
 function coinSpendMax(spendMax: number, mid: number, marketType: MarketType, lev: number): number {
   if (mid <= 0) return 0;
-  if (marketType === "spot") return spendMax / mid;
+  if (marketType !== "perp") return spendMax / mid;
   return (spendMax * Math.max(1, lev)) / mid;
 }

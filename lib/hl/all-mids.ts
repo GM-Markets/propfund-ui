@@ -18,6 +18,28 @@ export function hyperliquidInfoUrl(): string {
   return DEFAULT_INFO;
 }
 
+async function subscribeBuilderDexTapes(socket: WebSocket | null, stopped: () => boolean): Promise<void> {
+  try {
+    const response = await fetch(hyperliquidInfoUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "perpDexs" }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return;
+    const payload = (await response.json()) as unknown;
+    if (!Array.isArray(payload) || !socket || stopped()) return;
+    for (const entry of payload) {
+      if (!entry || typeof entry !== "object") continue;
+      const name = typeof (entry as { name?: unknown }).name === "string" ? (entry as { name: string }).name.trim() : "";
+      if (!name || stopped() || socket.readyState !== 1) continue;
+      socket.send(JSON.stringify({ method: "subscribe", subscription: { type: "allMids", dex: name } }));
+    }
+  } catch {
+    // Canonical + HIP-4 hash keys still arrive on the default allMids tape.
+  }
+}
+
 /** Latest Hyperliquid mids (REST). Used as a 2s UI pulse when the socket is quiet. */
 export async function fetchHlAllMids(): Promise<HypMids | null> {
   const response = await fetch(hyperliquidInfoUrl(), {
@@ -53,6 +75,7 @@ export function subscribeHlAllMids(onMids: (mids: HypMids) => void): () => void 
     socket = new WebSocket(hyperliquidWsUrl());
     socket.addEventListener("open", () => {
       socket?.send(JSON.stringify({ method: "subscribe", subscription: { type: "allMids" } }));
+      void subscribeBuilderDexTapes(socket, () => stopped);
       if (ping) clearInterval(ping);
       ping = setInterval(() => {
         if (socket?.readyState === WebSocket.OPEN) {
