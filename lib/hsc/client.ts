@@ -404,68 +404,6 @@ export const trading = {
     }>("/v2/trading/markets"),
 };
 
-export type CopyTradeStatus = "active" | "paused" | "stopped";
-export type CopyMarkets = "all" | "perp" | "spot";
-
-export type CopySubscription = {
-  id: string;
-  user_id: string;
-  prop_account_id: string;
-  leader_address: string;
-  scale_bps: number;
-  alloc_usd: number;
-  markets: CopyMarkets;
-  max_leverage: number;
-  status: CopyTradeStatus;
-  cursor_ms: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type CopyFill = {
-  id: string;
-  subscription_id: string;
-  leader_tid: string;
-  coin: string;
-  side: string;
-  market_type: string;
-  leader_notional: number;
-  follower_value: number;
-  reduce_only: boolean;
-  status: "copied" | "skipped" | "failed";
-  error: string | null;
-  created_at: string;
-};
-
-export const copyTrade = {
-  list: (propAccountId?: string) =>
-    hsc<CopySubscription[]>("/v2/copy-trade/subscriptions", {
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  start: (
-    body: {
-      leader_address: string;
-      scale_bps?: number;
-      alloc_usd?: number;
-      markets?: CopyMarkets;
-      max_leverage?: number;
-      from_ms?: number;
-    },
-    propAccountId?: string,
-  ) =>
-    hsc<CopySubscription>("/v2/copy-trade/subscriptions", {
-      method: "POST",
-      json: body,
-      headers: propAccountIdHeader(propAccountId),
-    }),
-  setStatus: (id: string, status: CopyTradeStatus) =>
-    hsc<CopySubscription>(`/v2/copy-trade/subscriptions/${id}`, {
-      method: "POST",
-      json: { status },
-    }),
-  fills: (id: string) => hsc<CopyFill[]>(`/v2/copy-trade/subscriptions/${id}/fills`),
-};
-
 function propAccountIdHeader(id?: string): Record<string, string> {
   return id ? { "X-Prop-Account": id } : {};
 }

@@ -144,16 +144,11 @@ export default async function DashboardHome() {
                     {a.asset_class} · ${Number(a.account_size).toLocaleString()}
                     {a.is_test ? " cash" : ""}
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href={`/dashboard/copy-trade?prop=${a.id}`}>Copy</Link>
-                    </Button>
-                    <Button size="sm" asChild>
-                      <Link href={`/dashboard/trading?prop=${a.id}`}>
-                        Trade <ArrowRight />
-                      </Link>
-                    </Button>
-                  </div>
+                  <Button size="sm" asChild>
+                    <Link href={`/dashboard/trading?prop=${a.id}`}>
+                      Trade <ArrowRight />
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             ))}

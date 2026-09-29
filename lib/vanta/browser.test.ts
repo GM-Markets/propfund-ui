@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { percentToScaleBps, scaleBpsToPercent } from "./copy-scale";
 import { readBrowserApiError, vantaBrowserBase } from "./http";
 
 describe("vanta browser client", () => {
@@ -19,8 +18,4 @@ describe("vanta browser client", () => {
     });
   });
 
-  it("converts scale percent to basis points", () => {
-    expect(percentToScaleBps(100)).toBe(10_000);
-    expect(scaleBpsToPercent(5_000)).toBe(50);
-  });
 });

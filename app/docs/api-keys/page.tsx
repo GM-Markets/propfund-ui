@@ -65,8 +65,7 @@ export default function ApiKeysDocsPage() {
         <RouteTable rows={DESK_API_KEY_ROUTES} />
         <p className="text-sm text-muted-foreground">
           <code>GET /v2/trading/markets</code> is public and does not need a
-          key. See <Link href="/docs/trading">Trading</Link> and{" "}
-          <Link href="/docs/copy-trade">Copy trade</Link>.
+          key. See <Link href="/docs/trading">Trading</Link>.
         </p>
       </DocSection>
 

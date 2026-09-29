@@ -29,6 +29,19 @@ export type DeskPosition = {
   market_type?: string;
 };
 
+export type DeskOrder = {
+  id?: string;
+  coin?: string;
+  side?: string;
+  type?: string;
+  quantity?: number;
+  price?: number;
+  status?: string;
+  filled_qty?: number;
+  created_at?: string;
+  market_type?: string;
+};
+
 export type DeskFill = {
   id?: string;
   coin?: string;
@@ -52,7 +65,7 @@ export type DeskBalance = {
 
 export type DeskSnapshot = {
   positions: DeskPosition[];
-  orders: Array<Record<string, unknown>>;
+  orders: DeskOrder[];
   history: DeskFill[];
   balance: DeskBalance;
 };
@@ -185,4 +198,19 @@ export function asPosition(row: Record<string, unknown>): DeskPosition {
 
 export function asFill(row: Record<string, unknown>): DeskFill {
   return row as DeskFill;
+}
+
+export function asOrder(row: Record<string, unknown>): DeskOrder {
+  return row as DeskOrder;
+}
+
+export function orderTypeLabel(type: string | undefined | null): string {
+  const value = String(type ?? "market").toLowerCase();
+  return value === "limit" ? "Limit" : "Market";
+}
+
+export function orderStatusLabel(status: string | undefined | null): string {
+  const value = String(status ?? "").trim();
+  if (!value) return "—";
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase().replace(/_/g, " ");
 }

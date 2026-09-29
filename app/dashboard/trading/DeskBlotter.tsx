@@ -20,21 +20,33 @@ import {
   formatPx,
   isLongSide,
   isSpotMarket,
+  orderStatusLabel,
+  orderTypeLabel,
   sideLabel,
   money,
   pnlClass,
   type DeskFill,
+  type DeskOrder,
   type DeskPosition,
 } from "./desk-types";
 
+function venueLabel(type: string | undefined | null): string {
+  const value = String(type ?? "").toLowerCase();
+  if (value === "spot") return "Spot";
+  if (value === "outcome") return "Outcome";
+  return "Perp";
+}
+
 export function DeskBlotter({
   positions,
+  orders,
   fills,
   pending,
   markets,
   onClose,
 }: {
   positions: DeskPosition[];
+  orders: DeskOrder[];
   fills: DeskFill[];
   pending: boolean;
   markets?: Array<{ coin: string; wire?: string; label?: string }>;
@@ -46,8 +58,11 @@ export function DeskBlotter({
         <TabsTrigger value="positions" className="flex-1 sm:flex-none">
           Positions{positions.length ? ` ${positions.length}` : ""}
         </TabsTrigger>
-        <TabsTrigger value="fills" className="flex-1 sm:flex-none">
-          Fills
+        <TabsTrigger value="orders" className="flex-1 sm:flex-none">
+          Orders{orders.length ? ` ${orders.length}` : ""}
+        </TabsTrigger>
+        <TabsTrigger value="trades" className="flex-1 sm:flex-none">
+          Trades{fills.length ? ` ${fills.length}` : ""}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="positions" className="mt-3">
@@ -180,9 +195,81 @@ export function DeskBlotter({
           </>
         )}
       </TabsContent>
-      <TabsContent value="fills" className="mt-3">
+      <TabsContent value="orders" className="mt-3">
+        {orders.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No orders yet.</p>
+        ) : (
+          <>
+            <div className="space-y-2 md:hidden">
+              {orders.slice(0, 50).map((o, i) => {
+                const coin = String(o.coin ?? "");
+                return (
+                  <article
+                    key={String(o.id ?? i)}
+                    className="rounded-lg border border-border bg-background/40 p-3 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-mono font-semibold">{formatDeskCoin(coin, markets)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {sideLabel(o.side, o.market_type)} · {orderTypeLabel(o.type)} · {venueLabel(o.market_type)}
+                        </p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{orderStatusLabel(o.status)}</p>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {o.created_at ? new Date(o.created_at).toLocaleString() : "—"}
+                    </p>
+                    <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
+                      {formatCoinSize(o.quantity)} @ {formatPx(o.price)}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Coin</TableHead>
+                    <TableHead>Book</TableHead>
+                    <TableHead>Side</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Size</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.slice(0, 50).map((o, i) => {
+                    const coin = String(o.coin ?? "");
+                    return (
+                      <TableRow key={String(o.id ?? i)}>
+                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                          {o.created_at ? new Date(o.created_at).toLocaleString() : "—"}
+                        </TableCell>
+                        <TableCell className="font-mono">{formatDeskCoin(coin, markets)}</TableCell>
+                        <TableCell>{venueLabel(o.market_type)}</TableCell>
+                        <TableCell>{sideLabel(o.side, o.market_type)}</TableCell>
+                        <TableCell>{orderTypeLabel(o.type)}</TableCell>
+                        <TableCell className="text-right font-mono tabular-nums">
+                          {formatCoinSize(o.quantity)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono tabular-nums">{formatPx(o.price)}</TableCell>
+                        <TableCell>{orderStatusLabel(o.status)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
+      </TabsContent>
+      <TabsContent value="trades" className="mt-3">
         {fills.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No fills yet.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">No trades yet.</p>
         ) : (
           <>
             <div className="space-y-2 md:hidden">

@@ -19,8 +19,4 @@ export const DESK_API_KEY_ROUTES = [
   { method: "GET", path: "/v2/trading/balance", summary: "Cash, equity, margin, and rules." },
   { method: "GET", path: "/v2/trading/history", summary: "Closed positions." },
   { method: "GET", path: "/v2/trading/desk-poll", summary: "Positions, resting orders, history, and balance." },
-  { method: "POST", path: "/v2/copy-trade/subscriptions", summary: "Start copying a Hyperliquid address." },
-  { method: "GET", path: "/v2/copy-trade/subscriptions", summary: "List copy-trade subscriptions." },
-  { method: "POST", path: "/v2/copy-trade/subscriptions/{id}", summary: "Pause, resume, or stop a subscription." },
-  { method: "GET", path: "/v2/copy-trade/subscriptions/{id}/fills", summary: "Copied, skipped, and failed fills." },
 ] as const;

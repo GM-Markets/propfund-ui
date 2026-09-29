@@ -33,7 +33,7 @@ export default function AuthDocsPage() {
 
       <DocSection
         title="Call the gateway with an API key"
-        description="Mint a key in the dashboard, then call the trading and copy-trade routes on gate.propfund.io. No Privy token on the bot."
+        description="Mint a key in the dashboard, then call the trading routes on gate.propfund.io. No Privy token on the bot."
       >
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>
@@ -59,9 +59,9 @@ export default function AuthDocsPage() {
         />
         <RouteTable title="Desk routes that accept X-Api-Key" rows={DESK_API_KEY_ROUTES} />
         <Callout type="warning" title="These routes only">
-          <code>X-Api-Key</code> is accepted on <code>/van/v2/trading/*</code>{" "}
-          and <code>/van/v2/copy-trade/*</code>. Auth, KYC, checkout, payouts,
-          and key admin reject it with <code>401</code>.
+          <code>X-Api-Key</code> is accepted on <code>/van/v2/trading/*</code>.
+          Auth, KYC, checkout, payouts, and key admin reject it with{" "}
+          <code>401</code>.
         </Callout>
       </DocSection>
 

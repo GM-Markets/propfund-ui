@@ -23,6 +23,7 @@ import {
   FALLBACK_PERPS,
   FALLBACK_SPOTS,
   asFill,
+  asOrder,
   asPosition,
   displayCoin,
   liveDeskBalance,
@@ -69,7 +70,7 @@ export function TradingTerminal({
     if (r.ok && r.data) {
       setSnap({
         positions: (r.data.positions ?? []).map(asPosition),
-        orders: r.data.orders ?? [],
+        orders: (r.data.orders ?? []).map(asOrder),
         history: (r.data.history ?? []).map(asFill),
         balance: r.data.balance,
       });
@@ -272,6 +273,7 @@ export function TradingTerminal({
       <div className="desk-blotter-band">
         <DeskBlotter
           positions={livePositions}
+          orders={snap?.orders ?? []}
           fills={snap?.history ?? []}
           pending={pending}
           markets={allBooks}

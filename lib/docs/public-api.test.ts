@@ -18,10 +18,6 @@ describe("public API host", () => {
       "GET /v2/trading/balance",
       "GET /v2/trading/history",
       "GET /v2/trading/desk-poll",
-      "POST /v2/copy-trade/subscriptions",
-      "GET /v2/copy-trade/subscriptions",
-      "POST /v2/copy-trade/subscriptions/{id}",
-      "GET /v2/copy-trade/subscriptions/{id}/fills",
     ]);
   });
 });

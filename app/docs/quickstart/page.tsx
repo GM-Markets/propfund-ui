@@ -45,7 +45,7 @@ export default function QuickstartPage() {
         <Callout type="tip" title="Base URL">
           <code>{PUBLIC_VAN_BASE}</code> — host <code>{PUBLIC_GATEWAY_ORIGIN}</code>,
           prefix <code>/van</code>, header <code>X-Api-Key</code> on trading
-          and copy-trade routes.
+          routes.
         </Callout>
         <RouteTable title="Routes the key can call" rows={DESK_API_KEY_ROUTES} />
       </DocSection>
@@ -79,9 +79,6 @@ export default function QuickstartPage() {
           </li>
           <li>
             <Link href="/docs/trading">Trading</Link> — orders, close, desk-poll.
-          </li>
-          <li>
-            <Link href="/docs/copy-trade">Copy trade</Link> — follow a Hyperliquid address.
           </li>
         </ul>
       </DocSection>

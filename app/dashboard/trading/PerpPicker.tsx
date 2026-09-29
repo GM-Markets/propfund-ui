@@ -5,7 +5,7 @@ import { ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { dexOf, formatPx, marketLabel, marketPairLabel, type DeskMarket } from "./desk-types";
+import { dexOf, formatPx, marketLabel, type DeskMarket } from "./desk-types";
 
 export function PerpPicker({
   markets,
@@ -73,8 +73,6 @@ export function PerpPicker({
           {selectedLabel}
           {selectedDex && colliding.has(selectedLabel) ? (
             <span className="ml-1.5 font-normal text-muted-foreground">{selectedDex}</span>
-          ) : selected && selected.coin !== selectedLabel ? (
-            <span className="ml-1.5 font-normal text-muted-foreground">{selected.coin}</span>
           ) : null}
         </span>
         {selected && selected.mid > 0 ? (
@@ -123,13 +121,6 @@ export function PerpPicker({
                         <span className="font-medium">{label}</span>
                         {dex && colliding.has(label) ? (
                           <span className="ml-1.5 text-xs font-normal text-muted-foreground">{dex}</span>
-                        ) : null}
-                        {marketPairLabel(m) && marketPairLabel(m) !== `${label}/USDC` ? (
-                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                            {m.coin !== label ? m.coin : marketPairLabel(m)}
-                          </span>
-                        ) : m.coin !== label && !dex ? (
-                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">{m.coin}</span>
                         ) : null}
                       </span>
                       <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
